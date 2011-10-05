@@ -14,7 +14,7 @@ open Tree;;
 
 open CombSys ;;
 
-open Oracle;;
+open OracleSimple;;
 
 open Util;;
 
@@ -32,7 +32,7 @@ let tryGen grammar sizemin sizemax =
   in  match pthetree with
     | None -> print_endline "pas d'arbre trouvé"
     | Some (tree,size) -> 
-      (*tree_print tree 1;*)
+      tree_print tree 1;
       print_string "la taille de l'arbre:  ";
       print_endline (string_of_int size) ;;
 

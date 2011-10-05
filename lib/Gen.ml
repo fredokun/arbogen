@@ -18,14 +18,14 @@ open CombSys
 
 open Grammar
 
-open Oracle
+open OracleSimple
 
 let gra_gratab (g:grammar) : string array = 
 	let l = List.length g in
 	let r = Array.make l "name" in
 	let e = l-1 in
 	for i=0 to e do
-		let (p1,p2,p3) = List.nth g i in
+		let (p1,_,_) = List.nth g i in
 		r.(i) <- p1
 	done;
 	r
@@ -36,15 +36,14 @@ let gra_weightTab (g:grammar) : int array =
 	let r = Array.make l 1 in
 	let e = l-1 in
 	for i=0 to e do
-		let (p1,p2,p3) = List.nth g i in
+		let (_,p2,_) = List.nth g i in
 		r.(i) <- p2
 	done;
 	r
 
-let strlist2cp (g:grammar) (sl:string list) (s:string) (w:int) (r:rule) (stab:string array) (wtab:int array):combprod =
+let strlist2cp (sl:string list) (w:int) (stab:string array):combprod =
 	let l = List.length sl in
 	let le = l - 1 in
-	let we = w - 1 in
 	let wt = Array.make w Z in
 	let thetl = Array.to_list wt in
 	(*print_endline "tl";
@@ -65,7 +64,7 @@ let strlist2cp (g:grammar) (sl:string list) (s:string) (w:int) (r:rule) (stab:st
 		
 	
 	
-let rule2combeq (g:grammar) (s:string) (w:int) (r:rule) (stab:string array) (wtab:int array):combeq =
+let rule2combeq (s:string) (w:int) (r:rule) (stab:string array) (wtab:int array):combeq =
 	match r with
 		Terminal -> 
 			let ind = findIndexstr stab s in
@@ -88,7 +87,7 @@ let rule2combeq (g:grammar) (s:string) (w:int) (r:rule) (stab:string array) (wta
 			for j = 0 to le do
 				inv := le - j;
 				sl := List.nth ll !inv;
-				restab.(j) <- strlist2cp g !sl s w r stab wtab 
+				restab.(j) <- strlist2cp !sl w stab 
 			done;
 			let res = Array.to_list restab in
 			(*print_endline (string_of_int (List.length res));*)
@@ -104,7 +103,7 @@ let gra_toCombSys (g:grammar) : combsys =
 	let strtab = gra_gratab g in
 	let wtab = gra_weightTab g in
 	for i = 0 to le do
-		res.(i) <- (rule2combeq g (grastr g i) (graint g i) (grarule g i) strtab wtab)
+		res.(i) <- (rule2combeq (grastr g i) (graint g i) (grarule g i) strtab wtab)
 	done;
 	res
 
@@ -152,7 +151,6 @@ let bernoulli (g:grammar) (y:float array) (therulestring:string) (sll:string lis
 	
 				
 let rec gra_rulegen (g:grammar) (r:string) (y:float array):tree = 
-	let gratab = gra_gratab g in
 	let therule = gra_findrule g r in
 	match therule with
 		Terminal -> tree_leaf r
@@ -197,7 +195,7 @@ let rec generateur (g:grammar) (sizemin:int) (sizemax:int) (epsilon1:float) (eps
           else (None,nb_smaller,nb_bigger)
         in
         
-        let (ptree,nb_smaller,nb_bigger) = genaux 500 0 0
+        let (ptree,nb_smaller,_) = genaux 500 0 0
         in
         match ptree with
           | Some _ -> ptree

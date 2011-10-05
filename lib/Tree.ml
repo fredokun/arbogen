@@ -50,32 +50,27 @@ let rec tree_print (thetree:tree) : unit =
 			tree_nodep thetree;
 *)
 let rec tree_print (thetree:tree) (bl:int) : unit = 
-	match thetree with
-		Leaf thest ->
-			let tree_leafp (Leaf st):unit = 
-				printblanc (bl-1);
-				print_string st
-			in
-			tree_leafp thetree
-		|Node(thest,thetl) ->
-			let tree_nodep (Node(st,tl)):unit = 
-				let nl = List.length tl in
-				print_string "  Node :";
-				print_endline st;
-				let lm1 = nl - 1 in
-				let lm2 = nl - 2 in
-				for var = 0 to lm2 do
-					printblanc bl;
-					tree_print (List.nth tl var) (bl+1);
-(* ne faire que si var < nl*)
-					print_endline ";";
-					(*print_endline ";";*)
-				done;
-				printblanc bl;
-				tree_print (List.nth tl lm1) (bl+1);
-				print_endline ""
-			in
-			tree_nodep thetree;
+  match thetree with
+    | Leaf st ->
+      printblanc (bl-1);
+      print_string st
+    | Node(st,tl) ->
+      let nl = List.length tl in
+      print_string "  Node :";
+      print_endline st;
+      let lm1 = nl - 1 in
+      let lm2 = nl - 2 in
+      for var = 0 to lm2 do
+	printblanc bl;
+	tree_print (List.nth tl var) (bl+1);
+              (* ne faire que si var < nl*)
+	print_endline ";";
+	    (*print_endline ";";*)
+      done;
+      printblanc bl;
+      tree_print (List.nth tl lm1) (bl+1);
+      print_endline ""
+       
 
 			
 

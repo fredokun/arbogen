@@ -22,7 +22,7 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
 	let thenorm = ref 0.0 in
 	thenorm := epsilon +. 1.0; 
 
-	let rec go_on (par:unit):float array = 
+	let rec go_on ():float array = 
 		let y = Array.copy y'
 		in
 		array_clone (evaluation phi z y) y';
@@ -42,7 +42,6 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
 	go_on ()
 
 let diverge (y:float array) (epsilon:float):bool =
-	let thesize = (Array.length y) in
 	let tresGrand = 1.0/.epsilon in 
 	let rslt = ref false in
 	let rec dvgi (i:int) (s:int):unit = 
