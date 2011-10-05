@@ -1,12 +1,14 @@
-(****************************************************
- * Module: Util                                     *
- * -------                                          *
- * Misc. utilities                                  *
- * -------                                          *
- * (C) 2011, Xuming Zhan, Frederic Peschanski       *
- *           Antonine Genitrini under the           *
- *           GNU GPL v.3 licence (cf. LICENSE file) *
- ****************************************************)
+(*********************************************************
+ * Arbogen-lib : fast uniform random generation of trees *
+ *********************************************************
+ * Module: Util                                          *
+ * -------                                               *
+ * Misc. utilities                                       *
+ * -------                                               *
+ * (C) 2011, Xuming Zhan, Frederic Peschanski            *
+ *           Antonine Genitrini under the                *
+ *           GNU GPL v.3 licence (cf. LICENSE file)      *
+ *********************************************************)
 
 (** option type for partial functions *)
 type 'a option =
