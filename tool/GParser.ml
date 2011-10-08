@@ -12,13 +12,38 @@
 
 type component = int * string list ;; (* weight , sub-components *) 
 
+let string_of_component (weight,refs) =
+  let rec strz w =
+    if w=0 then ""
+    else " * <z>" ^ (strz (w-1))
+  in let rec strrefs = function
+    | [] -> ""
+    | [ref] -> ref
+    | ref::refs -> ref ^ " * " ^ (strrefs refs)
+     in
+     (strrefs refs) ^ (strz weight) ;;
+     
 type rule = string * component list
 
+let string_of_rule (rname,comps) =
+  let rec strcomps = function
+    | [] -> ""
+    | [comp] -> (string_of_component comp) ^ " ;"
+    | comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
+  in (rname ^ " ::= " ^ (strcomps comps)) ;;
+
 type grammar = rule list ;;
+
+let rec string_of_grammar = function
+  | [] -> ""
+  | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules) ;;
 
 (* example of grammar *) 
 let bintree = [ ("BinNode", [ (1,["Leaf"]) ; 
                               (0,["BinNode";"BinNode"]) ]) ];;
+
+
+(* print_endline (string_of_grammar bintree);; *)
 
 exception Parse_error of string;;
 
@@ -54,7 +79,7 @@ let rec skip_until_starslash str i =
     | Char(ch) -> if ch='*' then (match get_char str (i+1) with
         | EOF -> raise (Parse_error "Missing end of comment after *") 
         | Char(ch') -> 
-          if ch'='/' then i+1
+          if ch'='/' then i+2
           else skip_until_starslash str (i+1))
       else skip_until_starslash str (i+1) ;;
 
@@ -107,6 +132,7 @@ let next_word str i =
         else aux (i+1) (ch::word)
   in
   let (word,i') = aux (skip str i) [] in
+  (* print_endline ("next word = " ^ (string_of_list word)) ; *)
   (string_of_list word,i') ;;
 
 let advance str i expect = 
@@ -196,4 +222,7 @@ let parse_from_file fname =
   let input = string_of_file fname in
   parse_grammar input ;;
 
-parse_from_file "examples/binary.arb" ;;
+let gram = parse_from_file "examples/binary.arb" 
+in 
+(print_endline "Grammar parsed = ") ;
+(print_endline (string_of_grammar gram));;
