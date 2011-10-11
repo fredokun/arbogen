@@ -69,6 +69,14 @@ let array_fold_left_2 (f:'a -> 'b -> 'c -> 'a) (init:'a) (b:'b array) (c:'c arra
   in
   aux 0 (Array.length b) init
 
+let array_fold_it (f:int -> 'a -> 'b -> 'b) (tab:'a array) (unt:'b) : 'b = 
+  let rec aux i max acc =
+    if i=max then acc
+    else aux (i+1) max (f i tab.(i) acc)
+  in
+  aux 0 ((Array.length tab)-1) unt ;;
+
+
 let normI_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y') in if z>norm then z else norm) 0.0 
 
 
@@ -78,6 +86,12 @@ let normI = Array.fold_left (fun init e -> let ae = abs_float e in if ae  > init
 
 let array_clone (a:'a array) (b:'a array) : unit =
 	Array.blit a 0 b 0 (Array.length a)
+
+(* string set *)
+
+module StringSet = Set.Make (String) ;;
+
+
 
 let printVector (v:float array):unit = 
 	let l = Array.length v in

@@ -10,41 +10,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)       *
  **********************************************************)
 
-type component = int * string list ;; (* weight , sub-components *) 
-
-let string_of_component (weight,refs) =
-  let rec strz w =
-    if w=0 then ""
-    else " * <z>" ^ (strz (w-1))
-  in let rec strrefs = function
-    | [] -> ""
-    | [ref] -> ref
-    | ref::refs -> ref ^ " * " ^ (strrefs refs)
-     in
-     (strrefs refs) ^ (strz weight) ;;
-     
-type rule = string * component list
-
-let string_of_rule (rname,comps) =
-  let rec strcomps = function
-    | [] -> ""
-    | [comp] -> (string_of_component comp) ^ " ;"
-    | comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
-  in (rname ^ " ::= " ^ (strcomps comps)) ;;
-
-type grammar = rule list ;;
-
-let rec string_of_grammar = function
-  | [] -> ""
-  | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules) ;;
-
-(* example of grammar *) 
-let bintree = [ ("BinNode", [ (1,["Leaf"]) ; 
-                              (0,["BinNode";"BinNode"]) ]) ];;
-
-
-(* print_endline (string_of_grammar bintree);; *)
-
 exception Parse_error of string;;
 
 type character =
@@ -129,6 +94,10 @@ let next_word str i =
       | Char(ch) -> 
         if is_space ichar then
           (List.rev word,i)
+        else if ch='*' or ch='+' or ch=';' then
+          (match word with
+            | [] -> ([ch], i+1)
+            | _ -> (List.rev word, i))
         else aux (i+1) (ch::word)
   in
   let (word,i') = aux (skip str i) [] in
@@ -206,8 +175,7 @@ let parse_grammar str =
   in
   aux 0 [] ;;
 
-(* parse_grammar "BinNode ::= Leaf * <z> + BinNode * BinNode ;" ;; *)
-
+(* parse_grammar "BinNode ::= Leaf * <z> + BinNode * BinNode;" ;; *)
 
 let string_of_file fname =
   let inchan = open_in fname in
@@ -222,7 +190,9 @@ let parse_from_file fname =
   let input = string_of_file fname in
   parse_grammar input ;;
 
+(*
 let gram = parse_from_file "examples/binary.arb" 
 in 
 (print_endline "Grammar parsed = ") ;
 (print_endline (string_of_grammar gram));;
+*)

@@ -14,6 +14,74 @@ open Util
 open CombSys
 open Tree
 
+(* Grammar encoding *)
+
+type component = int * string list ;; (* weight , sub-components *) 
+     
+type rule = string * component list
+
+type grammar = rule list ;;
+
+
+(* example of grammar  
+let bintree = [ ("BinNode", [ (1,["Leaf"]) ; 
+                              (0,["BinNode";"BinNode"]) ]) ];;
+*)
+
+(* grammar completion *)
+
+let names_of_component (_,comps) =
+  List.fold_right (fun name names -> StringSet.add names name) (StringSet.empty) comps ;;
+
+let names_of_rule (_,comps) = 
+  List.fold_right (fun comp names -> StringSet.union (names_of_component comp) names) (StringSet.empty) comps ;;
+
+let names_of_grammar grm =
+  List.fold_right (fun rule gnames -> StringSet.union (names_of_rule rule) gnames) (StringSet.empty) grm ;;
+
+let rule_names_of_grammar grm =
+  List.fold_right (fun (rname,_) rnames -> StringSet.add rnames rname) StringSet.empty gram ;;
+
+let leafs_of_grammar grm = 
+  let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
+  in
+  StringSet.fold (fun leaf l -> leaf::l) leafs [] ;;
+        
+let completion grm =
+  let leafs = leafs_of_grammar grm
+  in
+  
+
+(* printing *)
+
+let string_of_component (weight,refs) =
+  let rec strz w =
+    if w=0 then ""
+    else " * <z>" ^ (strz (w-1))
+  in let rec strrefs = function
+    | [] -> ""
+    | [ref] -> ref
+    | ref::refs -> ref ^ " * " ^ (strrefs refs)
+     in
+     (strrefs refs) ^ (strz weight) ;;
+
+let rec string_of_grammar = function
+  | [] -> ""
+  | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules) ;;
+
+let string_of_rule (rname,comps) =
+  let rec strcomps = function
+    | [] -> ""
+    | [comp] -> (string_of_component comp) ^ " ;"
+    | comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
+  in (rname ^ " ::= " ^ (strcomps comps)) ;;
+
+(* print_endline (string_of_grammar bintree);; *)
+
+
+
+
+
 (** a grammar rule is either a terminal (leaf) node or a non-terminal node *)
 type rule = Terminal | NonTerminal of (string list list)
 

@@ -57,53 +57,23 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
 	u 
 
-let get_length (phi:combsys) : int =
-	Array.length phi
+(* printing *)
 
-let print_combnode (cn:combnode): string list= 
-	match cn with
-		 Z -> ["Z"]
-		|One -> ["One"]
-		|Refe(i) -> ["( Refe ";(string_of_int i);")"]
+let string_of_combnode = function 
+  | Z -> "z"
+  | One -> "1"
+  | Refe i -> "Ref[" ^ (string_of_int i) ^ "]" ;;
 
-let print_combprod (cp:combprod): unit =
-	let l = List.length cp in
-	let le = l - 2 in
-	let lf = l - 1 in
-	print_string "[";
-	for i=0 to le do
-		printstrlistL (print_combnode (List.nth cp i));
-		print_string ";"
-	done;
-	printstrlistL (print_combnode (List.nth cp lf));
-	print_string "]"
-	
-let print_combeq (ce:combeq): unit =    
-	let l = List.length ce in
-	let le = l - 2 in
-	let lf = l - 1 in  
-	print_string "[";
-	for i=0 to le do
-		print_combprod (List.nth ce i);
-		print_string ";"
-	done;
-	print_combprod (List.nth ce lf);
-	print_string "]"
-	
+let rec string_of_combprod = function
+  | [] -> ""
+  | [cn] -> string_of_combnode cn
+  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_compprod ps)
 
-let print_combsys (cs:combsys): unit =    
-	let l = Array.length cs in
-	let le = l - 2 in
-	let lf = l - 1 in 
-	print_endline "[|";
-	for i=0 to le do
-		print_combeq cs.(i);
-		print_string ";";
-		print_endline " "
-	done;
-	print_combeq cs.(lf);
-	print_endline " ";
-	print_string "|]";
-	print_endline " ";
+let rec string_of_combeq = function
+  | [] -> ""
+  | [cp] -> string_of_combprod cp
+  | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs)
 
+let string_of_combsys sys =
+  Array.fold_it (fun i e str -> str ^ (string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n") sys "" ;;
 
