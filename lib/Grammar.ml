@@ -50,8 +50,8 @@ let leafs_of_grammar grm =
 let completion grm =
   let leafs = leafs_of_grammar grm
   in
+  grm @ (StringSet.fold (fun leaf lrules -> (leaf,[])::lrues) leafs [] leafs) ;;
   
-
 (* printing *)
 
 let string_of_component (weight,refs) =

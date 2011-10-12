@@ -179,7 +179,7 @@ let rec gra_rulegen (g:grammar) (r:string) (y:float array):tree =
 (*let thecombsys = gra_toCombSys g in *)
 
 let rec generateur (g:grammar) (sizemin:int) (sizemax:int) (epsilon1:float) (epsilon2:float) (nameOfNodeToGenerate:string) (pmin:float) (pmax:float) (thecombsys:combsys) : (tree*int) option = 
-	let (pmin',pmax',pvector') = rechercheSingularite thecombsys pmin pmax epsilon1 epsilon2 in
+	let (pmin',pmax',pvector') = searchSingularity thecombsys pmin pmax epsilon1 epsilon2 in
 
         let rec genaux (n:int) (nb_smaller:int) (nb_bigger:int) : ((tree*int) option) * int * int = 
           if n>0 then

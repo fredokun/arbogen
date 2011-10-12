@@ -25,7 +25,6 @@ and combnode =
   | One          (* a unit 1 for the product *)
   | Refe of int  (* a reference to another equation *) 
 
-
 (** evalution of a node at a given coordinate z *)
 let eval_combnode (z:float) (u:float array) (cn:combnode):float = 
 	match cn with
@@ -56,6 +55,40 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 	done;
 	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
 	u 
+
+(* conversion from grammar *)
+
+let rec make_z = function
+  | 0 -> [One]
+  | n -> Z::(make_z (- n 1)) ;;
+
+let rec make_refs map refs = match refs with
+  | [] -> []
+  | ref::refs' -> (Refe (StringMap.find ref map))::(make_refs map refs') ;;
+
+let comprod_of_component map (weight,refs) = 
+  (make_refs map refs) @ (make_z map weight)
+
+let combeq_of_rule map (_,comps) = 
+  List.fold_left (fun eqs comp -> (combprod_of_component map comp)::eqs) [] comps ;;
+
+let refmap_of_grammar grm =
+  let rec aux i grm map = match grm with
+    | [] -> map
+    | (rname,_)::grm' -> aux (i+1) grm' (StringMap.add rname i map)
+  in
+  aux 0 grm StringMap.empty ;;
+
+let combsys_of_grammar grm =
+  let rec aux grm map sys = match grm with
+    | [] -> sys
+    | ((rname,rbody) as rule)::grm' -> 
+      let index = StringMap.find rname map in
+      Array.set sys index (combeq_of_rule map rule) ;
+      aux grm' map sys
+  in
+  aux grm (refmap_of_grammar grm) (Array.create (List.length grm)) ;;
+
 
 (* printing *)
 

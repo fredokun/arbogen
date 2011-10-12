@@ -22,6 +22,21 @@ let fold_map mop fop finit a =
 
 (* Array utilities *)
 
+let array_unop (op:'a -> 'b) (init:'b) (a:'a array) : 'b array =
+  let rec aux i len b =
+    if i<len
+    then begin 
+      b.(i) <- (op a.(i)) ;
+      aux (i+1) len b
+    end 
+  in
+  let n = Array.length a
+  in
+  let b = Array.make n init
+  in 
+	aux 0 n b;
+	b
+
 let array_binop (op:'a -> 'b -> 'c) (init:'c) (a:'a array) (b:'b array) : 'c array =
   let rec aux i len c =
     if i<len
@@ -37,26 +52,10 @@ let array_binop (op:'a -> 'b -> 'c) (init:'c) (a:'a array) (b:'b array) : 'c arr
 	aux 0 n c; 
 	c 
 
-
-let array_soustrac = array_binop (-.) 0.0 ;;
-
 let string_of_array (tostr:'a -> string) (a : 'a array) : string =
 	"[" ^ (Array.fold_left (fun str e -> str ^  (tostr e) ^ ",") "" a) ^ "]" 
 
-let array_unop (op:'a -> 'b) (init:'b) (a:'a array) : 'b array =
-  let rec aux i len b =
-    if i<len
-    then begin 
-      b.(i) <- (op a.(i)) ;
-      aux (i+1) len b
-    end 
-  in
-  let n = Array.length a
-  in
-  let b = Array.make n init
-  in 
-	aux 0 n b;
-	b
+
 
 (* modifié pour float on utilise > non >.*)
 let array_max (a:float array) = Array.fold_left (fun (max:float) (e:float) -> if e > max then e else max) min_float a
@@ -77,11 +76,6 @@ let array_fold_it (f:int -> 'a -> 'b -> 'b) (tab:'a array) (unt:'b) : 'b =
   aux 0 ((Array.length tab)-1) unt ;;
 
 
-let normI_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y') in if z>norm then z else norm) 0.0 
-
-
-  
-let normI = Array.fold_left (fun init e -> let ae = abs_float e in if ae  > init then ae else init) 0.0 
 
 
 let array_clone (a:'a array) (b:'a array) : unit =
@@ -91,32 +85,9 @@ let array_clone (a:'a array) (b:'a array) : unit =
 
 module StringSet = Set.Make (String) ;;
 
+(* string map *)
 
-
-let printVector (v:float array):unit = 
-	let l = Array.length v in
-	let e = l - 1 in
-	for i = 0 to e do
-		print_endline (string_of_float v.(0))
-	done
-
-
-let printstrlist (sl : string list) : unit = 
-	let l = List.length sl in
-	let e = l - 1 in
-	for i = 0 to e do
-		print_string (List.nth sl i);
-		print_string " "
-	done;
-	print_endline ""
-
-let printstrlistL (sl : string list) : unit = 
-	let l = List.length sl in
-	let e = l - 1 in
-	for i = 0 to e do
-		print_string (List.nth sl i);
-		print_string " "
-	done
+module StringMap = Map.Make (String) ;;
 
 let compareStrArr (s:string) (a:string array) : bool =
 	let l = Array.length a in
@@ -172,23 +143,7 @@ let ifAtLeast8Smallerin10OthersBigger (p1:int) (p2:int) (tab:int array) : bool  
         if thesumTab >= 6 then
                  true
         else
-                 false
-
-let printblanc (l:int) : unit =
-	let e = l- 1 in
-	for i = 0 to e do
-		print_string " "
-	done;
-        
-        
-	
-	
-        
-				
-	
-	
-	
-	
+                 false	
 
 
 (*
