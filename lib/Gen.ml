@@ -178,30 +178,35 @@ let rec gra_rulegen (g:grammar) (r:string) (y:float array):tree =
 			end
 (*let thecombsys = gra_toCombSys g in *)
 
-let rec generateur (g:grammar) (sizemin:int) (sizemax:int) (epsilon1:float) (epsilon2:float) (nameOfNodeToGenerate:string) (pmin:float) (pmax:float) (thecombsys:combsys) : (tree*int) option = 
-	let (pmin',pmax',pvector') = searchSingularity thecombsys pmin pmax epsilon1 epsilon2 in
-
-        let rec genaux (n:int) (nb_smaller:int) (nb_bigger:int) : ((tree*int) option) * int * int = 
-          if n>0 then
-	    (let thetreegen =  gra_rulegen g nameOfNodeToGenerate pvector' in
-	     let sizeOfthetreegen = tree_size thetreegen g in
-             print_endline ("arbre généré de taille = " ^ (string_of_int sizeOfthetreegen)) ;
-	     if (interval sizemin sizemax sizeOfthetreegen) then
-               (Some (thetreegen,sizeOfthetreegen), nb_smaller, nb_bigger)
-             else (if sizeOfthetreegen < sizemin then  
-                 genaux (n-1) (nb_smaller+1) nb_bigger
-               else
-                 genaux (n-1) nb_smaller (nb_bigger +1)))
-          else (None,nb_smaller,nb_bigger)
-        in
-        
-        let (ptree,nb_smaller,_) = genaux 500 0 0
-        in
-        match ptree with
-          | Some _ -> ptree
-          | None -> if nb_smaller>=8 then
-              (print_endline ("trop loin de la singularite: raffine avec zmin = " ^ (string_of_float pmin') ^ " zmax = " ^ (string_of_float pmax'));
-	       generateur g sizemin sizemax (epsilon1/.10.0) (epsilon2/.10.0) nameOfNodeToGenerate pmin' pmax' thecombsys)
-            else
-              None
-
+let generator 
+    (g:grammar) 
+    (sizemin:int) (sizemax:int) 
+    (epsilon1:float) (epsilon1_factor:float)
+    (epsilon2:float) (epsilon2_factor:float)
+    (idprefix:string) 
+    (max_try:int) (max_refine:int) : (tree*int) option =
+  let sys = combsys_of_grammar g in
+  let rec gen epsilon1 epsilon2 pmin pmax nb_refine =
+    let (pmin',pmax',sing) = searchSingularity sys pmin pmax epsilon1 epsilon2 in
+    let rec try_gen nb_try nb_smaller nb_bigger =
+      if nb_try > 0 then
+        (let (tree,size) = gen_tree g idprefix sing in
+         if size<sizemin then
+           try_gen (n-1) (nb_smaller+1) nb_bigger
+         else if size>sizemax then
+           try_gen (n-1) nb_smaller (nb_bigger+1)
+         else (* ok, the tree has an acceptable size *)
+           (Some ((tree,size),nb_smaller,nb_bigger)))
+      else (* max number of tries *)
+        (None,nb_smaller,nb_bigger) 
+    in
+    if nb_refine>0 then
+      (let (ptree,nb_smaller,nb_larger) = try_gen max_try 0 0 in
+       match ptree with
+         | Some _ -> ptree (* ok, found a tree, return it with its size *)
+         | None -> 
+           if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_larger)) >= 0.8
+           then (* if more than 80% of the trees are too small, then refine *)
+             gen (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) pmin' pmax' (nb_refine+1))
+    else (* refined too much : could not generate a tree *)
+      (None,0) 

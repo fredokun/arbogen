@@ -20,6 +20,11 @@ type 'a option =
 let fold_map mop fop finit a =
   List.fold_left (fun r e -> fop (mop e) r) finit a 
 
+let rec string_of_list str_of_elem op dl cl l = match l with
+  | [] -> cl
+  | [e] -> (str_of_elem e) ^ cl
+  | e::l' -> (string_of_elem e) ^ dl ^ (string_of_list op dl cl l')
+
 (* Array utilities *)
 
 let array_unop (op:'a -> 'b) (init:'b) (a:'a array) : 'b array =
