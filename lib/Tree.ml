@@ -16,13 +16,6 @@ type tree =
     Leaf of string * string     (* node type, node id *)
   | Node of string * string * (tree list)   (* node type, node id, children *)
 
-let make_builder id_prefix = { mutable idgen = 0 ; prefix = id_prefix } 
-
-let build_next_id builder =
-  builder.idgen := builder.idgen + 1 ;
-  id_prefix ^ (string_of_int builder.idgen)
-
-
 let rec string_of_tree = function
   | Leaf(typ,id) -> "Leaf{" ^ typ ^ "," ^ id ^ "}"
   | Node(typ,id,ts) -> "Node{" ^ typ ^ "," ^ id ^ "}" ^ (string_of_list string_of_tree "[" "," "]" ts)
@@ -52,7 +45,7 @@ let indent_xml_of_tree t =
   let rec tree level t = match t with
     | Leaf(typ,id) -> (indent_string level) ^ "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
     | Node(typ,id,ts) -> 
-      (indent_string level) ^ "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">\n" ^ (forest (level+1) ts) ^ "\n" ^ (indent_sting level) ^ "</node>"
+      (indent_string level) ^ "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">\n" ^ (forest (level+1) ts) ^ "\n" ^ (indent_string level) ^ "</node>"
   and forest level f = match f with
     | [] -> ""
     | [t] -> tree level t
@@ -66,8 +59,8 @@ let dot_of_tree show_type t =
       "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
       ^ (string_of_list nodes "" "" "" ts)
   and edges level pred t = match t with
-    | Leaf(typ,id) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n"
-    | Node(typ,id,ts) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n" ^ (string_of_list (fun t -> edges (level+1) id t) "" "" "" ts)
+    | Leaf(_,id) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n"
+    | Node(_,id,ts) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n" ^ (string_of_list (fun t -> edges (level+1) id t) "" "" "" ts)
   in
   "digraph {\n"
   ^ nodes t

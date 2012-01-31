@@ -63,17 +63,17 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 
 let rec make_z = function
   | 0 -> [One]
-  | n -> Z::(make_z (- n 1)) ;;
+  | n -> Z::(make_z ((-) n 1)) ;;
 
 let rec make_refs map refs = match refs with
   | [] -> []
   | ref::refs' -> (Refe (StringMap.find ref map))::(make_refs map refs') ;;
 
 let comprod_of_component map (weight,refs) = 
-  (make_refs map refs) @ (make_z map weight)
+  (make_refs map refs) @ (make_z weight)
 
 let combeq_of_rule map (_,comps) = 
-  List.fold_left (fun eqs comp -> (combprod_of_component map comp)::eqs) [] comps ;;
+  List.fold_left (fun eqs comp -> (comprod_of_component map comp)::eqs) [] comps ;;
 
 let refmap_of_grammar grm =
   let rec aux i grm map = match grm with
@@ -85,12 +85,12 @@ let refmap_of_grammar grm =
 let combsys_of_grammar grm =
   let rec aux grm map sys = match grm with
     | [] -> sys
-    | ((rname,rbody) as rule)::grm' -> 
+    | ((rname,_) as rule)::grm' ->
       let index = StringMap.find rname map in
       Array.set sys index (combeq_of_rule map rule) ;
       aux grm' map sys
   in
-  aux grm (refmap_of_grammar grm) (Array.create (List.length grm)) ;;
+  aux grm (refmap_of_grammar grm) (Array.create (List.length grm) []) ;;
 
 
 (* printing *)
@@ -103,7 +103,7 @@ let string_of_combnode = function
 let rec string_of_combprod = function
   | [] -> ""
   | [cn] -> string_of_combnode cn
-  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_compprod ps)
+  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_combprod ps)
 
 let rec string_of_combeq = function
   | [] -> ""
@@ -111,5 +111,5 @@ let rec string_of_combeq = function
   | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs)
 
 let string_of_combsys sys =
-  Array.fold_it (fun i e str -> str ^ (string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n") sys "" ;;
+	Array.fold_left (fun (str,i) e -> ((string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n" ^ str,i+1)) ("",0) sys ;;
 
