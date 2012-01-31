@@ -25,21 +25,24 @@ and combnode =
   | One          (* a unit 1 for the product *)
   | Refe of int  (* a reference to another equation *) 
 
+
+let combsys_size = Array.length
+
 (** evalution of a node at a given coordinate z *)
-let eval_combnode (z:float) (u:float array) (cn:combnode):float = 
+let eval_combnode (z:float) (y:float array) (cn:combnode):float = 
 	match cn with
 		 Z -> z
 		|One -> 1.0
-		|Refe(i) -> u.(i)
+		|Refe(i) -> y.(i)
 
 (** evaluation of a product at a given coordinate z *)
-let eval_combprod (z:float) (u:float array) (cp:combprod):float = 
-	let eval_combnode_s = eval_combnode z u in
+let eval_combprod (z:float) (y:float array) (cp:combprod):float = 
+	let eval_combnode_s = eval_combnode z y in
 	fold_map eval_combnode_s ( *.) 1.0 cp
 
 (** evaluation of an equation at a given coordinate z *)
-let eval_eq (z:float) (u:float array) (eq:combeq):float = 
-	let eval_combprod_s = eval_combprod z u in
+let eval_eq (z:float) (y:float array) (eq:combeq):float = 
+	let eval_combprod_s = eval_combprod z y in
 	fold_map eval_combprod_s (+.) 0.0 eq
 	 
 (** evaluation of a system at a given coordinate z *)

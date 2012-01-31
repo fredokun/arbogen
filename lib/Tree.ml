@@ -10,7 +10,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-
 open Util
 
 type tree = 
