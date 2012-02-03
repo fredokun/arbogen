@@ -6,7 +6,8 @@
  * Internal representation of grammars                   *
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
- *           Antonine Genitrini under the                *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
@@ -43,15 +44,22 @@ let rule_names_of_grammar grm =
 	List.fold_left (fun rnames (rname,_) -> StringSet.add rname rnames) StringSet.empty grm ;;
 
 let leafs_of_grammar grm = 
-  let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
-  in
-  StringSet.fold (fun leaf l -> leaf::l) leafs [] ;;
+	let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
+	in
+	StringSet.fold (fun leaf l -> leaf::l) leafs [] ;;
         
 let completion grm =
-  let leafs = leafs_of_grammar grm
-  in
-  grm @ (List.fold_left (fun lrules leaf -> (leaf,[])::lrules) [] leafs) ;;
-  
+	let leafs = leafs_of_grammar grm
+	in
+	grm @ (List.fold_left (fun lrules leaf -> (leaf,[(0,[])])::lrules) [] leafs) ;;
+
+let count elt liste =
+	let rec count_rec e l i =
+		match l with
+		|[] -> i
+		|p::q -> if e=p then count_rec e q (i+1) else count_rec e q i in
+	count_rec elt liste 0
+
 (* printing *)
 
 let string_of_component (weight,refs) =

@@ -6,7 +6,8 @@
  * Internal representation of trees and export tools     *
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
- *           Antonine Genitrini under the                *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
@@ -17,8 +18,8 @@ type tree =
   | Node of string * string * (tree list)   (* node type, node id, children *)
 
 let rec string_of_tree = function
-  | Leaf(typ,id) -> "Leaf{" ^ typ ^ "," ^ id ^ "}"
-  | Node(typ,id,ts) -> "Node{" ^ typ ^ "," ^ id ^ "}" ^ (string_of_list string_of_tree "[" "," "]" ts)
+  | Leaf(typ,id) -> "Leaf[" ^ typ ^ "," ^ id ^ "]"
+  | Node(typ,id,ts) -> "Node[" ^ typ ^ "," ^ id ^ "]" ^ (string_of_list string_of_tree "[" "," "]" ts)
 
 let rec indent_string = function
   | 0 -> ""
@@ -26,9 +27,9 @@ let rec indent_string = function
 
 let indent_string_of_tree t =
   let rec tree level t = match t with
-    | Leaf(typ,id) -> (indent_string level) ^ "Leaf{" ^ typ ^ "," ^ id ^ "}"
+    | Leaf(typ,id) -> (indent_string level) ^ "Leaf[" ^ typ ^ "," ^ id ^ "]"
     | Node(typ,id,ts) -> 
-      (indent_string level) ^ "Node{" ^ typ ^ "," ^ id ^ "}[\n" ^ (forest (level+1) ts) ^ "]"
+      (indent_string level) ^ "Node[" ^ typ ^ "," ^ id ^ "][\n" ^ (forest (level+1) ts) ^ "]"
   and forest level f = match f with
     | [] -> ""
     | [t] -> tree level t
@@ -68,4 +69,3 @@ let dot_of_tree show_type t =
     | Leaf(_,_) -> ""
     | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
-

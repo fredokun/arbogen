@@ -6,7 +6,8 @@
  * Generator tests (can be run in the top-level)         *
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
- *           Antonine Genitrini under the                *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
@@ -22,19 +23,11 @@ open Gen;;
 open Grammar;;
 
 
-Random.self_init();;
-
-let bintree = [ ("binnode",0, NonTerminal [ [ "leaf" ] ; [ "binnode"; "binnode" ] ]) ;
-                ("leaf",1, Terminal) ] ;;
-
-let tryGen grammar sizemin sizemax = 
-  let pthetree = generateur grammar sizemin sizemax 0.000001 0.0000000001 "binnode"  0.0 1.0 (gra_toCombSys grammar)
-  in  match pthetree with
-    | None -> print_endline "pas d'arbre trouvé"
-    | Some (tree,size) -> 
-      tree_print tree 1;
-      print_string "la taille de l'arbre:  ";
-      print_endline (string_of_int size) ;;
-
-
-tryGen bintree 100000 500000;;
+let tbtree = [("BinNode",[(1,["Leaf"]);(0,["TriNode";"TriNode"])]);
+("TriNode",[(1,["Leaf"]);(0,["BinNode";"BinNode";"BinNode"])])] ;;
+(*
+let bintree = [ ("BinNode", [ (1,["Leaf"]) ; (0,["BinNode";"BinNode"]) ]) ] in
+match generator bintree true 0 2 30 0.001 0.1 0.00001 0.1 false "" 20 0.8 10 with
+|None -> failwith "a priori Ã§a marche pas"
+|Some(tree,size) -> print_endline (string_of_int size) ; print_string (dot_of_tree true tree);;
+*)

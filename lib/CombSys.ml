@@ -7,7 +7,8 @@
  * combinatorial equations.                              *
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
- *           Antonine Genitrini under the                *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
@@ -106,7 +107,7 @@ let rec string_of_combprod = function
   | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_combprod ps)
 
 let rec string_of_combeq = function
-  | [] -> ""
+  | [] -> "vide ici"
   | [cp] -> string_of_combprod cp
   | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs)
 

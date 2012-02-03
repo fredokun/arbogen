@@ -6,7 +6,8 @@
  * The Oracle for the singularity search (naive version) *
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
- *           Antonine Genitrini under the                *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
@@ -19,9 +20,9 @@ let normInf_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y
 
 let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
   let rec iterate (y:float array): float array = 
-    let y' = evaluation phi z y 
-    in 
-    if normInf_diff y y' <= epsilon 
+    let y' = evaluation phi z y
+    in
+	if normInf_diff y y' <= epsilon
     then y'
     else iterate y'
   in
@@ -32,7 +33,7 @@ let diverge (y:float array) (epsilon:float):bool =
   let tooBig = 1.0/.epsilon in 
   let rec dvgi (i:int) (s:int):bool = 
     (*print_endline ("element = " ^ (string_of_float ele));*)
-    if i < s then
+    if i <= s then
       (if (y.(i) < 0.0) || (y.(i) > tooBig) then true
        else dvgi (i+1) s)
     else false
@@ -47,7 +48,7 @@ let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilo
 		let z = (zmin +. zmax)/.2.0 in
 		let y = iterationSimple phi z epsilon2 in
 		(*print_endline ("singularite= " ^ (string_of_float zmin) ^ "moyenne= " ^ (string_of_float z));*)
-		if diverge y epsilon1 = true then 
+		if diverge y epsilon2 = true then
 			searchSingularity phi zmin z epsilon1 epsilon2
 		else
 			searchSingularity phi z zmax epsilon1 epsilon2
