@@ -23,8 +23,8 @@ let fold_map mop fop finit a =
 
 let rec string_of_list str_of_elem op dl cl l = match l with
   | [] -> cl
-  | [e] -> (str_of_elem e) ^ cl
-  | e::l' -> (str_of_elem e) ^ dl ^ (string_of_list str_of_elem op dl cl l')
+  | [e] -> op ^ (str_of_elem e) ^ cl
+  | e::l' -> op ^ (str_of_elem e) ^ dl ^ (string_of_list str_of_elem "" dl cl l')
 
 (* Array utilities *)
 

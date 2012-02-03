@@ -18,8 +18,8 @@ type tree =
   | Node of string * string * (tree list)   (* node type, node id, children *)
 
 let rec string_of_tree = function
-  | Leaf(typ,id) -> "Leaf[" ^ typ ^ "," ^ id ^ "]"
-  | Node(typ,id,ts) -> "Node[" ^ typ ^ "," ^ id ^ "]" ^ (string_of_list string_of_tree "[" "," "]" ts)
+  | Leaf(typ,id) -> "Leaf(" ^ typ ^ "," ^ id ^ ")"
+  | Node(typ,id,ts) -> "Node(" ^ typ ^ "," ^ id ^ ")" ^ (string_of_list string_of_tree "[" "," "]" ts)
 
 let rec indent_string = function
   | 0 -> ""

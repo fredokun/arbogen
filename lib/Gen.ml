@@ -51,33 +51,36 @@ let gen_tree
 	(sizemax:int)
 	(y:float array) : (tree option * int) =
 	let (first_rule,_) = List.hd g in
-	let (wmap,gmap) = pondere g y in
+	let (wmap,gmap) = pondere (completion g) y in
 	let rec gen_tree_rec (size:int) (next_rule:string) : (tree option * int) =
 		if sizemax-size<=0 then
-			None
+			(None,sizemax)
 		else
 		(* On génère la suite de l'arbre *)
-			let prefix = if with_prefix then idprefix ^ (string_of_int (size+1)) else (string_of_int (size+1)) in
 			if StringMap.find next_rule wmap = 1. then
+				let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
 				(* On doit générer une feuille *)
 				(Some (Leaf(next_rule,prefix)),size+1)
 			else
 				(* On doit générer des sous arbres *)
+				let prefix = if with_prefix then idprefix ^ (string_of_int (size+1)) else (string_of_int (size+1)) in
 				let rdm_float = Random.float (StringMap.find next_rule wmap) in
 				let (_,_,next_rules_list) = List.fold_left
-				(fun (limit,stop,temp) (l,f) -> if limit-.f<=0. && stop then (limit,false,l) else (limit-.f,stop,temp) )
+				(fun (limit,stop,temp) (l,f) -> if limit-.f<=0. && stop then (limit,false,l) else (limit-.f,stop,temp))
 				(rdm_float,true,[])
 				(StringMap.find next_rule gmap) in
 				let aux opt next =
 					match opt with
 						|None -> None
 						|Some(l,s) -> match gen_tree_rec s next with
-							|None -> None
+							|(None,_) -> None
 							|(Some sub_tree,new_size) -> Some(l@[sub_tree],new_size)
 				in
-				let suite = List.fold_left aux Some([],size+1) next_rules_list in
-				if suite = None then (None,sizemax)
-				else let Some(sons,s)=suite in (Some(Node(next_rule,prefix,sons)),s)
+				let suite = List.fold_left aux (Some([],size+1)) next_rules_list in
+				match suite with
+					|None -> (None,sizemax)
+					|Some([Leaf(a,b)],s) -> (Some(Leaf(a,b)),s-1)
+					|Some(sons,s) -> (Some(Node(next_rule,prefix,sons)),s)
 	in
 	gen_tree_rec 0 first_rule
 
@@ -97,12 +100,13 @@ let generator
 	let sys = combsys_of_grammar (completion g) in
 	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
 		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 in
-		(*Array.iter (fun e -> print_endline (string_of_float e)) y;*)
+		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
+		print_endline "";*)
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
 			if nb_try > 0 then
 				(match gen_tree g with_prefix idprefix sizemax y with
 				| (Some tree,size) ->
-					print_endline (string_of_tree tree);
+					(* print_endline (string_of_int size);*)
 					if size<sizemin then
 					try_gen (nb_try-1) (nb_smaller+1) nb_bigger
 					else (Some (tree,size), nb_smaller, nb_bigger)
