@@ -26,6 +26,16 @@ let rec string_of_list str_of_elem op dl cl l = match l with
   | [e] -> op ^ (str_of_elem e) ^ cl
   | e::l' -> op ^ (str_of_elem e) ^ dl ^ (string_of_list str_of_elem "" dl cl l')
 
+
+(* Queue utilities *)
+let npop n q =
+	let rec npop_rec n q l=
+		match n with
+		|0 -> l
+		|_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
+	in
+	npop_rec n q []
+
 (* Array utilities *)
 
 let array_unop (op:'a -> 'b) (init:'b) (a:'a array) : 'b array =
