@@ -36,6 +36,6 @@ match generator bintree true 0 1 2000 0.001 0.1 0.00001 0.1 false "" 100 0.8 6 w
 |Some(tree,size) -> print_endline (string_of_int size) ; print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;*)
 
 let bintree = [ ("TriNode", [ (1,["Leaf"]) ; (1,["TriNode";"TriNode";"TriNode"]) ]) ] in
-match generator bintree true 0 150000 200000 0.001 0.1 0.0001 0.1 false "" 300 0.8 6 with
+match generator bintree true 0 100 150 0.001 0.1 0.0001 0.1 false "" 300 0.8 6 with
 |None -> failwith "a priori ça marche pas"
 |Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;
