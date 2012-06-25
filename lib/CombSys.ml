@@ -14,6 +14,21 @@
 
 open Util
 
+type elem = SEQ of string | ELEM of string ;;
+
+module Elem =
+	struct
+	type t = elem
+	let compare x y =
+		match (x,y) with
+			|(ELEM(a),ELEM(b)) -> Pervasives.compare a b
+			|(SEQ(a),SEQ(b)) -> Pervasives.compare a b
+			|(SEQ(a),ELEM(b)) -> 1
+			|_ -> -1
+	end ;;
+
+module ElemMap = Map.Make (Elem) ;;
+
 (* a system is an array of equations *)
 type combsys = combeq array 
 (* an equation is a list of products *)
@@ -24,10 +39,11 @@ and combprod = combnode list
 and combnode =
   | Z            (* an instance of the variable Z *)
   | One          (* a unit 1 for the product *)
-  | Refe of int  (* a reference to another equation *) 
+  | Refe of int  (* a reference to another equation *)
+  | Seq of int ;;
 
 
-let combsys_size = Array.length
+let combsys_size = Array.length ;;
 
 (** evalution of a node at a given coordinate z *)
 let eval_combnode (z:float) (y:float array) (cn:combnode):float = 
@@ -35,16 +51,17 @@ let eval_combnode (z:float) (y:float array) (cn:combnode):float =
 		 Z -> z
 		|One -> 1.0
 		|Refe(i) -> y.(i)
+		|Seq(i) -> 1./.(1.-.y.(i)) ;;
 
 (** evaluation of a product at a given coordinate z *)
 let eval_combprod (z:float) (y:float array) (cp:combprod):float = 
 	let eval_combnode_s = eval_combnode z y in
-	fold_map eval_combnode_s ( *.) 1.0 cp
+	fold_map eval_combnode_s ( *.) 1.0 cp ;;
 
 (** evaluation of an equation at a given coordinate z *)
 let eval_eq (z:float) (y:float array) (eq:combeq):float = 
 	let eval_combprod_s = eval_combprod z y in
-	fold_map eval_combprod_s (+.) 0.0 eq
+	fold_map eval_combprod_s (+.) 0.0 eq ;;
 	 
 (** evaluation of a system at a given coordinate z *)
 let evaluation (phi:combsys) (z:float) (y:float array):float array = 
@@ -58,7 +75,7 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 		  u.(i) <- vali
 	done;
 	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
-	u 
+	u ;;
 
 (* conversion from grammar *)
 
@@ -68,10 +85,11 @@ let rec make_z = function
 
 let rec make_refs map refs = match refs with
   | [] -> []
-  | ref::refs' -> (Refe (StringMap.find ref map))::(make_refs map refs') ;;
+  | SEQ(a)::refs' -> (Seq (ElemMap.find (ELEM(a)) map))::(make_refs map refs')
+  | ref::refs' -> (Refe (ElemMap.find ref map))::(make_refs map refs') ;;
 
 let comprod_of_component map (weight,refs) = 
-  (make_refs map refs) @ (make_z weight)
+  (make_refs map refs) @ (make_z weight) ;;
 
 let combeq_of_rule map (_,comps) = 
   List.fold_left (fun eqs comp -> (comprod_of_component map comp)::eqs) [] comps ;;
@@ -79,15 +97,15 @@ let combeq_of_rule map (_,comps) =
 let refmap_of_grammar grm =
   let rec aux i grm map = match grm with
     | [] -> map
-    | (rname,_)::grm' -> aux (i+1) grm' (StringMap.add rname i map)
+    | (rname,_)::grm' -> aux (i+1) grm' (ElemMap.add rname i map)
   in
-  aux 0 grm StringMap.empty ;;
+  aux 0 grm ElemMap.empty ;;
 
 let combsys_of_grammar grm =
   let rec aux grm map sys = match grm with
     | [] -> sys
     | ((rname,_) as rule)::grm' ->
-      let index = StringMap.find rname map in
+      let index = ElemMap.find rname map in
       Array.set sys index (combeq_of_rule map rule) ;
       aux grm' map sys
   in
@@ -99,17 +117,18 @@ let combsys_of_grammar grm =
 let string_of_combnode = function 
   | Z -> "z"
   | One -> "1"
+  | Seq i ->  "Seq[" ^ (string_of_int i) ^ "]"
   | Refe i -> "Ref[" ^ (string_of_int i) ^ "]" ;;
 
 let rec string_of_combprod = function
   | [] -> ""
   | [cn] -> string_of_combnode cn
-  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_combprod ps)
+  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_combprod ps) ;;
 
 let rec string_of_combeq = function
   | [] -> "vide ici"
   | [cp] -> string_of_combprod cp
-  | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs)
+  | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs) ;;
 
 let string_of_combsys sys =
 	Array.fold_left (fun (str,i) e -> ((string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n" ^ str,i+1)) ("",0) sys ;;
