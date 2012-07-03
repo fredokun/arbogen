@@ -40,7 +40,20 @@ match generator bintree true 0 100 150 0.001 0.1 0.0001 0.1 false "" 300 0.8 6 w
 |None -> failwith "a priori ça marche pas"
 |Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;*)
 
-let tree = [("SEQ(Node)",[(1,["Node"])]) ; ("Node", [ (1,["Leaf"]) ; (1,["SEQ(Node)"]) ]) ] in
+(*let (tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(1,[SEQ("T")]);(1,[ELEM("Leaf")])]);(SEQ("T"),[(0,[ELEM("T")])])] in
 let (s,_) = string_of_combsys (combsys_of_grammar (completion tree)) in
-print_endline s ;;
+print_endline s ;;*)
 
+let (plane_tree:grammar) = [ (ELEM("T"),[(1,[SEQ("T")])])]
+in
+List.iter (fun x -> print_endline (name_of_elem x)) (leafs_of_grammar plane_tree);
+let (s,_) = string_of_combsys (combsys_of_grammar (completion plane_tree)) in
+print_endline s ;
+let sys = combsys_of_grammar (completion plane_tree) in
+let (zmin,_,_) = searchSingularity sys 0. 1. 0.001 0.0001 0.25in
+print_float zmin;;
+(*let bintree = [ (ELEM("BinNode"), [ (1,[ELEM("Leaf")]) ; (1,[ELEM("BinNode");ELEM("BinNode")]) ]) ]
+in*)
+(*match generator plane_tree true 0 100 150 0.001 0.1 0.0001 0.1 false "" 100 0.8 6 with
+|None -> failwith "a priori ça marche pas"
+|Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;*)

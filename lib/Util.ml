@@ -16,6 +16,29 @@ type 'a option =
   | None
   | Some of 'a
 
+(* Elements of grammar *)
+type elem = SEQ of string | ELEM of string ;;
+
+module Elem =
+	struct
+	type t = elem
+	let compare x y =
+		match (x,y) with
+			|(ELEM(a),ELEM(b)) -> Pervasives.compare a b
+			|(SEQ(a),SEQ(b)) -> Pervasives.compare a b
+			|(SEQ(_),ELEM(_)) -> 1
+			|_ -> -1
+	end ;;
+
+module ElemMap = Map.Make (Elem) ;;
+module ElemSet = Set.Make (Elem) ;;
+
+
+let name_of_elem (elt:Elem.t) =
+	match elt with
+		|SEQ(name) -> "SEQ("^name^")"
+		|ELEM(name) -> "ELEM("^name^")" ;;
+
 (* List utilities *)
 
 let fold_map mop fop finit a =
@@ -26,6 +49,10 @@ let rec string_of_list str_of_elem op dl cl l = match l with
   | [e] -> op ^ (str_of_elem e) ^ cl
   | e::l' -> op ^ (str_of_elem e) ^ dl ^ (string_of_list str_of_elem "" dl cl l')
 
+let rec concat_n l n =
+	match n with
+	| 0 -> []
+	| n -> List.append l (concat_n l (n-1))
 
 (* Queue utilities *)
 let npop n q =

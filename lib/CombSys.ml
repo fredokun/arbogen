@@ -14,21 +14,6 @@
 
 open Util
 
-type elem = SEQ of string | ELEM of string ;;
-
-module Elem =
-	struct
-	type t = elem
-	let compare x y =
-		match (x,y) with
-			|(ELEM(a),ELEM(b)) -> Pervasives.compare a b
-			|(SEQ(a),SEQ(b)) -> Pervasives.compare a b
-			|(SEQ(a),ELEM(b)) -> 1
-			|_ -> -1
-	end ;;
-
-module ElemMap = Map.Make (Elem) ;;
-
 (* a system is an array of equations *)
 type combsys = combeq array 
 (* an equation is a list of products *)
@@ -71,10 +56,11 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 		(*print_string ("i=" ^ (string_of_int i)) ;*)
 		let vali = eval_eq z y phi.(i)
 		in
-		  (*print_endline ("  vali=" ^ (string_of_float vali)) ;*)
+		 (* print_endline ("  vali=" ^ (string_of_float vali)) ;*)
 		  u.(i) <- vali
 	done;
 	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
+	print_endline (string_of_float u.(0));
 	u ;;
 
 (* conversion from grammar *)

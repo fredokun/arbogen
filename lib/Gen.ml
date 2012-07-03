@@ -21,31 +21,31 @@ open OracleSimple
 Renvoie une map des poids total de chaque composant (somme des pondération des sous composants)
 et une map de la grammaire sous forme de (composant -> liste des (liste des sous_composants * pondération)) *)
 let pondere (g:grammar) (y:float array)
-	(*: (float StringMap * (string list * float) list StringMap )*) =
-	let ymap = List.fold_left2 (fun map coef (name,_) -> StringMap.add name coef map) (StringMap.empty) (Array.to_list y) g
+	(*: (float ElemMap * (string list * float) list ElemMap )*) =
+	let ymap = List.fold_left2 (fun map coef (name,_) -> ElemMap.add name coef map) (ElemMap.empty) (Array.to_list y) g
 	in
 	(* calcule la pondération correspondante à un sous composants *)
 	let aux2 = fun (_,componentList) ->
-		let proba = List.fold_left (fun a b -> a *. (StringMap.find b ymap)) 1. componentList  in
+		let proba = List.fold_left (fun a b -> a *. (ElemMap.find b ymap)) 1. componentList  in
 		(componentList,proba)
 	in
 	(* renvoie la map des composants avec leurs sous composants (prochain fils) et pondération *)
 	let aux = fun (map,wmap) (component,subComponents) ->
 		let sub_component_list = List.map aux2 subComponents in
-		(StringMap.add component sub_component_list map,
-		StringMap.add component (List.fold_left (fun a (_,f) -> f +. a) 0. sub_component_list) wmap)
+		(ElemMap.add component sub_component_list map,
+		ElemMap.add component (List.fold_left (fun a (_,f) -> f +. a) 0. sub_component_list) wmap)
 	in
-	let (gmap,wmap) = List.fold_left aux (StringMap.empty,StringMap.empty) g
+	let (gmap,wmap) = List.fold_left aux (ElemMap.empty,ElemMap.empty) g
 	in
 	(wmap,gmap)
 	
-	let pondere2 (g:grammar) (y:float array)
-	(*: (float StringMap * (string list * float) list StringMap )*) =
+let pondere2 (g:grammar) (y:float array)
+	(*: (float ElemMap * (string list * float) list ElemMap )*) =
 	let g_comp = completion g in
 	let ymap =
 		List.fold_left2
-			(fun map coef (name,_) -> StringMap.add name coef map)
-			(StringMap.empty)
+			(fun map coef (name,_) -> ElemMap.add name coef map)
+			(ElemMap.empty)
 			(Array.to_list y)
 			g_comp
 		in
@@ -53,7 +53,7 @@ let pondere (g:grammar) (y:float array)
 		let aux2 = fun (_,componentList) ->
 			let proba =
 				List.fold_left
-				(fun a b -> a *. (StringMap.find b ymap))
+				(fun a b -> a *. (ElemMap.find b ymap))
 				1.
 				componentList
 			in
@@ -71,13 +71,13 @@ let pondere (g:grammar) (y:float array)
 			in
 			let proba = (List.fold_left (fun a (_,_,f) -> f +. a) 0. sub_component_list)
 			in
-			StringMap.add
+			ElemMap.add
 			component
 			(sub_component_list,proba)
 			map
 		in
-	List.fold_left aux StringMap.empty g_comp
-(* StringMap.iter (fun x l -> print_string (x^" -> ") ; List.iter (fun (l',f) -> print_float f ; List.iter (fun e->print_string  (" "^e^";")) l') l ; print_endline "" ) gmap ;; *)
+	List.fold_left aux ElemMap.empty g_comp
+(* ElemMap.iter (fun x l -> print_string (x^" -> ") ; List.iter (fun (l',f) -> print_float f ; List.iter (fun e->print_string  (" "^e^";")) l') l ; print_endline "" ) gmap ;; *)
 
 let rec gen_stack_tree
 	size
@@ -98,15 +98,24 @@ let rec gen_stack_tree
 					(limit-.f,stop,temp,b)
 			in
 			let next_rule = Queue.pop next_rules in
-			let (sub_component_list,max_rdm) = StringMap.find next_rule map in
-			let rdm_float = Random.float max_rdm in
-			let (_,_,next_rules_list,arity) =
-				List.fold_left
-				folder
-				(rdm_float,true,[],0)
-				sub_component_list
-			in (*Trouves les futurs composants et leur nombre *)
-			(*print_endline (string_of_int arity);*)
+			let (sub_component_list,max_rdm) = ElemMap.find next_rule map in
+			let (next_rules_list,arity) = match next_rule with
+				| SEQ(_) -> let n = int_of_float (floor((log( Random.float 1.)) /. (log(max_rdm)))) in
+					let (sublist,_,_) = List.hd sub_component_list in
+					((concat_n sublist n),n)
+				| ELEM(_) ->
+					let rdm_float = Random.float max_rdm in
+					let (_,_,next_rules_list',arity') =
+						List.fold_left
+						folder
+						(rdm_float,true,[],0)
+						sub_component_list
+					in (next_rules_list',arity')
+					(*Trouves les futurs composants et leur nombre *)
+				(*print_endline (string_of_int arity);*)
+			in
+			(*ICI MODIFIER ET TRAITER LA NEXT_RULE*)
+			
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
 			if not(arity=0) || (arity=0 && (List.mem next_rule leafs)) then
 					Stack.push (next_rule,arity) current_rules;
@@ -129,9 +138,9 @@ let rec gen_tree_of_stack_rec
 			let (rule,arity) = Stack.pop stack in
 			let next_rule = 
 				if arity=0 then
-					Leaf(rule,prefix)
+					Leaf((name_of_elem rule),prefix)
 				else
-					let sons = npop arity current_rules in Node(rule,prefix,sons)
+					let sons = npop arity current_rules in Node((name_of_elem rule),prefix,sons)
 			in
 			Queue.push next_rule current_rules;
 			gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
@@ -144,7 +153,7 @@ let gen_tree_of_stack
 		| 0 -> (None,0)
 		| _ -> gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
 			(Some(Queue.pop queue),size)
-
+(*
 let rec gen_tree_rec
 	(size:int)
 	(next_rule:string)
@@ -154,26 +163,26 @@ let rec gen_tree_rec
 		(None,sizemax)
 	else
 		(* On génère la suite de l'arbre *)
-		if StringMap.find next_rule wmap = 1.
+		if ElemMap.find next_rule wmap = 1.
 			(* On doit générer une feuille *)
 			then
 				let prefix =
 					if with_prefix then idprefix ^ (string_of_int (size))
 					else (string_of_int (size))
 				in
-				(Some (Leaf(next_rule,prefix)),size+1)
+				(Some (Leaf((name_of_elem next_rule),prefix)),size+1)
 			else
 				(* On doit générer des sous arbres *)
 				let prefix =
 					if with_prefix then idprefix ^ (string_of_int (size+1))
 					else (string_of_int (size+1))
 				in
-				let rdm_float = Random.float (StringMap.find next_rule wmap) in
+				let rdm_float = Random.float (ElemMap.find next_rule wmap) in
 				let (_,_,next_rules_list) =
 					List.fold_left
 					(fun (limit,stop,temp) (l,f) -> if limit-.f<=0. && stop then (limit,false,l) else (limit-.f,stop,temp))
 					(rdm_float,true,[])
-					(StringMap.find next_rule gmap)
+					(ElemMap.find next_rule gmap)
 				in
 				let aux opt next =
 					match opt with
@@ -187,8 +196,8 @@ let rec gen_tree_rec
 				match suite with
 					|None -> (None,sizemax)
 					|Some([Leaf(a,b)],s) -> (Some(Leaf(a,b)),s-1)
-					|Some(sons,s) -> (Some(Node(next_rule,prefix,sons)),s)
-
+					|Some(sons,s) -> (Some(Node((name_of_elem next_rule),prefix,sons)),s)
+*)
 let gen_tree
 	(g:grammar)
 	(with_prefix:bool) (idprefix:string)
@@ -199,16 +208,20 @@ let gen_tree
 	gen_tree_rec 0 first_rule wmap gmap sizemax with_prefix idprefix*)
 	let map = pondere2 g y in
 	let leafs = leafs_of_grammar g in
-	(*StringMap.iter
-	(fun key (l,_)-> print_endline key; print_endline (string_of_int (List.length l));
-	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l ) map;*)
+	
+	ElemMap.iter
+	(fun key (l,_)-> print_endline (name_of_elem key);
+	print_endline (string_of_int (List.length l));
+	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l )
+	map;
+	
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
-	(*print_endline first_rule;*)
+	print_endline (name_of_elem first_rule);
 	Queue.push first_rule queue;
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
-	(*print_int size;
-	print_endline " ";*)
+	print_int size;
+	print_endline " ";
 	(*Stack.iter (fun (s,a) -> print_string s; print_string " "; print_int a; print_endline " ") stack;
 	print_endline "je suis ici";*)
 	(*print_endline (string_of_int (Stack.length stack));
@@ -230,7 +243,9 @@ let generator
 	else Random.init seed) ;
 	let sys = combsys_of_grammar (completion g) in
 	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
-		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 in
+		print_endline "test";
+		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 0.001 in
+		print_endline "test";
 		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
 		print_endline "";*)
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
@@ -255,4 +270,4 @@ let generator
 				else failwith "Your trees are too big, change paramaters please")
 		else None (* refined too much : could not generate a tree *)
 	in
-	gen epsilon1 epsilon2 0. 1. 1
+	gen epsilon1 epsilon2 0. 0.99 1

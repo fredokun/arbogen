@@ -17,22 +17,6 @@ open Tree
 
 (* Grammar encoding *)
 
-
-type elem = SEQ of string | ELEM of string ;;
-
-module Elem =
-	struct
-	type t = elem
-	let compare x y =
-		match (x,y) with
-			|(ELEM(a),ELEM(b)) -> Pervasives.compare a b
-			|(SEQ(a),SEQ(b)) -> Pervasives.compare a b
-			|(SEQ(a),ELEM(b)) -> 1
-			|_ -> -1
-	end ;;
-
-module ElemSet = Set.Make (Elem) ;;
-
 type component = int * Elem.t list ;; (* weight , sub-components *)
      
 type rule = Elem.t * component list ;;
@@ -48,12 +32,7 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 
 (* grammar completion *)
 
-ElemSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);;
-
-let name_of_elem (elt:Elem.t) =
-	match elt with
-		|SEQ(name) -> "SEQ("^name^")"
-		|ELEM(name) -> "ELEM("^name^")" ;;
+(* ElemSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);; *)
 
 let names_of_component (_,comps) =
 	List.fold_left (fun names name -> ElemSet.add name names) (ElemSet.empty) comps ;;
