@@ -60,7 +60,7 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 		  u.(i) <- vali
 	done;
 	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
-	print_endline (string_of_float u.(0));
+	(*print_endline (string_of_float u.(0));*)
 	u ;;
 
 (* conversion from grammar *)
@@ -71,8 +71,8 @@ let rec make_z = function
 
 let rec make_refs map refs = match refs with
   | [] -> []
-  | SEQ(a)::refs' -> (Seq (ElemMap.find (ELEM(a)) map))::(make_refs map refs')
-  | ref::refs' -> (Refe (ElemMap.find ref map))::(make_refs map refs') ;;
+  | SEQ(a)::refs' -> (Seq (StringMap.find a map))::(make_refs map refs')
+  | ref::refs' -> (Refe (StringMap.find (name_of_elem ref) map))::(make_refs map refs') ;;
 
 let comprod_of_component map (weight,refs) = 
   (make_refs map refs) @ (make_z weight) ;;
@@ -83,15 +83,15 @@ let combeq_of_rule map (_,comps) =
 let refmap_of_grammar grm =
   let rec aux i grm map = match grm with
     | [] -> map
-    | (rname,_)::grm' -> aux (i+1) grm' (ElemMap.add rname i map)
+    | (rname,_)::grm' -> aux (i+1) grm' (StringMap.add rname i map)
   in
-  aux 0 grm ElemMap.empty ;;
+  aux 0 grm StringMap.empty ;;
 
 let combsys_of_grammar grm =
   let rec aux grm map sys = match grm with
     | [] -> sys
     | ((rname,_) as rule)::grm' ->
-      let index = ElemMap.find rname map in
+      let index = StringMap.find rname map in
       Array.set sys index (combeq_of_rule map rule) ;
       aux grm' map sys
   in

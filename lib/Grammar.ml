@@ -17,9 +17,9 @@ open Tree
 
 (* Grammar encoding *)
 
-type component = int * Elem.t list ;; (* weight , sub-components *)
+type component = int * elem list ;; (* weight , sub-components *)
      
-type rule = Elem.t * component list ;;
+type rule = string * component list ;;
 
 type grammar = rule list ;;
 
@@ -32,24 +32,24 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 
 (* grammar completion *)
 
-(* ElemSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);; *)
+(* StringSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);; *)
 
 let names_of_component (_,comps) =
-	List.fold_left (fun names name -> ElemSet.add name names) (ElemSet.empty) comps ;;
+	List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) (StringSet.empty) comps ;;
 
 let names_of_rule (_,comps) = 
-	List.fold_left (fun names comp -> ElemSet.union (names_of_component comp) names) (ElemSet.empty) comps ;;
+	List.fold_left (fun names comp -> StringSet.union (names_of_component comp) names) (StringSet.empty) comps ;;
 
 let names_of_grammar grm =
-	List.fold_left (fun gnames rule -> ElemSet.union (names_of_rule rule) gnames) (ElemSet.empty) grm ;;
+	List.fold_left (fun gnames rule -> StringSet.union (names_of_rule rule) gnames) (StringSet.empty) grm ;;
 
 let rule_names_of_grammar grm =
-	List.fold_left (fun rnames (rname,_) -> ElemSet.add rname rnames) ElemSet.empty grm ;;
+	List.fold_left (fun rnames (rname,_) -> StringSet.add rname rnames) (StringSet.empty) grm ;;
 
 let leafs_of_grammar grm = 
-	let leafs = ElemSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
+	let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
 	in
-	ElemSet.fold (fun leaf l -> leaf::l) leafs [] ;;
+	StringSet.fold (fun leaf l -> leaf::l) leafs [] ;;
         
 let completion grm =
 	let leafs = leafs_of_grammar grm
@@ -65,6 +65,7 @@ let count elt liste =
 
 (* printing *)
 
+(*TODO à revoir *)
 let string_of_component (weight,refs) =
   let rec strz w =
     if w=0 then ""

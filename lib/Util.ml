@@ -19,7 +19,7 @@ type 'a option =
 (* Elements of grammar *)
 type elem = SEQ of string | ELEM of string ;;
 
-module Elem =
+(*module Elem =
 	struct
 	type t = elem
 	let compare x y =
@@ -31,13 +31,13 @@ module Elem =
 	end ;;
 
 module ElemMap = Map.Make (Elem) ;;
-module ElemSet = Set.Make (Elem) ;;
+module ElemSet = Set.Make (Elem) ;;*)
 
 
-let name_of_elem (elt:Elem.t) =
+let name_of_elem elt =
 	match elt with
-		|SEQ(name) -> "SEQ("^name^")"
-		|ELEM(name) -> "ELEM("^name^")" ;;
+		|SEQ(name) -> name
+		|ELEM(name) -> name ;;
 
 (* List utilities *)
 

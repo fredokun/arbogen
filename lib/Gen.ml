@@ -21,31 +21,31 @@ open OracleSimple
 Renvoie une map des poids total de chaque composant (somme des pondération des sous composants)
 et une map de la grammaire sous forme de (composant -> liste des (liste des sous_composants * pondération)) *)
 let pondere (g:grammar) (y:float array)
-	(*: (float ElemMap * (string list * float) list ElemMap )*) =
-	let ymap = List.fold_left2 (fun map coef (name,_) -> ElemMap.add name coef map) (ElemMap.empty) (Array.to_list y) g
+	(*: (float StringMap * (string list * float) list StringMap )*) =
+	let ymap = List.fold_left2 (fun map coef (name,_) -> StringMap.add name coef map) (StringMap.empty) (Array.to_list y) g
 	in
 	(* calcule la pondération correspondante à un sous composants *)
 	let aux2 = fun (_,componentList) ->
-		let proba = List.fold_left (fun a b -> a *. (ElemMap.find b ymap)) 1. componentList  in
+		let proba = List.fold_left (fun a b -> a *. (StringMap.find (name_of_elem b) ymap)) 1. componentList  in
 		(componentList,proba)
 	in
 	(* renvoie la map des composants avec leurs sous composants (prochain fils) et pondération *)
 	let aux = fun (map,wmap) (component,subComponents) ->
 		let sub_component_list = List.map aux2 subComponents in
-		(ElemMap.add component sub_component_list map,
-		ElemMap.add component (List.fold_left (fun a (_,f) -> f +. a) 0. sub_component_list) wmap)
+		(StringMap.add component sub_component_list map,
+		StringMap.add component (List.fold_left (fun a (_,f) -> f +. a) 0. sub_component_list) wmap)
 	in
-	let (gmap,wmap) = List.fold_left aux (ElemMap.empty,ElemMap.empty) g
+	let (gmap,wmap) = List.fold_left aux (StringMap.empty,StringMap.empty) g
 	in
 	(wmap,gmap)
 	
 let pondere2 (g:grammar) (y:float array)
-	(*: (float ElemMap * (string list * float) list ElemMap )*) =
+	(*: (float StringMap * (string list * float) list StringMap )*) =
 	let g_comp = completion g in
 	let ymap =
 		List.fold_left2
-			(fun map coef (name,_) -> ElemMap.add name coef map)
-			(ElemMap.empty)
+			(fun map coef (name,_) -> StringMap.add name coef map)
+			(StringMap.empty)
 			(Array.to_list y)
 			g_comp
 		in
@@ -53,16 +53,11 @@ let pondere2 (g:grammar) (y:float array)
 		let aux2 = fun (_,componentList) ->
 			let proba =
 				List.fold_left
-				(fun a b -> a *. (ElemMap.find b ymap))
+				(fun a b -> a *. (StringMap.find (name_of_elem b) ymap))
 				1.
 				componentList
 			in
-			let leafs = Grammar.leafs_of_grammar g in
-			let len = match componentList with
-				|[]->0
-				|[a]->if (List.mem a leafs) then 0 else 1
-				|_->List.length componentList
-			in
+			let len = List.length componentList in
 			(componentList,len,proba)
 		in
 		(* renvoie la map des composants avec leurs sous composants (prochain fils) et pondération *)
@@ -71,13 +66,13 @@ let pondere2 (g:grammar) (y:float array)
 			in
 			let proba = (List.fold_left (fun a (_,_,f) -> f +. a) 0. sub_component_list)
 			in
-			ElemMap.add
+			StringMap.add
 			component
 			(sub_component_list,proba)
 			map
 		in
-	List.fold_left aux ElemMap.empty g_comp
-(* ElemMap.iter (fun x l -> print_string (x^" -> ") ; List.iter (fun (l',f) -> print_float f ; List.iter (fun e->print_string  (" "^e^";")) l') l ; print_endline "" ) gmap ;; *)
+	List.fold_left aux StringMap.empty g_comp
+(* StringMap.iter (fun x l -> print_string (x^" -> ") ; List.iter (fun (l',f) -> print_float f ; List.iter (fun e->print_string  (" "^e^";")) l') l ; print_endline "" ) gmap ;; *)
 
 let rec gen_stack_tree
 	size
@@ -98,27 +93,30 @@ let rec gen_stack_tree
 					(limit-.f,stop,temp,b)
 			in
 			let next_rule = Queue.pop next_rules in
-			let (sub_component_list,max_rdm) = ElemMap.find next_rule map in
-			let (next_rules_list,arity) = match next_rule with
-				| SEQ(_) -> let n = int_of_float (floor((log( Random.float 1.)) /. (log(max_rdm)))) in
-					let (sublist,_,_) = List.hd sub_component_list in
-					((concat_n sublist n),n)
-				| ELEM(_) ->
-					let rdm_float = Random.float max_rdm in
-					let (_,_,next_rules_list',arity') =
-						List.fold_left
-						folder
-						(rdm_float,true,[],0)
-						sub_component_list
-					in (next_rules_list',arity')
-					(*Trouves les futurs composants et leur nombre *)
-				(*print_endline (string_of_int arity);*)
+			let (sub_component_list,max_rdm) = StringMap.find next_rule map in
+			let rdm_float = Random.float max_rdm in
+			let (_,_,next_rules_list',arity') =
+				List.fold_left
+					folder
+					(rdm_float,true,[],0)
+					sub_component_list
 			in
-			(*ICI MODIFIER ET TRAITER LA NEXT_RULE*)
-			
+			(* ICI TRAITEMENT DE SUBCOMPONENTLIST *)
+			let (next_rules_list,arity) =
+				List.fold_left
+				(fun (l,n) elt ->
+					match elt with
+					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
+						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
+						((List.append (concat_n [rul] n) l),(n'+n-1))
+					| ELEM(rul) -> ((rul::l),n))
+				([],arity')
+				next_rules_list'
+			in			
+			(*Trouves les futurs composants et leur nombre *)
+			(*print_endline (string_of_int arity);*)
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-			if not(arity=0) || (arity=0 && (List.mem next_rule leafs)) then
-					Stack.push (next_rule,arity) current_rules;
+			Stack.push (next_rule,arity) current_rules;
 			gen_stack_tree
 			(size+arity)
 			next_rules current_rules
@@ -138,9 +136,9 @@ let rec gen_tree_of_stack_rec
 			let (rule,arity) = Stack.pop stack in
 			let next_rule = 
 				if arity=0 then
-					Leaf((name_of_elem rule),prefix)
+					Leaf(rule,prefix)
 				else
-					let sons = npop arity current_rules in Node((name_of_elem rule),prefix,sons)
+					let sons = npop arity current_rules in Node(rule,prefix,sons)
 			in
 			Queue.push next_rule current_rules;
 			gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
@@ -163,7 +161,7 @@ let rec gen_tree_rec
 		(None,sizemax)
 	else
 		(* On génère la suite de l'arbre *)
-		if ElemMap.find next_rule wmap = 1.
+		if StringMap.find next_rule wmap = 1.
 			(* On doit générer une feuille *)
 			then
 				let prefix =
@@ -177,12 +175,12 @@ let rec gen_tree_rec
 					if with_prefix then idprefix ^ (string_of_int (size+1))
 					else (string_of_int (size+1))
 				in
-				let rdm_float = Random.float (ElemMap.find next_rule wmap) in
+				let rdm_float = Random.float (StringMap.find next_rule wmap) in
 				let (_,_,next_rules_list) =
 					List.fold_left
 					(fun (limit,stop,temp) (l,f) -> if limit-.f<=0. && stop then (limit,false,l) else (limit-.f,stop,temp))
 					(rdm_float,true,[])
-					(ElemMap.find next_rule gmap)
+					(StringMap.find next_rule gmap)
 				in
 				let aux opt next =
 					match opt with
@@ -209,15 +207,15 @@ let gen_tree
 	let map = pondere2 g y in
 	let leafs = leafs_of_grammar g in
 	
-	ElemMap.iter
-	(fun key (l,_)-> print_endline (name_of_elem key);
+	StringMap.iter
+	(fun key (l,_)-> print_endline key;
 	print_endline (string_of_int (List.length l));
 	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l )
 	map;
 	
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
-	print_endline (name_of_elem first_rule);
+	print_endline first_rule;
 	Queue.push first_rule queue;
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
 	print_int size;

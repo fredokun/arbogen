@@ -23,9 +23,13 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
     let y' = evaluation phi z y
     in
 (*    print_endline (string_of_float (normInf_diff y y'));*)
-	if normInf_diff y y' <= epsilon
-    then y'
-    else iterate y'
+	if (Array.fold_left (fun pred x -> pred or (x > 1.)) false y')
+		then (Array.make (Array.length y') (-1.0))
+	else
+		if (normInf_diff y y') <= epsilon
+			then y'
+		else 
+			iterate y'
   in
   iterate (Array.make (combsys_size phi) 0.0)
 
@@ -43,7 +47,7 @@ let diverge (y:float array) (epsilon:float):bool =
 
 (* output:zmin,zmax,vectorY *)
 let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float) (zstart:float):float *float* float array =
-	print_endline ((string_of_float zmin)^" "^(string_of_float zmax));
+	(*print_endline ((string_of_float zmin)^" "^(string_of_float zmax));*)
 	if zmax -. zmin < epsilon1 then
 		(zmin,zmax,iterationSimple phi zmin epsilon2)
 	else
