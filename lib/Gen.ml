@@ -107,6 +107,7 @@ let rec gen_stack_tree
 				(fun (l,n) elt ->
 					match elt with
 					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
+(*						print_endline (string_of_float rdm);*)
 						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
 						((List.append (concat_n [rul] n) l),(n'+n-1))
 					| ELEM(rul) -> ((rul::l),n))
@@ -115,6 +116,7 @@ let rec gen_stack_tree
 			in			
 			(*Trouves les futurs composants et leur nombre *)
 			(*print_endline (string_of_int arity);*)
+			print_endline (string_of_int size);
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
 			Stack.push (next_rule,arity) current_rules;
 			gen_stack_tree
@@ -207,19 +209,19 @@ let gen_tree
 	let map = pondere2 g y in
 	let leafs = leafs_of_grammar g in
 	
-	StringMap.iter
+(*	StringMap.iter
 	(fun key (l,_)-> print_endline key;
 	print_endline (string_of_int (List.length l));
 	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l )
-	map;
+	map;*)
 	
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
-	print_endline first_rule;
+(*	print_endline first_rule;*)
 	Queue.push first_rule queue;
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
-	print_int size;
-	print_endline " ";
+(*	print_int size;
+	print_endline " ";*)
 	(*Stack.iter (fun (s,a) -> print_string s; print_string " "; print_int a; print_endline " ") stack;
 	print_endline "je suis ici";*)
 	(*print_endline (string_of_int (Stack.length stack));
@@ -235,15 +237,16 @@ let generator
 	(epsilon2:float) (epsilon2_factor:float)
 	(with_prefix:bool) (idprefix:string)
 	(max_try:int) (ratio_rejected:float)
-	(max_refine:int) : (tree*int) option =
+	(max_refine:int) (zstart:float)
+	: (tree*int) option =
 	(if self_seed
 	then Random.self_init ()
 	else Random.init seed) ;
 	let sys = combsys_of_grammar (completion g) in
-	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
-		print_endline "test";
-		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 0.001 in
-		print_endline "test";
+	let rec gen epsilon1 epsilon2 zmin zmax nb_refine zstart =
+(*		print_endline "test";*)
+		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
+(*		print_endline "test";*)
 		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
 		print_endline "";*)
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
@@ -264,8 +267,8 @@ let generator
 				| None ->
 				if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_larger)) >= ratio_rejected
 				then (* if more than e.g. 80% of the trees are too small, then refine *)
-					gen (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax' (nb_refine+1)
+					gen (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax' (nb_refine+1) zstart
 				else failwith "Your trees are too big, change paramaters please")
 		else None (* refined too much : could not generate a tree *)
 	in
-	gen epsilon1 epsilon2 0. 0.99 1
+	gen epsilon1 epsilon2 0. 1. 1 zstart

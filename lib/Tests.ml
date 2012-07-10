@@ -46,14 +46,15 @@ print_endline s ;;*)
 
 let (plane_tree:grammar) = [ ("T",[(1,[SEQ("T")])])]
 in
-List.iter (fun x -> print_endline x) (leafs_of_grammar plane_tree);
+(*let bin_tree = [("T",[(1,[ELEM("T");ELEM("T")]);(1,[ELEM("Leaf")])])] in*)
+(*List.iter (fun x -> print_endline x) (leafs_of_grammar plane_tree);
 let (s,_) = string_of_combsys (combsys_of_grammar (completion plane_tree)) in
 print_endline s ;
 let sys = combsys_of_grammar (completion plane_tree) in
 let (zmin,_,_) = searchSingularity sys 0. 1. 0.001 0.0001 1. in
-print_float zmin;;
+print_endline (string_of_float zmin) ;;*)
 (*let bintree = [ (ELEM("BinNode"), [ (1,[ELEM("Leaf")]) ; (1,[ELEM("BinNode");ELEM("BinNode")]) ]) ]
 in*)
-(*match generator plane_tree true 0 100 150 0.001 0.1 0.0001 0.1 false "" 100 0.8 6 with
-|None -> failwith "a priori ça marche pas"
-|Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;*)
+match generator plane_tree true 0 100000 1500000 0.1 0.1 0.1 0.1 false "" 100 0.8 10 0.1 with
+|None -> failwith "Change your parameters"
+|Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;
