@@ -1,0 +1,15 @@
+Frederic Peschanski -- Firstname dot Name at lip6 dot fr
+  Maintainer
+  General design
+  Packaging and distribution
+
+Xuming Zhan 
+  Initial prototype
+
+Antoine Genitrini
+  Algorithm design and tuning
+
+Mathieu Dien
+  Tail-recursive generator
+  native SEQ implementation
+  Many fixes and improvements
