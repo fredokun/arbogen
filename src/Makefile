@@ -1,11 +1,14 @@
 SRCS = $(wildcard *.ml *.mli *.mll *.mly)
-TARGS = arbogen
+TARGS = arbogen tests
 KIND = native # d.byte
 FLAGS = -w,Ae,-warn-error,A
 
 all: $(TARGS)
 
 arbogen: _build/Arbogen.$(KIND)
+	cp $< $@
+
+tests: _build/Tests.$(KIND)
 	cp $< $@
 
 _build/%.$(KIND): $(SRCS)
