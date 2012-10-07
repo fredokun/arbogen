@@ -10,7 +10,12 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)       *
  **********************************************************)
 
-exception Parse_error of string;;
+open Printf
+
+open Util
+open Options
+
+exception Parse_Error of string;;
 
 type character =
     Char of char
@@ -40,9 +45,9 @@ let rec skip_until_eol str i =
 let rec skip_until_starslash str i =
   let ichar = get_char str i in
   match ichar with
-    | EOF -> raise (Parse_error "Missing end of comment: */") 
+    | EOF -> raise (Parse_Error "Missing end of comment: */") 
     | Char(ch) -> if ch='*' then (match get_char str (i+1) with
-        | EOF -> raise (Parse_error "Missing end of comment after *") 
+        | EOF -> raise (Parse_Error "Missing end of comment after *") 
         | Char(ch') -> 
           if ch'='/' then i+2
           else skip_until_starslash str (i+1))
@@ -108,7 +113,7 @@ let advance str i expect =
   let (word,i') = next_word str i
   in
   if word = expect then i'
-  else raise (Parse_error ("Missing '" ^ expect ^ "'")) ;;
+  else raise (Parse_Error ("Missing '" ^ expect ^ "'")) ;;
 
 let parse_component str i =
   let rec aux i weight refs =
@@ -120,20 +125,20 @@ let parse_component str i =
           aux i'' (weight+1) refs
        else if next="+" or next=";" then
          match refs with
-           | [] -> raise (Parse_error "Missing reference after <z>")
+           | [] -> raise (Parse_Error "Missing reference after <z>")
            | _ -> ((weight+1,List.rev refs),i')
        else
-         raise (Parse_error "Expecting '*', '+' or ';' after <z>"))
+         raise (Parse_Error "Expecting '*', '+' or ';' after <z>"))
     else if componentName="*" or componentName="+" then
-      raise (Parse_error ("Unexpected '" ^ componentName ^ "'"))
+      raise (Parse_Error ("Unexpected '" ^ componentName ^ "'"))
     else (* component Name is ok *)
       let (next,i'') = next_word str i' in
       (* print_endline ("Next = " ^ next) ; *)
       if next="+" or next =";" then
-        ((weight,List.rev (componentName::refs)),i')
+        ((weight,List.rev ((ELEM componentName)::refs)),i')
       else if next="*" then
-        aux i'' weight (componentName::refs)
-      else raise (Parse_error "Expecting '+', ';' or '*'") 
+        aux i'' weight ((ELEM componentName)::refs)
+      else raise (Parse_Error "Expecting '+', ';' or '*'") 
   in
   aux i 0 [] ;;
 
@@ -147,7 +152,7 @@ let parse_components str i =
       aux i'' (comp::comps)
     else if next=";" then
       (List.rev (comp::comps), i'')
-    else raise (Parse_error ("Expecting '+' or ';' after component"))
+    else raise (Parse_Error ("Expecting '+' or ';' after component"))
   in
   aux i [] ;;
 
@@ -156,7 +161,7 @@ let parse_components str i =
 let parse_rule str i =
   let (ruleName,i') = next_word str i in
   if ruleName="" then
-    raise (Parse_error "Missing rule name")
+    raise (Parse_Error "Missing rule name")
   else
     let i'' = advance str i' "::=" in
     let (components,i''') = parse_components str i''
@@ -165,15 +170,87 @@ let parse_rule str i =
 
 (* parse_rule "BinNode ::= Leaf * <z> + BinNode * BinNode ;" 0 ;; *)
 
+
+let parse_int str i =
+  let int_str, i' = next_word str i
+  in
+    try
+      let int_val = int_of_string int_str
+      in
+        (int_val, i')
+    with Failure _ -> raise (Parse_Error (sprintf "cannot convert '%s' to an integer" int_str))
+
+let parse_float str i =
+  let float_str, i' = next_word str i
+  in
+    try
+      let float_val = float_of_string float_str
+      in
+        (float_val, i')
+    with Failure _ -> raise (Parse_Error (sprintf "cannot convert '%s' to a float" float_str))
+
+
+let parse_option str i =
+  let opt_id, i' = next_word str i
+  in match opt_id with
+  | "min" -> 
+    let min_val, i' = parse_int str i'
+    in
+      (if min_val < 0 
+       then raise (Option_Error (sprintf "incorrect minimal size %d => should be positive" min_val))
+       else global_options.size_min <- min_val) ;
+      advance str i' ";"
+  | "max" -> 
+    let max_val, i' = parse_int str i'
+    in
+      (if max_val < 0 
+       then raise (Option_Error (sprintf "incorrect maximal size %d => should be positive" max_val))
+       else global_options.size_max <- max_val) ;
+      advance str i' ";"
+  | "eps1" | "epsilon1" ->
+    let eps1_val, i' = parse_float str i'
+    in
+      (if eps1_val <= 0.0
+       then raise (Option_Error (sprintf "incorrect epsilon 1 %f => should be strictly positive" eps1_val))
+       else global_options.epsilon1 <- eps1_val) ;
+      advance str i' ";"
+  | "eps1_factor" | "epsilon1_factor" ->
+    let eps1_val, i' = parse_float str i'
+    in
+      (if eps1_val <= 0.0
+       then raise (Option_Error (sprintf "incorrect epsilon 1 factor %f => should be strictly positive" eps1_val))
+       else global_options.epsilon1_factor <- eps1_val) ;
+      advance str i' ";"
+  | "eps2" | "epsilon2" ->
+    let eps2_val, i' = parse_float str i'
+    in
+      (if eps2_val <= 0.0
+       then raise (Option_Error (sprintf "incorrect epsilon 2 %f => should be strictly positive" eps2_val))
+       else global_options.epsilon2 <- eps2_val) ;
+      advance str i' ";"
+  | "eps2_factor" | "epsilon2_factor" ->
+    let eps2_val, i' = parse_float str i'
+    in
+      (if eps2_val <= 0.0
+       then raise (Option_Error (sprintf "incorrect epsilon 2 factor %f => should be strictly positive" eps2_val))
+       else global_options.epsilon2_factor <- eps2_val) ;
+      advance str i' ";"
+  | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
+    
+    
 let parse_grammar str =
   let rec aux i rules =
     match next_word str i with
-        ("",i') -> List.rev rules
-      | _ ->
-        let (rul,i') = parse_rule str i
-        in aux i' (rul::rules)
+      ("",_) -> List.rev rules
+    | ("set", i') -> 
+      let i'' = parse_option str i'
+      in
+        aux i'' rules
+    | _ ->
+      let (rul,i') = parse_rule str i
+      in aux i' (rul::rules)
   in
-  aux 0 [] ;;
+    aux 0 [] ;;
 
 (* parse_grammar "BinNode ::= Leaf * <z> + BinNode * BinNode;" ;; *)
 

@@ -36,6 +36,30 @@ let indent_string_of_tree t =
     | t::f' -> (tree level t) ^ "\n" ^ (forest level f')
   in tree 0 t     
 
+
+let rec tree_out show_type show_id tree out = 
+  let label typ id = 
+    (if show_id then id else "") ^
+      (if show_type 
+       then (if show_id then ":" else "") ^ typ
+       else "")
+  in
+    match tree with
+    | Leaf(typ,id) -> output_string out ((label typ id) ^ ".")
+    | Node(typ,id,ts) ->
+      output_string out (label typ id) ;
+      output_list 
+        out 
+        (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
+        "[" "," "]" ts  ;;
+        
+let file_of_tree show_type show_id fname tree =
+  let out = open_out fname
+  in 
+    tree_out show_type show_id tree out ;
+    close_out out
+    
+
 let xml_of_tree t = 
   let rec aux = function
     | Leaf(typ,id) -> "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"

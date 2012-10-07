@@ -11,11 +11,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-(** option type for partial functions *)
-type 'a option =
-  | None
-  | Some of 'a
-
 (* Elements of grammar *)
 type elem = SEQ of string | ELEM of string ;;
 
@@ -48,6 +43,18 @@ let rec string_of_list str_of_elem op dl cl l = match l with
   | [] -> cl
   | [e] -> op ^ (str_of_elem e) ^ cl
   | e::l' -> op ^ (str_of_elem e) ^ dl ^ (string_of_list str_of_elem "" dl cl l')
+
+let rec output_list out output_elem op dl cl l = match l with
+  | [] -> output_string out cl
+  | [e] -> 
+    output_string out op ;
+    output_elem out e ;
+    output_string out cl
+  | e::l' ->
+    output_string out op ;
+    output_elem out e ;
+    output_string out dl ;
+    output_list out output_elem "" dl cl l'
 
 let rec concat_n l n =
 	match n with
