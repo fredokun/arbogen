@@ -31,3 +31,8 @@ performance bottleneck.
 
 Arbogen can be used in the very many situations when tree-shaped
 datastructures must be manipulated, e.g. in random testing.
+
+----
+This software was inspired by the research work of Alexis Darasse.
+It is distributed under the GNU Public license v.2 (cf. LICENSE.txt).
+
