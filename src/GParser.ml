@@ -198,42 +198,48 @@ let parse_option str i =
     in
       (if min_val < 0 
        then raise (Option_Error (sprintf "incorrect minimal size %d => should be positive" min_val))
-       else global_options.size_min <- min_val) ;
+       else if not global_options.size_min_set 
+       then global_options.size_min <- min_val) ;
       advance str i' ";"
   | "max" -> 
     let max_val, i' = parse_int str i'
     in
       (if max_val < 0 
        then raise (Option_Error (sprintf "incorrect maximal size %d => should be positive" max_val))
-       else global_options.size_max <- max_val) ;
+       else if not global_options.size_max_set
+       then global_options.size_max <- max_val) ;
       advance str i' ";"
   | "eps1" | "epsilon1" ->
     let eps1_val, i' = parse_float str i'
     in
       (if eps1_val <= 0.0
        then raise (Option_Error (sprintf "incorrect epsilon 1 %f => should be strictly positive" eps1_val))
-       else global_options.epsilon1 <- eps1_val) ;
+       else if not global_options.epsilon1_set
+       then global_options.epsilon1 <- eps1_val) ;
       advance str i' ";"
   | "eps1_factor" | "epsilon1_factor" ->
     let eps1_val, i' = parse_float str i'
     in
       (if eps1_val <= 0.0
        then raise (Option_Error (sprintf "incorrect epsilon 1 factor %f => should be strictly positive" eps1_val))
-       else global_options.epsilon1_factor <- eps1_val) ;
+       else if not global_options.epsilon1_factor_set
+       then global_options.epsilon1_factor <- eps1_val) ;
       advance str i' ";"
   | "eps2" | "epsilon2" ->
     let eps2_val, i' = parse_float str i'
     in
       (if eps2_val <= 0.0
        then raise (Option_Error (sprintf "incorrect epsilon 2 %f => should be strictly positive" eps2_val))
-       else global_options.epsilon2 <- eps2_val) ;
+       else if not global_options.epsilon2_set
+       then global_options.epsilon2 <- eps2_val) ;
       advance str i' ";"
   | "eps2_factor" | "epsilon2_factor" ->
     let eps2_val, i' = parse_float str i'
     in
       (if eps2_val <= 0.0
        then raise (Option_Error (sprintf "incorrect epsilon 2 factor %f => should be strictly positive" eps2_val))
-       else global_options.epsilon2_factor <- eps2_val) ;
+       else if not global_options.epsilon2_factor_set
+       then global_options.epsilon2_factor <- eps2_val) ;
       advance str i' ";"
   | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
     

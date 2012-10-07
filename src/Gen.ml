@@ -72,7 +72,6 @@ let pondere2 (g:grammar) (y:float array)
 			map
 		in
 	List.fold_left aux StringMap.empty g_comp
-(* StringMap.iter (fun x l -> print_string (x^" -> ") ; List.iter (fun (l',f) -> print_float f ; List.iter (fun e->print_string  (" "^e^";")) l') l ; print_endline "" ) gmap ;; *)
 
 let rec gen_stack_tree
 	size
@@ -80,8 +79,6 @@ let rec gen_stack_tree
 	map
 	sizemax
 	leafs =
-	(*Queue.iter (fun elt -> print_string (elt^" ")) next_rules;
-	print_endline " ";*)
 	if size<sizemax then
 		if (Queue.is_empty next_rules) then
 			(current_rules,size)
@@ -115,8 +112,6 @@ let rec gen_stack_tree
 				next_rules_list'
 			in			
 			(*Trouves les futurs composants et leur nombre *)
-			(*print_endline (string_of_int arity);*)
-			print_endline (string_of_int size);
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
 			Stack.push (next_rule,arity) current_rules;
 			gen_stack_tree

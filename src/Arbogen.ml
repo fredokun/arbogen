@@ -31,7 +31,8 @@ Arg.parse [
         eprintf "Error: wrong verbosity level %d => must be positive\n...aborting\n%!" n ;
         exit 1;
       end
-    else global_options.verbosity <- n),
+    else
+      global_options.verbosity <- n),
    "<n> : set the verbosity level to <n>  (a positive integer)");
   ("-min", Arg.Int (fun n ->
     if n <= 0 then
@@ -39,7 +40,10 @@ Arg.parse [
         eprintf "Error: wrong minimum size %d => must be strictly positive\n...aborting\n%!" n ;
         exit 1;
       end
-    else global_options.size_min <- n),
+    else begin
+      global_options.size_min <- n;
+      global_options.size_min_set <- true
+    end),
    "<n> : set the minimum size for the generated tree to <n> (a strictly positive integer)");
   ("-max", Arg.Int (fun n ->
     if n <= 0 then
@@ -47,11 +51,17 @@ Arg.parse [
         eprintf "Error: wrong maximum size %d => must be strictly positive\n...aborting\n%!" n ;
         exit 1;
       end
-    else global_options.size_max <- n),
+    else  begin
+      global_options.size_max <- n;
+      global_options.size_max_set <- true
+    end),
    "<n> : set the maximum size for the generated tree to <n> (a strictly positive integer)");
-  ("-seed", Arg.Int (fun n -> 
-    global_options.self_seed <- false ;
-    global_options.random_seed <- n),
+  ("-seed", Arg.Int (fun n ->
+    begin
+      global_options.self_seed <- false ;
+      global_options.random_seed <- n;
+      global_options.random_seed_set <- true
+    end),
    "<n> : set the random generator seed to <n>");
   ("-eps1", Arg.Float (fun x ->
     if x < 0.0 then
@@ -59,7 +69,10 @@ Arg.parse [
         eprintf "Error: wrong epsilon 1 parameter %f => must be positive\n...aborting\n%!" x ;
         exit 1;
       end
-    else global_options.epsilon1 <- x),
+    else begin
+      global_options.epsilon1 <- x;
+      global_options.epsilon1_set <- true
+    end),
    "<x> : set the epsilon for singularity search (a strictly positive float number)");
   ("-eps1_factor", Arg.Float (fun x ->
     if x < 0.0 then
@@ -67,7 +80,10 @@ Arg.parse [
         eprintf "Error: wrong epsilon 1 factor parameter %f => must be positive\n...aborting\n%!" x ;
         exit 1;
       end
-    else global_options.epsilon1_factor <- x),
+    else begin
+      global_options.epsilon1_factor <- x;
+      global_options.epsilon1_factor_set <- true
+    end),
    "<x> : set the refinement factor for epsilon in singularity search (a strictly positive float number)");
   ("-eps2", Arg.Float (fun x ->
     if x < 0.0 then
@@ -75,7 +91,10 @@ Arg.parse [
         eprintf "Error: wrong epsilon 2 parameter %f => must be positive\n...aborting\n%!" x ;
         exit 1;
       end
-    else global_options.epsilon2 <- x),
+    else begin
+      global_options.epsilon2 <- x;
+      global_options.epsilon2_set <- true
+    end),
    "<x> : set the epsilon for Newton iteration (a strictly positive float number)");
   ("-eps2_factor", Arg.Float (fun x ->
     if x < 0.0 then
@@ -83,7 +102,10 @@ Arg.parse [
         eprintf "Error: wrong epsilon 2 factor parameter %f => must be positive\n...aborting\n%!" x ;
         exit 1;
       end
-    else global_options.epsilon2_factor <- x),
+    else begin
+      global_options.epsilon2_factor <- x;
+      global_options.epsilon2_factor_set <- true
+    end),
    "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
 ]
   (fun arg ->
