@@ -1,0 +1,4 @@
+
+// grammar file for unary/binary trees
+
+UBTree ::= Leaf * <z> + UBTree * <z> + UBTree * UBTree * <z>;

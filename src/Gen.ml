@@ -243,7 +243,13 @@ let generator
 	let sys = combsys_of_grammar (completion g) in
 	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
 (*		print_endline "test";*)
-		let (zmin',zmax',y) = searchSingularity sys zmin zmax epsilon1 epsilon2 in
+		let (zmin',zmax',y) = 
+                  (if global_options.verbosity >= 2
+                   then printf "[ORACLE]: search singularity at z=%f\n%!" zmin) ;
+                  searchSingularity sys zmin zmax epsilon1 epsilon2 in
+                  (if global_options.verbosity >= 2
+                   then printf "          ==> found singularity at z=%f\n%!" zmin') ;
+                  
 (*		print_endline "test";*)
 		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
 		print_endline "";*)
@@ -251,16 +257,16 @@ let generator
 			if nb_try > 0 then
 				(match gen_tree g with_prefix idprefix sizemax y with
 				| (Some tree,size) ->
-                                  if global_options.verbosity >= 2
+                                  if global_options.verbosity >= 3
                                   then printf "[GEN]: Generated tree of size = %d\n%!" size ;
 					if size<sizemin then
                                           begin
-                                            (if global_options.verbosity >= 2
+                                            (if global_options.verbosity >= 3
                                              then printf "     ==> tree is too smal => reject\n%!");
 					    try_gen (nb_try-1) (nb_smaller+1) nb_bigger
                                           end
 					else begin
-                                          (if global_options.verbosity >= 2
+                                          (if global_options.verbosity >= 3
                                            then printf "     ==> tree matches expecte size, select\n%!");
                                           (Some (tree,size), nb_smaller, nb_bigger)
                                         end
