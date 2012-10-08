@@ -262,7 +262,7 @@ let generator
 					if size<sizemin then
                                           begin
                                             (if global_options.verbosity >= 3
-                                             then printf "     ==> tree is too smal => reject\n%!");
+                                             then printf "     ==> tree is too small => reject\n%!");
 					    try_gen (nb_try-1) (nb_smaller+1) nb_bigger
                                           end
 					else begin
@@ -270,7 +270,10 @@ let generator
                                            then printf "     ==> tree matches expecte size, select\n%!");
                                           (Some (tree,size), nb_smaller, nb_bigger)
                                         end
-				| (None,_) -> try_gen (nb_try-1) nb_smaller (nb_bigger+1))
+				| (None,_) -> 
+                                  (if global_options.verbosity >= 3
+                                  then printf "      ==> tree is too large\n%!") ;
+                                  try_gen (nb_try-1) nb_smaller (nb_bigger+1))
 			else (* max number of tries *)
 				(None,nb_smaller,nb_bigger)
 		in
