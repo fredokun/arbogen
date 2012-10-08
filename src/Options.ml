@@ -63,7 +63,7 @@ let global_options = {
   ratio_rejected_set = false;
   max_refine = 6;
   max_refine_set = false;
-  zstart = 0.1;
+  zstart = 0.0;
   zstart_set = false;
 } ;;
 

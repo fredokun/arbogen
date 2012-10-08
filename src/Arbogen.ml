@@ -5,20 +5,20 @@ open Options
 let version_str = "arbogen v0.20121006 (beta)"
 
 let usage = "Usage: arbogen <opt> <specfile>.arb"
-let banner = 
-"                       v .   ._, |_  .,\n" ^
-"                    `-._\\/  .  \\ /    |/_\n" ^
-"  ARBOGEN                \\\\  _\\, y | \\//\n" ^
-"  °°°°°°°          _\\_.___\\\\, \\\\/ -.\\||\n" ^
-"  *Fast*             `7-,--.`._||  / / ,\n" ^
-"    Uniform          /'     `-. `./ / |/_.'\n" ^
-"      Random                   |    |//\n" ^
-"        Tree                   |_    /\n" ^
-"         Generator             |-   |\n" ^
-"                               |   =|\n" ^
-" (C) 2012 F.Peschanski et. al  |    |\n" ^
-"------------------------------/ ,  . \\---------- (jg)\n" ;;
-
+let banner = "\n" ^
+"   A      ...:'....:'':...':......\n" ^
+"   R    :''   ._   .  `.  \\   ,   '':\n" ^
+"   B    ':  .   \" .|    \\  `>/   _.-': \n" ^
+"   O   .:'  .`'.   `-.  '. /'  ,..  .:\n" ^
+"   G  :'        `.    `\\| \\./   ' :\n" ^
+"   E  :. ,,-'''''  \"-.   |   | ....:\n" ^
+"   N   '.      ..'''  `\\ :   |\n" ^
+"         ''''''''       \\'   |\n" ^
+"*fast* uniform random    |  =|\n" ^
+"       tree generator    |   |\n" ^
+"                         |-  |\n" ^
+"'''''''''''''''''''''''''''''''''''''''\n" ^ 
+"(C) F. Peschanski et al. under the GPL\n";;
 
 Arg.parse [
   ("-version", Arg.Unit (fun () -> printf "%s\n%!" version_str ; exit 0),

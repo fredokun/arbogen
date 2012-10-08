@@ -1,18 +1,21 @@
 <pre>
-                       v .   ._, |_  .,
-                    `-._\\/  .  \\ /    |/_
-  ARBOGEN                \\\\  _\\, y | \\//
-  °°°°°°°          _\\_.___\\\\, \\\\/ -.\\||
-  *Fast*             `7-,--.`._||  / / ,
-    Uniform          /'     `-. `./ / |/_.'
-      Random                   |    |//
-        Tree                   |_    /
-         Generator             |-   |
-                               |   =|
- (C) 2012 F.Peschanski et. al  |    |
-------------------------------/ ,  . \\---------- (jg)
-</pre>
 
+   A      ...:'....:'':...':......
+   R    :''   ._   .  `.  \   ,   '':
+   B    ':  .   \" .|    \  `>/   _.-': 
+   O   .:'  .`'.   `-.  '. /'  ,..  .:
+   G  :'        `.    `\| \./   ' :
+   E  :. ,,-'''''  \"-.   |   | ....:
+   N   '.      ..'''  `\ :   |
+         ''''''''       \'   |
+*fast* uniform random    |  =|
+       tree generator    |   |
+                         |-  |
+''''''''''''''''''''''''''''''''''''''' 
+(C) F. Peschanski et al. under the GPL
+
+</pre>
+ 
 Arbogen is a fast uniform random generator of tree structures.
 The tool reads a grammar file describing a tree structure
 (e.g. binary trees, 2-3-4 trees, etc.) and a size interval
