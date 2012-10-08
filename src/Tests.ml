@@ -55,6 +55,6 @@ let (zmin,_,_) = searchSingularity sys 0. 1. 0.001 0.0001 1. in
 print_endline (string_of_float zmin) ;;*)
 (*let bintree = [ (ELEM("BinNode"), [ (1,[ELEM("Leaf")]) ; (1,[ELEM("BinNode");ELEM("BinNode")]) ]) ]
 in*)
-match generator plane_tree true 0 100000 1500000 0.1 0.1 0.1 0.1 false "" 100 0.8 10 0.1 with
+match generator plane_tree true 0 100000 1500000 0.1 0.1 0.1 0.1 false "" 100 0.8 10 with
 |None -> failwith "Change your parameters"
 |Some(tree,_) -> (*print_endline (string_of_int size) ;*) print_endline (dot_of_tree true tree) (*(string_of_tree tree)*) ;;

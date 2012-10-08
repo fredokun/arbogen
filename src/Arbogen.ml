@@ -107,6 +107,17 @@ Arg.parse [
       global_options.epsilon2_factor_set <- true
     end),
    "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
+  ("-try", Arg.Int (fun n ->
+    if n <= 0 then
+      begin
+        eprintf "Error: wrong try number %d => must be strictly positive\n...aborting\n%!" n ;
+        exit 1;
+      end
+    else begin
+      global_options.max_try <- n;
+      global_options.max_try_set <- true
+    end),
+   "<n> : set the maximum of tries when generating trees")
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "")=0
@@ -150,7 +161,6 @@ let result =
     global_options.max_try
     global_options.ratio_rejected
     global_options.max_refine
-    global_options.zstart
 in match result with
   None ->
     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ;
