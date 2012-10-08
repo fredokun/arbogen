@@ -209,6 +209,14 @@ let parse_option str i =
        else if not global_options.size_max_set
        then global_options.size_max <- max_val) ;
       advance str i' ";"
+  | "try" -> 
+    let try_val, i' = parse_int str i'
+    in
+      (if try_val <= 0 
+       then raise (Option_Error (sprintf "incorrect minimal try number %d => should be strictly positive" try_val))
+       else if not global_options.max_try_set 
+       then global_options.max_try <- try_val) ;
+      advance str i' ";"
   | "eps1" | "epsilon1" ->
     let eps1_val, i' = parse_float str i'
     in
