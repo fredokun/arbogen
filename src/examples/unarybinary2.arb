@@ -1,0 +1,11 @@
+
+// grammar file for unary/binary trees
+
+set min 1000 ;
+set max 10000 ;
+set try 400 ;
+
+UBTree ::= Leaf * <z> + Unary + Binary;
+Unary ::= UBTree * <z>;
+Binary ::= UBTree * UBTree * <z>;
+
