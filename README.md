@@ -25,6 +25,10 @@ are produced (following simple file formats).
 The generated tree are generated with a guarantee of uniformity,
  which means that it is the "average" tree for the given size.
 
+----
+![Tree example](http://github.com/fredokun/arbogen/wiki/images/tree_nary_seq_big.png)
+----
+
 Internally, the tool is based on recent advances in analytic
 combinatorics and Boltzman generators.  The generation is
 roughly linear in the size of the trees, which means huge
