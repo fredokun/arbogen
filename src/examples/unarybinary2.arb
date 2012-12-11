@@ -3,7 +3,7 @@
 
 set min 1000 ;
 set max 10000 ;
-set try 400 ;
+set try 40 ;
 
 UBTree ::= Leaf * <z> + Unary + Binary;
 Unary ::= UBTree * <z>;

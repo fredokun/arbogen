@@ -279,7 +279,11 @@ let string_of_file fname =
 
 let parse_from_file fname =
   let input = string_of_file fname in
-  parse_grammar input ;;
+  let grm = parse_grammar input
+  in 
+    if Options.global_options.verbosity >= 3
+    then printf "[GEN]: Parsed grammar = %s\n%!" (Grammar.string_of_grammar (List.map (fun (n,l) -> (ELEM n,l)) grm)) ;
+    grm ;;
 
 (*
 let gram = parse_from_file "examples/binary.arb" 

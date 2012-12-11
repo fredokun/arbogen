@@ -240,7 +240,9 @@ let generator
 	(if self_seed
 	then Random.self_init ()
 	else Random.init seed) ;
-	let sys = combsys_of_grammar (completion g) in
+  let sys = combsys_of_grammar (completion g) in
+    (if global_options.verbosity >= 2
+     then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))) ;
 	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
 (*		print_endline "test";*)
 		let (zmin',zmax',y) = 
