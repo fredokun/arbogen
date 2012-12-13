@@ -27,6 +27,9 @@ The generated tree are generated with a guarantee of uniformity,
 
 ----
 ![Tree example](http://github.com/fredokun/arbogen/wiki/images/tree_nary_seq_big.png)
+
+Note: this example is a plane rooted tree of more than 100.000 nodes obtained in a few seconds on a standard PC.
+
 ----
 
 Internally, the tool is based on recent advances in analytic
