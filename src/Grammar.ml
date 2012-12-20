@@ -12,8 +12,6 @@
  *********************************************************)
 
 open Util
-open CombSys
-open Tree
 
 (* Grammar encoding *)
 
