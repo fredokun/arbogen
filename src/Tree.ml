@@ -45,7 +45,7 @@ let rec tree_out show_type show_id tree out =
        else "")
   in
     match tree with
-    | Leaf(typ,id) -> output_string out ((label typ id) ^ ".")
+    | Leaf(_,_) -> output_string out ("Leaf")
     | Node(typ,id,ts) ->
       output_string out (label typ id) ;
       output_list 
