@@ -117,7 +117,16 @@ Arg.parse [
       global_options.max_try <- n;
       global_options.max_try_set <- true
     end),
-   "<n> : set the maximum of tries when generating trees")
+   "<n> : set the maximum of tries when generating trees");
+  ("-type", Arg.String(fun x ->
+    match x with
+      |"arb" -> global_options.output_type <- 0;
+      |"dot" -> global_options.output_type <- 1;
+      |"both" -> global_options.output_type <- 2;
+      |_ -> eprintf "Error: wrong option value must be strictly 0 or 1\n...aborting\n";
+            exit 1;
+  ),
+  "<n>: set the type of output generated at the end");
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "")=0
@@ -166,13 +175,23 @@ in match result with
     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ;
     exit 1
 | Some (tree,size) ->
-  if (global_options.verbosity) > 0
+  if (global_options.verbosity) > 0 
   then begin
     printf "==> Tree generated with size=%d\n%!" size ;
-    printf "Saving file to 'tree.arb'\n%!" ;
-    Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;
-    printf "==> file saved\n%!"
-  end
+    if (global_options.output_type) = 0 
+    then
+        printf "Saving file to 'tree.arb'\n%!" ;
+        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
+    if (global_options.output_type) = 1 then
+        printf "Saving file to 'tree.dot'\n%!" ;
+        Tree.file_of_dot true "tree.dot" tree;
+    if (global_options.output_type = 2) then
+        printf "Saving both files to 'tree.arb' and 'tree.dot'\n%!" ;
+        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
+        Tree.file_of_dot true "tree.dot" tree;
+     printf "==> file saved\n%!"
+  end  
+ 
 
 
  

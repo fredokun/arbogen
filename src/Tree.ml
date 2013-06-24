@@ -45,18 +45,19 @@ let rec tree_out show_type show_id tree out =
        else "")
   in
     match tree with
-    | Leaf(typ,id) -> output_string out ((label typ id) ^ ".")
-    | Node(typ,id,ts) ->
+    | Leaf(typ,id) -> output_string out (label typ id);
+    | Node(typ,id,ts) ->                
       output_string out (label typ id) ;
       output_list 
         out 
         (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
-        "[" "," "]" ts  ;;
+        "[" "," "]" ts ;;     
         
 let file_of_tree show_type show_id fname tree =
   let out = open_out fname
   in 
     tree_out show_type show_id tree out ;
+    output_string out "\n";         (*break line to make it clear*)
     close_out out
     
 
@@ -79,7 +80,7 @@ let indent_xml_of_tree t =
 
 let dot_of_tree show_type t =
   let rec nodes = function
-    | Leaf(typ,id) -> "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
+    | Leaf(_,id) -> "  " ^ id ^ (if show_type then (" [label=\"Leaf\"];\n") else " [shape=point];\n")
     | Node(typ,id,ts) -> 
       "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
       ^ (string_of_list nodes "" "" "" ts)
@@ -93,3 +94,9 @@ let dot_of_tree show_type t =
     | Leaf(_,_) -> ""
     | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
+
+  let file_of_dot show_type fname tree =
+  let out = open_out fname
+  in 
+    output_string out (dot_of_tree show_type tree);         (*break line to make it clear*)
+    close_out out
