@@ -105,6 +105,8 @@ let rec gen_stack_tree
 					sub_component_list
 			in
 			(* ICI TRAITEMENT DE SUBCOMPONENTLIST *)
+                        let subst_rule = ref ""
+                        in
 			let (next_rules_list,arity) =
 				List.fold_left
 				(fun (l,n) elt ->
@@ -112,13 +114,18 @@ let rec gen_stack_tree
 					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
 						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
 						((List.append (concat_n [rul] n) l),(n'+n-1))
-					| ELEM(rul) -> if(List.exists (fun x -> x = rul) leafs) then (l,0) else ((rul::l),n))
+					| ELEM(rul) -> if(List.exists (fun x -> x = rul) leafs) then
+					                   begin subst_rule := rul; (l,0) end   
+					               else ((rul::l),n))
 				([],arity')
 				next_rules_list'
 			in			
 			(*Trouves les futurs composants et leur nombre *)
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-			Stack.push (next_rule,arity) current_rules;
+			(if arity = 0 then
+				Stack.push(!subst_rule,arity) current_rules
+			else
+			Stack.push (next_rule,arity) current_rules);
 			gen_stack_tree
 			(size+arity)
 			next_rules current_rules
