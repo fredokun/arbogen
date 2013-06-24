@@ -39,10 +39,12 @@ let name_of_elem elt =
 let fold_map mop fop finit a =
   List.fold_left (fun r e -> fop (mop e) r) finit a 
 
-let rec string_of_list str_of_elem op dl cl l = match l with
+let string_of_list str_of_elem op dl cl l =
+  	let rec aux = function
   | [] -> cl
   | [e] -> op ^ (str_of_elem e) ^ cl
-  | e::l' -> op ^ (str_of_elem e) ^ dl ^ (string_of_list str_of_elem "" dl cl l')
+  | e::l' -> op ^ (str_of_elem e) ^ dl ^ (aux l')
+in op ^ (aux l)
 
 let rec output_list out output_elem op dl cl l = match l with
   | [] -> output_string out cl
