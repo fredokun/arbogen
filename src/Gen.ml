@@ -60,7 +60,10 @@ let pondere2 (g:grammar) (y:float array)
 				1.
 				componentList
 			in
-			let len = List.length componentList in
+			let len = if (List.length componentList = 1) &  (*original line that was replaced List.length componentList*)
+			    (List.exists (fun x -> x = (name_of_elem (List.hd componentList))) (leafs_of_grammar g)) then 0
+			  else List.length componentList
+			in
 			(componentList,len,proba)
 		in
 		(* renvoie la map des composants avec leurs sous composants (prochain fils) et pondération *)
@@ -102,21 +105,27 @@ let rec gen_stack_tree
 					sub_component_list
 			in
 			(* ICI TRAITEMENT DE SUBCOMPONENTLIST *)
+                        let subst_rule = ref ""
+                        in
 			let (next_rules_list,arity) =
 				List.fold_left
 				(fun (l,n) elt ->
 					match elt with
 					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
-(*						print_endline (string_of_float rdm);*)
 						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
 						((List.append (concat_n [rul] n) l),(n'+n-1))
-					| ELEM(rul) -> ((rul::l),n))
+					| ELEM(rul) -> if(List.exists (fun x -> x = rul) leafs) then
+					                   begin subst_rule := rul; (l,0) end   
+					               else ((rul::l),n))
 				([],arity')
 				next_rules_list'
 			in			
 			(*Trouves les futurs composants et leur nombre *)
 			List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-			Stack.push (next_rule,arity) current_rules;
+			(if arity = 0 then
+				Stack.push(!subst_rule,arity) current_rules
+			else
+			Stack.push (next_rule,arity) current_rules);
 			gen_stack_tree
 			(size+arity)
 			next_rules current_rules
@@ -201,29 +210,12 @@ let gen_tree
 	(with_prefix:bool) (idprefix:string)
 	(sizemax:int)
 	(y:float array) : (tree option * int) =
-	(*let (first_rule,_) = List.hd g in
-	let (wmap,gmap) = pondere (completion g) y in
-	gen_tree_rec 0 first_rule wmap gmap sizemax with_prefix idprefix*)
 	let map = pondere2 g y in
 	let leafs = leafs_of_grammar g in
-	
-(*	StringMap.iter
-	(fun key (l,_)-> print_endline key;
-	print_endline (string_of_int (List.length l));
-	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l )
-	map;*)
-	
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
-(*	print_endline first_rule;*)
 	Queue.push first_rule queue;
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
-(*	print_int size;
-	print_endline " ";*)
-	(*Stack.iter (fun (s,a) -> print_string s; print_string " "; print_int a; print_endline " ") stack;
-	print_endline "je suis ici";*)
-	(*print_endline (string_of_int (Stack.length stack));
-	print_endline (string_of_int size) ;*)
 	gen_tree_of_stack (stack,size) with_prefix idprefix
 
 (* TODO: à documenter *)
@@ -252,9 +244,6 @@ let generator
                   (if global_options.verbosity >= 2
                    then printf "          ==> found singularity at z=%f\n%!" zmin') ;
                   
-(*		print_endline "test";*)
-		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
-		print_endline "";*)
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
 			if nb_try > 0 then
 				(match gen_tree g with_prefix idprefix sizemax y with
