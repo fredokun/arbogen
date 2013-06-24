@@ -93,3 +93,9 @@ let dot_of_tree show_type t =
     | Leaf(_,_) -> ""
     | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
+
+  let file_of_dot show_type fname tree =
+  let out = open_out fname
+  in 
+    output_string out (dot_of_tree show_type tree); 
+    close_out out
