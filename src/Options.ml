@@ -29,6 +29,7 @@ type options_record = {
   mutable ratio_rejected_set: bool;
   mutable max_refine: int;
   mutable max_refine_set: bool;
+  mutable output_type: int;
 } ;;
 
 let global_options = {
@@ -61,6 +62,7 @@ let global_options = {
   ratio_rejected_set = false;
   max_refine = 6;
   max_refine_set = false;
+  output_type = 0;
 } ;;
 
 exception Option_Error of string ;;
