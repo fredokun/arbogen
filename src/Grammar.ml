@@ -15,12 +15,14 @@ open Util
 
 (* Grammar encoding *)
 
+(* Elements of grammar *)
+type elem = SEQ of string | ELEM of string ;;
+
 type component = int * elem list ;; (* weight , sub-components *)
      
 type rule = string * component list ;;
 
 type grammar = rule list ;;
-
 
 (* example of grammar  
 let bintree = [ (ELEM("BinNode"), [ (1,[ELEM("Leaf")]) ; 
@@ -31,6 +33,11 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 (* grammar completion *)
 
 (* StringSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);; *)
+
+let name_of_elem elt =
+	match elt with
+		|SEQ(name) -> name
+		|ELEM(name) -> name ;;
 
 let names_of_component (_,comps) =
 	List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) (StringSet.empty) comps ;;

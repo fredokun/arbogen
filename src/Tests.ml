@@ -17,8 +17,6 @@ open Tree;;
 
 (* open OracleSimple;; *)
 
-open Util;;
-
 open Gen;;
 open Grammar;;
 

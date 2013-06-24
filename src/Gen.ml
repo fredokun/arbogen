@@ -77,7 +77,7 @@ let pondere2 (g:grammar) (y:float array)
 	List.fold_left aux StringMap.empty g_comp
 
 let rec gen_stack_tree
-	size
+	(size:int)
 	next_rules current_rules
 	map
 	sizemax

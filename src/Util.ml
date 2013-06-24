@@ -11,28 +11,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-(* Elements of grammar *)
-type elem = SEQ of string | ELEM of string ;;
-
-(*module Elem =
-	struct
-	type t = elem
-	let compare x y =
-		match (x,y) with
-			|(ELEM(a),ELEM(b)) -> Pervasives.compare a b
-			|(SEQ(a),SEQ(b)) -> Pervasives.compare a b
-			|(SEQ(_),ELEM(_)) -> 1
-			|_ -> -1
-	end ;;
-
-module ElemMap = Map.Make (Elem) ;;
-module ElemSet = Set.Make (Elem) ;;*)
-
-
-let name_of_elem elt =
-	match elt with
-		|SEQ(name) -> name
-		|ELEM(name) -> name ;;
 
 (* List utilities *)
 

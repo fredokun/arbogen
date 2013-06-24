@@ -12,8 +12,8 @@
 
 open Printf
 
-open Util
 open Options
+open Grammar
 
 exception Parse_Error of string;;
 

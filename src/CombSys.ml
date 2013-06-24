@@ -12,6 +12,7 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
+open Grammar
 open Util
 
 (* a system is an array of equations *)
