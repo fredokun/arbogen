@@ -123,10 +123,15 @@ Arg.parse [
       |"arb" -> global_options.output_type <- 0;
       |"dot" -> global_options.output_type <- 1;
       |"both" -> global_options.output_type <- 2;
-      |_ -> eprintf "Error: wrong option value must be strictly 0 or 1\n...aborting\n";
+      |_ -> eprintf "Error: wrong option value must be strictly arb,dot or both\n...aborting\n";
             exit 1;
   ),
   "<n>: set the type of output generated at the end");
+  ("-file",Arg.String(fun x->
+    global_options.fileName <- x;
+    ),
+  "<x>: set the name of the file to be created at end of execution"
+  );
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "")=0
@@ -179,14 +184,14 @@ in match result with
   then begin
     printf "==> Tree generated with size=%d\n%!" size ;
     match global_options.output_type with
-    |0 -> printf "Saving file to 'tree.arb'\n%!";
-          Tree.file_of_tree true global_options.with_prefix "tree.arb" tree;
-    |1 -> printf "Saving file to 'tree.dot'\n%!";
-          Tree.file_of_dot true "tree.dot" tree;
-    |2 -> printf "Saving files to 'tree.arb' and 'tree.dot'\n%!";
-          Tree.file_of_tree true global_options.with_prefix "tree.arb" tree;
-          Tree.file_of_dot true "tree.dot" tree;
-    |_ -> printf "Error \n";
+    |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName;
+          Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+    |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName;
+          Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+    |2 -> printf "Saving files to '%s.arb' and '%s.dot'\n%!" global_options.fileName global_options.fileName;
+          Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+          Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+    |_ -> printf "Error \n";      (* unreachable case *)
          printf "==> file saved\n%!"
   end  
 
