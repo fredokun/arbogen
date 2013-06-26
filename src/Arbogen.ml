@@ -178,18 +178,16 @@ in match result with
   if (global_options.verbosity) > 0 
   then begin
     printf "==> Tree generated with size=%d\n%!" size ;
-    if (global_options.output_type) = 0 
-    then
-        printf "Saving file to 'tree.arb'\n%!" ;
-        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
-    if (global_options.output_type) = 1 then
-        printf "Saving file to 'tree.dot'\n%!" ;
-        Tree.file_of_dot true "tree.dot" tree;
-    if (global_options.output_type = 2) then
-        printf "Saving both files to 'tree.arb' and 'tree.dot'\n%!" ;
-        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
-        Tree.file_of_dot true "tree.dot" tree;
-     printf "==> file saved\n%!"
+    match global_options.output_type with
+    |0 -> printf "Saving file to 'tree.arb'\n%!";
+          Tree.file_of_tree true global_options.with_prefix "tree.arb" tree;
+    |1 -> printf "Saving file to 'tree.dot'\n%!";
+          Tree.file_of_dot true "tree.dot" tree;
+    |2 -> printf "Saving files to 'tree.arb' and 'tree.dot'\n%!";
+          Tree.file_of_tree true global_options.with_prefix "tree.arb" tree;
+          Tree.file_of_dot true "tree.dot" tree;
+    |_ -> printf "Error \n";
+         printf "==> file saved\n%!"
   end  
 
 
