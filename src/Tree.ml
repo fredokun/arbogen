@@ -99,3 +99,9 @@ let dot_of_tree show_type t =
   in 
     output_string out (dot_of_tree show_type tree); 
     close_out out
+    
+let file_of_xml fname tree = 
+  let out = open_out fname
+  in
+    output_string out(xml_of_tree tree);
+    close_out out;  
