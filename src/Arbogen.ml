@@ -122,8 +122,9 @@ Arg.parse [
     match x with
       |"arb" -> global_options.output_type <- 0;
       |"dot" -> global_options.output_type <- 1;
-      |"both" -> global_options.output_type <- 2;
-      |_ -> eprintf "Error: wrong option value must be strictly arb,dot or both\n...aborting\n";
+      |"xml" -> global_options.output_type <- 2;
+      |"all" -> global_options.output_type <- 3;  
+      |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
             exit 1;
   ),
   "<n>: set the type of output generated at the end");
@@ -188,9 +189,12 @@ in match result with
           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
     |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName;
           Tree.file_of_dot true (global_options.fileName^".dot") tree; 
-    |2 -> printf "Saving files to '%s.arb' and '%s.dot'\n%!" global_options.fileName global_options.fileName;
+    |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName;
+          Tree.file_of_xml (global_options.fileName^".xml") tree;
+    |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
-          Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+          Tree.file_of_dot true (global_options.fileName^".dot") tree;
+          Tree.file_of_xml (global_options.fileName^".xml") tree; 
     |_ -> printf "Error \n";      (* unreachable case *)
          printf "==> file saved\n%!"
   end  
