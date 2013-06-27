@@ -122,11 +122,17 @@ Arg.parse [
     match x with
       |"arb" -> global_options.output_type <- 0;
       |"dot" -> global_options.output_type <- 1;
-      |"both" -> global_options.output_type <- 2;
-      |_ -> eprintf "Error: wrong option value must be strictly 0 or 1\n...aborting\n";
+      |"xml" -> global_options.output_type <- 2;
+      |"all" -> global_options.output_type <- 3;  
+      |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
             exit 1;
   ),
   "<n>: set the type of output generated at the end");
+  ("-file",Arg.String(fun x->
+    global_options.fileName <- x;
+    ),
+  "<x>: set the name of the file to be created at end of execution"
+  );
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "")=0
@@ -178,18 +184,19 @@ in match result with
   if (global_options.verbosity) > 0 
   then begin
     printf "==> Tree generated with size=%d\n%!" size ;
-    if (global_options.output_type) = 0 
-    then
-        printf "Saving file to 'tree.arb'\n%!" ;
-        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
-    if (global_options.output_type) = 1 then
-        printf "Saving file to 'tree.dot'\n%!" ;
-        Tree.file_of_dot true "tree.dot" tree;
-    if (global_options.output_type = 2) then
-        printf "Saving both files to 'tree.arb' and 'tree.dot'\n%!" ;
-        Tree.file_of_tree true global_options.with_prefix "tree.arb" tree ;  
-        Tree.file_of_dot true "tree.dot" tree;
-     printf "==> file saved\n%!"
+    match global_options.output_type with
+    |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName;
+          Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+    |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName;
+          Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+    |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName;
+          Tree.file_of_xml (global_options.fileName^".xml") tree;
+    |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
+          Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+          Tree.file_of_dot true (global_options.fileName^".dot") tree;
+          Tree.file_of_xml (global_options.fileName^".xml") tree; 
+    |_ -> printf "Error \n";      (* unreachable case *)
+         printf "==> file saved\n%!"
   end  
 
 
