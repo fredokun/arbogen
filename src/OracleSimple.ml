@@ -46,19 +46,19 @@ let diverge (y:float array) (epsilon:float):bool =
   dvgi 0 ((Array.length y) - 1)
 
 (* output:zmin,zmax,vectorY *)
-let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float):float *float* float array =
+let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
 	(*print_endline ((string_of_float zmin)^" "^(string_of_float zmax));*)
 	if zmax -. zmin < epsilon1 then
 		(zmin,zmax,iterationSimple phi zmin epsilon2)
 	else
-		let z = ((zmin +. zmax) /. 2.0) in
+		let z = zstart in
 		(*print_float z;*)
 		let y = iterationSimple phi z epsilon2 in
 		(*print_endline ("singularite= " ^ (string_of_float zmin) ^ "moyenne= " ^ (string_of_float z));*)
 		if diverge y epsilon2 = true then
-			searchSingularity phi zmin z epsilon1 epsilon2
+			searchSingularity phi zmin zstart epsilon1 epsilon2 ((zmin+.zstart)/.2.)
 		else
-			searchSingularity phi z zmax epsilon1 epsilon2
+			searchSingularity phi zstart zmax epsilon1 epsilon2 ((zmax+.zstart)/.2.)
 	
 	 
 
