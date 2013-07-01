@@ -60,7 +60,10 @@ let pondere2 (g:grammar) (y:float array)
 				1.
 				componentList
 			in
-			let len = List.length componentList in
+			let len = if (List.length componentList = 1) & 
+			    (List.exists (fun x -> x = (name_of_elem (List.hd componentList))) (leafs_of_grammar g)) then 0
+			  else List.length componentList
+			in
 			(componentList,len,proba)
 		in
 		(* renvoie la map des composants avec leurs sous composants (prochain fils) et pondération *)
@@ -111,7 +114,7 @@ let rec gen_stack_tree
 					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
 (*						print_endline (string_of_float rdm);*)
 						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
-						((List.append (concat_n [rul] n) l),(n'+n-1))
+						((List.append (concat_n [rul] n') l),(n'+n-1))
 						| ELEM(rul) -> if(List.exists (fun x -> x = rul) leafs) then
 					                   begin subst_rule := rul; (l,0) end   
 					               else ((rul::l),n))
