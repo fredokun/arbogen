@@ -208,29 +208,12 @@ let gen_tree
 	(with_prefix:bool) (idprefix:string)
 	(sizemax:int)
 	(y:float array) : (tree option * int) =
-	(*let (first_rule,_) = List.hd g in
-	let (wmap,gmap) = pondere (completion g) y in
-	gen_tree_rec 0 first_rule wmap gmap sizemax with_prefix idprefix*)
 	let map = pondere2 g y in
 	let leafs = leafs_of_grammar g in
-	
-(*	StringMap.iter
-	(fun key (l,_)-> print_endline key;
-	print_endline (string_of_int (List.length l));
-	List.iter (fun (_,a,_) -> print_endline (string_of_int a)) l )
-	map;*)
-	
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
-(*	print_endline first_rule;*)
 	Queue.push first_rule queue;
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
-(*	print_int size;
-	print_endline " ";*)
-	(*Stack.iter (fun (s,a) -> print_string s; print_string " "; print_int a; print_endline " ") stack;
-	print_endline "je suis ici";*)
-	(*print_endline (string_of_int (Stack.length stack));
-	print_endline (string_of_int size) ;*)
 	gen_tree_of_stack (stack,size) with_prefix idprefix
 
 (* TODO: à documenter *)
@@ -242,7 +225,7 @@ let generator
 	(epsilon2:float) (epsilon2_factor:float)
 	(with_prefix:bool) (idprefix:string)
 	(max_try:int) (ratio_rejected:float)
-	(max_refine:int)
+	(max_refine:int)(zstart:float)
 	: (tree*int) option =
 	(if self_seed
 	then Random.self_init ()
@@ -250,18 +233,15 @@ let generator
   let sys = combsys_of_grammar (completion g) in
     (if global_options.verbosity >= 2
      then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))) ;
-	let rec gen epsilon1 epsilon2 zmin zmax nb_refine =
-(*		print_endline "test";*)
+	let rec gen epsilon1 epsilon2 zmin zmax nb_refine zstart =
+
 		let (zmin',zmax',y) = 
                   (if global_options.verbosity >= 2
-                   then printf "[ORACLE]: search singularity at z=%f\n%!" zmin) ;
-                  searchSingularity sys zmin zmax epsilon1 epsilon2 in
+                   then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
+                  searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
                   (if global_options.verbosity >= 2
                    then printf "          ==> found singularity at z=%f\n%!" zmin') ;
                   
-(*		print_endline "test";*)
-		(*Array.iter (fun e -> print_endline (string_of_float e)) y;
-		print_endline "";*)
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
 			if nb_try > 0 then
 				(match gen_tree g with_prefix idprefix sizemax y with
@@ -293,8 +273,8 @@ let generator
 				| None ->
 				if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_larger)) >= ratio_rejected
 				then (* if more than e.g. 80% of the trees are too small, then refine *)
-					gen (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax' (nb_refine+1)
+					gen (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax' (nb_refine+1) zstart
 				else failwith "Your trees are too big, change paramaters please")
 		else None (* refined too much : could not generate a tree *)
 	in
-	gen epsilon1 epsilon2 0. 1. 1
+	gen epsilon1 epsilon2 0. 1. 1 zstart

@@ -31,6 +31,7 @@ type options_record = {
   mutable max_refine_set: bool;
   mutable output_type: int;
   mutable fileName: string;
+  mutable zstart: float;
 } ;;
 
 let global_options = {
@@ -65,6 +66,7 @@ let global_options = {
   max_refine_set = false;
   output_type = 0;
   fileName = "tree";
+  zstart = 0.0;
 } ;;
 
 exception Option_Error of string ;;

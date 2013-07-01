@@ -249,6 +249,14 @@ let parse_option str i =
        else if not global_options.epsilon2_factor_set
        then global_options.epsilon2_factor <- eps2_val) ;
       advance str i' ";"
+   | "zstart" ->
+    let start, i' = parse_float str  i'
+    in
+    (if (start > 1.0 || start < 0.0) then
+      raise (Option_Error (sprintf "incorrect zstart value %f => should be between 0 and 1" start))
+    else
+      global_options.zstart <- start);
+    advance str i' ";"
   | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
     
     
