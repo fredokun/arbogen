@@ -21,6 +21,15 @@ type character =
     Char of char
   | EOF;;
 
+let contains s1 s2 =
+  try
+    let len = String.length s2 in
+    for i = 0 to String.length s1 - len do
+      if String.sub s1 i len = s2 then raise Exit
+    done;
+    false
+  with Exit -> true  
+
 let is_space = function
   | Char(ch) -> ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r'
   | EOF -> false ;;
@@ -131,6 +140,16 @@ let parse_component str i =
          raise (Parse_Error "Expecting '*', '+' or ';' after <z>"))
     else if componentName="*" or componentName="+" then
       raise (Parse_Error ("Unexpected '" ^ componentName ^ "'"))
+    else if (contains componentName "SEQ(") == true then
+       let start = String.index componentName '(' in
+        let stop = String.index componentName ')' in
+          let name = String.sub componentName (start+1) (stop-start-1) in
+            let (next,i'') = next_word str i' in
+              if next="+" or next =";" then
+                ((weight,List.rev ((SEQ name)::refs)),i')
+              else if next="*" then
+                aux i'' weight ((SEQ name)::refs)
+              else raise (Parse_Error "Expecting '+', ';' or '*'")
     else (* component Name is ok *)
       let (next,i'') = next_word str i' in
       (* print_endline ("Next = " ^ next) ; *)
@@ -249,6 +268,14 @@ let parse_option str i =
        else if not global_options.epsilon2_factor_set
        then global_options.epsilon2_factor <- eps2_val) ;
       advance str i' ";"
+   | "zstart" ->
+    let start, i' = parse_float str  i'
+    in
+    (if (start > 1.0 || start < 0.0) then
+      raise (Option_Error (sprintf "incorrect zstart value %f => should be between 0 and 1" start))
+    else
+      global_options.zstart <- start);
+    advance str i' ";"
   | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
     
     

@@ -2,6 +2,7 @@ open Printf
 
 open Options
 
+
 let version_str = "arbogen v0.20121006 (beta)"
 
 let usage = "Usage: arbogen <opt> <specfile>.arb"
@@ -133,6 +134,15 @@ Arg.parse [
     ),
   "<x>: set the name of the file to be created at end of execution"
   );
+  ("-zstart", Arg.Float(fun x -> 
+    if(x > 1.0 || x < 0.0) then(
+            eprintf "Error: value must be between 0 and 1\n...arborting\n";
+            exit 1;
+    )else(
+      global_options.zstart <- x;
+    )
+  ),
+  "<x>: sets the value of zstart");
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "")=0
@@ -160,6 +170,7 @@ then printf "==> Grammar file loaded\n%!" ;;
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;
  
+
 let result =
   Gen.generator
     grammar
@@ -176,6 +187,7 @@ let result =
     global_options.max_try
     global_options.ratio_rejected
     global_options.max_refine
+    global_options.zstart
 in match result with
   None ->
     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ;
@@ -198,6 +210,5 @@ in match result with
     |_ -> printf "Error \n";      (* unreachable case *)
          printf "==> file saved\n%!"
   end  
-
 
  
