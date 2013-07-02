@@ -54,14 +54,10 @@ let evaluation (phi:combsys) (z:float) (y:float array):float array =
 	let u = Array.create (Array.length y) 0.0 in
 	for i=0 to ((Array.length y) - 1)
 	do
-		(*print_string ("i=" ^ (string_of_int i)) ;*)
 		let vali = eval_eq z y phi.(i)
 		in
-		 (* print_endline ("  vali=" ^ (string_of_float vali)) ;*)
 		  u.(i) <- vali
 	done;
-	(*print_endline ("u = " ^ (Util.string_of_array string_of_float u)) ;*)
-	(*print_endline (string_of_float u.(0));*)
 	u ;;
 
 (* conversion from grammar *)
