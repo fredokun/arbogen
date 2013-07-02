@@ -112,7 +112,6 @@ let rec gen_stack_tree
 				(fun (l,n) elt ->
 					match elt with
 					| SEQ(rul) -> let (_,rdm) = StringMap.find rul map in
-(*						print_endline (string_of_float rdm);*)
 						let n' = int_of_float (floor((log( Random.float 1.)) /. (log rdm))) in
 						((List.append (concat_n [rul] n') l),(n'+n-1))
 						| ELEM(rul) -> if(List.exists (fun x -> x = rul) leafs) then
@@ -161,51 +160,7 @@ let gen_tree_of_stack
 		| 0 -> (None,0)
 		| _ -> gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
 			(Some(Queue.pop queue),size)
-(*
-let rec gen_tree_rec
-	(size:int)
-	(next_rule:string)
-	wmap gmap sizemax with_prefix idprefix
-	: (tree option * int) =
-	if sizemax-size<=0 then
-		(None,sizemax)
-	else
-		(* On génère la suite de l'arbre *)
-		if StringMap.find next_rule wmap = 1.
-			(* On doit générer une feuille *)
-			then
-				let prefix =
-					if with_prefix then idprefix ^ (string_of_int (size))
-					else (string_of_int (size))
-				in
-				(Some (Leaf((name_of_elem next_rule),prefix)),size+1)
-			else
-				(* On doit générer des sous arbres *)
-				let prefix =
-					if with_prefix then idprefix ^ (string_of_int (size+1))
-					else (string_of_int (size+1))
-				in
-				let rdm_float = Random.float (StringMap.find next_rule wmap) in
-				let (_,_,next_rules_list) =
-					List.fold_left
-					(fun (limit,stop,temp) (l,f) -> if limit-.f<=0. && stop then (limit,false,l) else (limit-.f,stop,temp))
-					(rdm_float,true,[])
-					(StringMap.find next_rule gmap)
-				in
-				let aux opt next =
-					match opt with
-						|None -> None
-						|Some(l,s) ->
-							match gen_tree_rec s next wmap gmap sizemax with_prefix idprefix with
-								|(None,_) -> None
-								|(Some sub_tree,new_size) -> Some(l@[sub_tree],new_size)
-				in
-				let suite = List.fold_left aux (Some([],size+1)) next_rules_list in
-				match suite with
-					|None -> (None,sizemax)
-					|Some([Leaf(a,b)],s) -> (Some(Leaf(a,b)),s-1)
-					|Some(sons,s) -> (Some(Node((name_of_elem next_rule),prefix,sons)),s)
-*)
+
 let gen_tree
 	(g:grammar)
 	(with_prefix:bool) (idprefix:string)

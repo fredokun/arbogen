@@ -115,7 +115,6 @@ let next_word str i =
         else aux (i+1) (ch::word)
   in
   let (word,i') = aux (skip str i) [] in
-  (* print_endline ("next word = " ^ (string_of_list word)) ; *)
   (string_of_list word,i') ;;
 
 let advance str i expect = 
@@ -127,7 +126,6 @@ let advance str i expect =
 let parse_component str i =
   let rec aux i weight refs =
     let (componentName,i') = next_word str i in
-    (* print_endline ("Component name = " ^ componentName) ; *)
     if componentName="<z>" then
       let (next,i'') = next_word str i' in
       (if next="*" then
@@ -152,7 +150,6 @@ let parse_component str i =
               else raise (Parse_Error "Expecting '+', ';' or '*'")
     else (* component Name is ok *)
       let (next,i'') = next_word str i' in
-      (* print_endline ("Next = " ^ next) ; *)
       if next="+" or next =";" then
         ((weight,List.rev ((ELEM componentName)::refs)),i')
       else if next="*" then
@@ -311,10 +308,3 @@ let parse_from_file fname =
     if Options.global_options.verbosity >= 3
     then printf "[GEN]: Parsed grammar = %s\n%!" (Grammar.string_of_grammar (List.map (fun (n,l) -> (ELEM n,l)) grm)) ;
     grm ;;
-
-(*
-let gram = parse_from_file "examples/binary.arb" 
-in 
-(print_endline "Grammar parsed = ") ;
-(print_endline (string_of_grammar gram));;
-*)

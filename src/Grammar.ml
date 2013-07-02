@@ -93,4 +93,3 @@ let rec string_of_grammar = function
   | [] -> ""
   | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules) ;;
 
-(* print_endline (string_of_grammar bintree);; *)

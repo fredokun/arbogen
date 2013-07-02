@@ -22,7 +22,6 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
   let rec iterate (y:float array): float array = 
     let y' = evaluation phi z y
     in
-(*    print_endline (string_of_float (normInf_diff y y'));*)
 	if (Array.fold_left (fun pred x -> pred or (x > 1.)) false y')
 		then (Array.make (Array.length y') (-1.0))
 	else
@@ -37,7 +36,6 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
 let diverge (y:float array) (epsilon:float):bool =
   let tooBig = 1.0/.epsilon in 
   let rec dvgi (i:int) (s:int):bool = 
-    (*print_endline ("element = " ^ (string_of_float ele));*)
     if i <= s then
       (if (y.(i) < 0.0) || (y.(i) > tooBig) then true
        else dvgi (i+1) s)
@@ -47,14 +45,11 @@ let diverge (y:float array) (epsilon:float):bool =
 
 (* output:zmin,zmax,vectorY *)
 let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
-	(*print_endline ((string_of_float zmin)^" "^(string_of_float zmax));*)
 	if zmax -. zmin < epsilon1 then
 		(zmin,zmax,iterationSimple phi zmin epsilon2)
 	else
 		let z = zstart in
-		(*print_float z;*)
 		let y = iterationSimple phi z epsilon2 in
-		(*print_endline ("singularite= " ^ (string_of_float zmin) ^ "moyenne= " ^ (string_of_float z));*)
 		if diverge y epsilon2 = true then
 			searchSingularity phi zmin zstart epsilon1 epsilon2 ((zmin+.zstart)/.2.)
 		else
