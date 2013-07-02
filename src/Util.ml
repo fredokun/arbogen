@@ -177,35 +177,6 @@ let ifAtLeast8Smallerin10OthersBigger (p1:int) (p2:int) (tab:int array) : bool  
                  false	
 
 
-(*
-let bernoulli (z:float) : bool = 
-	let rd = Random.float 1.0 in
-	let afrd = string_of_float rd in
-	if rd < z then
-		true
-	else
-		false
- let r = bernoulli 0.5;;
-
-let af = string_of_bool r ;;
-
-print_endline af ;;
-
-"false"
-
-
-let r2 = bernoulli 0.5;;
-
-let af2 = string_of_bool r2 ;;
-
-print_endline af2 ;;
-
-"true" *)
-
-(*let gra_first ((st,ru):string*rule): string  = st; *)
-
-
-
 
 
 
