@@ -21,7 +21,7 @@ type character =
     Char of char
   | EOF;;
 
-let contains s1 s2 =
+let contains (s1:string) (s2:string) =
   try
     let len = String.length s2 in
     for i = 0 to String.length s1 - len do
@@ -34,16 +34,16 @@ let is_space = function
   | Char(ch) -> ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r'
   | EOF -> false ;;
 
-let get_char str i = 
+let get_char (str:string) (i:int) = 
   try Char (String.get str i) with
       _ -> EOF;;
 
-let rec skip_spaces str i =
+let rec skip_spaces (str:string) (i:int) =
   let ichar = get_char str i in
   if is_space ichar then skip_spaces str (i+1)
   else i ;;
 
-let rec skip_until_eol str i =
+let rec skip_until_eol (str:string) (i:int) =
   let ichar = get_char str i in
   match ichar with
     | EOF -> i
@@ -51,7 +51,7 @@ let rec skip_until_eol str i =
       if ch='\n' then i+1
       else skip_until_eol str (i+1);;
 
-let rec skip_until_starslash str i =
+let rec skip_until_starslash (str:string) (i:int) =
   let ichar = get_char str i in
   match ichar with
     | EOF -> raise (Parse_Error "Missing end of comment: */") 
@@ -64,7 +64,7 @@ let rec skip_until_starslash str i =
 
 (* skip_until_starslash "/* toto titi tata */ tutu" 2 ;; *)
 
-let rec skip_comments str i =
+let rec skip_comments (str:string) (i:int) =
   let ichar = get_char str i in
   match ichar with
     | EOF -> i
@@ -81,7 +81,7 @@ let rec skip_comments str i =
 
 (* skip_comments "/* toto titi tata */ tutu" 0 ;;  *)
 
-let rec skip str i =
+let rec skip (str:string) (i:int) =
   let i' = skip_comments str i in
   if not (i'==i) then skip str i'
   else i;;
@@ -100,7 +100,7 @@ let string_of_list l =
   list_iteri (fun ch i -> String.set str ch i) l ;
   str ;;
 
-let next_word str i =
+let next_word (str:string) (i:int) =
   let rec aux i word =
     let ichar = get_char str i in
     match ichar with
@@ -117,13 +117,13 @@ let next_word str i =
   let (word,i') = aux (skip str i) [] in
   (string_of_list word,i') ;;
 
-let advance str i expect = 
+let advance (str:string) (i:int) (expect:string) = 
   let (word,i') = next_word str i
   in
   if word = expect then i'
   else raise (Parse_Error ("Missing '" ^ expect ^ "'")) ;;
 
-let parse_component str i =
+let parse_component (str:string) (i:int) =
   let rec aux i weight refs =
     let (componentName,i') = next_word str i in
     if componentName="<z>" then
@@ -160,7 +160,7 @@ let parse_component str i =
 
 (* parse_component "<z> * BinNode * BinNode +" 0 ;; *)
 
-let parse_components str i =
+let parse_components (str:string) (i:int) =
   let rec aux i comps =
     let (comp,i') = parse_component str i in
     let (next,i'') = next_word str i' in
@@ -174,7 +174,7 @@ let parse_components str i =
 
 (* parse_components "Leaf * <z> + BinNode * BinNode ;" 0 ;;  *)
       
-let parse_rule str i =
+let parse_rule (str:string) (i:int) =
   let (ruleName,i') = next_word str i in
   if ruleName="" then
     raise (Parse_Error "Missing rule name")
@@ -187,7 +187,7 @@ let parse_rule str i =
 (* parse_rule "BinNode ::= Leaf * <z> + BinNode * BinNode ;" 0 ;; *)
 
 
-let parse_int str i =
+let parse_int (str:string) (i:int) =
   let int_str, i' = next_word str i
   in
     try
@@ -196,7 +196,7 @@ let parse_int str i =
         (int_val, i')
     with Failure _ -> raise (Parse_Error (sprintf "cannot convert '%s' to an integer" int_str))
 
-let parse_float str i =
+let parse_float (str:string) (i:int) =
   let float_str, i' = next_word str i
   in
     try
@@ -206,7 +206,7 @@ let parse_float str i =
     with Failure _ -> raise (Parse_Error (sprintf "cannot convert '%s' to a float" float_str))
 
 
-let parse_option str i =
+let parse_option (str:string) (i:int) =
   let opt_id, i' = next_word str i
   in match opt_id with
   | "min" -> 
@@ -276,7 +276,7 @@ let parse_option str i =
   | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
     
     
-let parse_grammar str =
+let parse_grammar (str:string) =
   let rec aux i rules =
     match next_word str i with
       ("",_) -> List.rev rules
@@ -292,7 +292,7 @@ let parse_grammar str =
 
 (* parse_grammar "BinNode ::= Leaf * <z> + BinNode * BinNode;" ;; *)
 
-let string_of_file fname =
+let string_of_file (fname:string) =
   let inchan = open_in fname in
   let rec read str =
     try let next = input_line inchan in
@@ -301,7 +301,7 @@ let string_of_file fname =
   in
   read "" ;;
 
-let parse_from_file fname =
+let parse_from_file (fname:string) =
   let input = string_of_file fname in
   let grm = parse_grammar input
   in 

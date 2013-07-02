@@ -34,7 +34,7 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 
 (* StringSet.iter (fun x -> print_endline (name_of_elem x)) (names_of_grammar plane_tree);; *)
 
-let name_of_elem elt =
+let name_of_elem (elt:elem) =
 	match elt with
 		|SEQ(name) -> name
 		|ELEM(name) -> name ;;
@@ -45,23 +45,23 @@ let names_of_component (_,comps) =
 let names_of_rule (_,comps) = 
 	List.fold_left (fun names comp -> StringSet.union (names_of_component comp) names) (StringSet.empty) comps ;;
 
-let names_of_grammar grm =
+let names_of_grammar (grm:grammar) =
 	List.fold_left (fun gnames rule -> StringSet.union (names_of_rule rule) gnames) (StringSet.empty) grm ;;
 
-let rule_names_of_grammar grm =
+let rule_names_of_grammar (grm:grammar) =
 	List.fold_left (fun rnames (rname,_) -> StringSet.add rname rnames) (StringSet.empty) grm ;;
 
-let leafs_of_grammar grm = 
+let leafs_of_grammar (grm:grammar) = 
 	let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
 	in
 	StringSet.fold (fun leaf l -> leaf::l) leafs [] ;;
         
-let completion grm =
+let completion (grm:grammar) =
 	let leafs = leafs_of_grammar grm
 	in
 	grm @ (List.fold_left (fun lrules leaf -> (leaf,[(0,[])])::lrules) [] leafs) ;;
 
-let count elt liste =
+let count (elt:elem) (liste: elem list) =
 	let rec count_rec e l i =
 		match l with
 		|[] -> i

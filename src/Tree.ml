@@ -25,7 +25,7 @@ let rec indent_string = function
   | 0 -> ""
   | n -> "  " ^  indent_string (n-1)
 
-let indent_string_of_tree t =
+let indent_string_of_tree (t:tree) =
   let rec tree level t = match t with
     | Leaf(typ,id) -> (indent_string level) ^ "Leaf[" ^ typ ^ "," ^ id ^ "]"
     | Node(typ,id,ts) -> 
@@ -37,7 +37,7 @@ let indent_string_of_tree t =
   in tree 0 t     
 
 
-let rec tree_out show_type show_id tree out = 
+let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out = 
   let label typ id = 
     (if show_id then id else "") ^
       (if show_type 
@@ -53,20 +53,20 @@ let rec tree_out show_type show_id tree out =
         (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
         "[" "," "]" ts  ;;
         
-let file_of_tree show_type show_id fname tree =
+let file_of_tree (show_type:bool) (show_id:bool) (fname:string) (tree:tree) =
   let out = open_out fname
   in 
     tree_out show_type show_id tree out ;
     close_out out
     
 
-let xml_of_tree t = 
+let xml_of_tree (t:tree) = 
   let rec aux = function
     | Leaf(typ,id) -> "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
     | Node(typ,id,ts) -> "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">" ^ (string_of_list aux "" "" "</node>" ts)
   in "<?xml version=\"1.0\"?><tree>" ^ (aux t) ^ "</tree>" 
 
-let indent_xml_of_tree t =
+let indent_xml_of_tree (t:tree) =
   let rec tree level t = match t with
     | Leaf(typ,id) -> (indent_string level) ^ "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
     | Node(typ,id,ts) -> 
@@ -77,7 +77,7 @@ let indent_xml_of_tree t =
     | t::f' -> (tree level t) ^ "\n" ^ (forest level f')
   in "<?xml version=\"1.0\"?>\n<tree>\n" ^ (tree 1 t) ^ "\n</tree>\n"     
 
-let dot_of_tree show_type t =
+let dot_of_tree (show_type:bool) (t:tree) =
   let rec nodes = function
     | Leaf(typ,id) -> "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
     | Node(typ,id,ts) -> 
@@ -94,13 +94,13 @@ let dot_of_tree show_type t =
     | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
-  let file_of_dot show_type fname tree =
+  let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
   let out = open_out fname
   in 
     output_string out (dot_of_tree show_type tree); 
     close_out out
     
-let file_of_xml fname tree = 
+let file_of_xml (fname:string) (tree:tree) = 
   let out = open_out fname
   in
     output_string out(xml_of_tree tree);

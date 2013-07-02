@@ -20,6 +20,7 @@ open CombSys
 open Grammar
 open OracleSimple
 
+
 (* g must be completed
 Renvoie une map des poids total de chaque composant (somme des pondération des sous composants)
 et une map de la grammaire sous forme de (composant -> liste des (liste des sous_composants * pondération)) *)
@@ -79,11 +80,14 @@ let pondere2 (g:grammar) (y:float array)
 		in
 	List.fold_left aux StringMap.empty g_comp
 
+type 'a queue = 'a Queue.t
+type 'a stack = 'a Stack.t
+
 let rec gen_stack_tree
 	(size:int)
-	next_rules current_rules
+	(next_rules: string queue) (current_rules: (string * int) stack)
 	map
-	sizemax
+	(sizemax:int)
 	leafs =
 	if size<sizemax then
 		if (Queue.is_empty next_rules) then
@@ -137,8 +141,8 @@ let rec gen_stack_tree
 
 let rec gen_tree_of_stack_rec
 	(stack,size)
-	current_rules
-	with_prefix idprefix =
+	(current_rules: tree queue)
+	(with_prefix:bool) (idprefix:string) =
 	match (Stack.is_empty stack) with
 		|true -> ()
 		|false -> let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
@@ -154,7 +158,7 @@ let rec gen_tree_of_stack_rec
 
 let gen_tree_of_stack
 	(stack,size)
-	with_prefix idprefix =
+	(with_prefix:bool) (idprefix:string) =
 	let queue = Queue.create () in
 	match size with
 		| 0 -> (None,0)

@@ -44,7 +44,7 @@ let diverge (y:float array) (epsilon:float):bool =
   dvgi 0 ((Array.length y) - 1)
 
 (* output:zmin,zmax,vectorY *)
-let rec searchSingularity phi (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
+let rec searchSingularity (phi:combsys) (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
 	if zmax -. zmin < epsilon1 then
 		(zmin,zmax,iterationSimple phi zmin epsilon2)
 	else
