@@ -140,6 +140,7 @@ Arg.parse [
             exit 1;
     )else(
       global_options.zstart <- x;
+      global_options.zstart_set <- true;
     )
   ),
   "<x>: sets the value of zstart");
