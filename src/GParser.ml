@@ -270,8 +270,8 @@ let parse_option (str:string) (i:int) =
     in
     (if (start > 1.0 || start < 0.0) then
       raise (Option_Error (sprintf "incorrect zstart value %f => should be between 0 and 1" start))
-    else
-      global_options.zstart <- start);
+    else if not global_options.zstart_set then
+        global_options.zstart <- start);
     advance str i' ";"
   | _ -> raise (Parse_Error (sprintf "Uknown or unsupported option: %s" opt_id))
     
