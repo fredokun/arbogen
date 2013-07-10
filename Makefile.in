@@ -1,0 +1,28 @@
+# where to install
+PREFIX = @prefix@
+BINDIR = $(PREFIX)/bin
+
+SRCS = $(wildcard src/*.ml src/*.mli src/*.mll src/*.mly)
+TARGS = arbogen
+KIND = native # d.byte
+FLAGS = -w,Ae,-warn-error,A
+
+all: $(TARGS)
+
+arbogen: _build/src/Arbogen.$(KIND)
+	cp $< $@
+
+install:: arbogen
+	mkdir -p $(BINDIR)
+	mv arbogen $(BINDIR)
+	mkdir -p $(MANDIR)/man1
+	cp -f doc/$(TARGS).1 /usr/local/man/man1/$(TARGS).1
+
+_build/src/%.$(KIND): $(SRCS)
+	ocamlbuild -cflags $(FLAGS) -no-links -I src $*.$(KIND)
+
+clean:
+	@ocamlbuild -clean
+	@rm -f *~ $(TARGS)
+
+.PHONY: all clean
