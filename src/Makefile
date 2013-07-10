@@ -1,18 +1,35 @@
-SRCS = $(wildcard *.ml *.mli *.mll *.mly)
+# where to install the binaries
+prefix=/usr/local
+exec_prefix=${prefix}
+BINDIR=${exec_prefix}/bin
+
+# where to install the man page
+MANDIR=${prefix}/share/man
+
+# other variables set by ./configure
+OCAMLC   = ocamlc
+OCAMLOPT = ocamlopt
+OCAMLDEP = ocamldep
+OCAMLLEX = ocamllex
+OCAMLYACC= ocamlyacc
+OCAMLLIB = /usr/lib/ocaml
+OCAMLBEST= op
+
+SRCS = Options.ml Util.ml Grammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml GParser.ml ArboLib.ml Arbogen.ml
 TARGS = arbogen
-KIND = native # d.byte
-FLAGS = -w,Ae,-warn-error,A
 
 all: $(TARGS)
 
-arbogen: _build/Arbogen.$(KIND)
-	cp $< $@
+arbogen: $(SRCS)
+	$(OCAMLOPT) -o arbogen $(SRCS)
 
-_build/%.$(KIND): $(SRCS)
-	ocamlbuild -cflags $(FLAGS) -no-links $*.$(KIND)
+
+install:: arbogen
+	mkdir -p $(BINDIR)
+	mv arbogen $(BINDIR)
+	mkdir -p $(MANDIR)/man1
+	cp -f doc/$(TARGS).1 /usr/local/man/man1/$(TARGS).1
 
 clean:
-	@ocamlbuild -clean
-	@rm -f *~ $(TARGS)
-
-.PHONY: all clean
+	rm arbogen
+	rm *.cmi *.cmx *.o
