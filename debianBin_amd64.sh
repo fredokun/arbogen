@@ -2,13 +2,7 @@
 #debianBin.sh
 #creates a binary debian package from source files
 
-
-if [ ! -f arbogen ]; then
-    echo "checking for binary file... no"
-    exit 1;
-else
-	echo "checking for binary file... ok"
-fi
+file=arbogen_`cat VERSION`_1
 
 if which dpkg >/dev/null; then 
 	echo "checking for dpkg... ok"
@@ -23,8 +17,9 @@ else
 	echo "checking for fakeroot... no"
 	exit 1;
 fi
+
 #creating of directories
-file=arbogen_$1_1
+
 mkdir $file
 mkdir -p $file/DEBIAN
 mkdir -p $file/usr/bin
