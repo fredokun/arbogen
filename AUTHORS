@@ -16,3 +16,9 @@ Mathieu Dien
 
 Alexis Darrasse
   Underlying algorithmics
+
+Marwan Ghanem
+  finalization of SEQ
+  various fixes
+  packaging (source, Debian, Opam)
+

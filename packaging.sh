@@ -3,7 +3,7 @@
 #creates an install package for using the files in its directory
 #the verision is passed as a parameter
 
-pack=arbogen_$1
+pack=arbogen_`cat VERSION`
 
 #testing if in correct folder
 if [ ! -f configure.in ]; then
@@ -28,6 +28,7 @@ mkdir $pack
 cp -r src/ $pack
 cp Makefile.in $pack/Makefile.in
 cp configure $pack/configure
+cp VERSION $pack/VERSION
 cp LICENSE.txt $pack/LICENCE.txt
 cp README.md $pack/README.md
 cp AUTHORS $pack/AUTHORS

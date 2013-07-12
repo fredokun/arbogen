@@ -23,6 +23,9 @@ all: $(TARGS)
 arbogen: $(SRCS)
 	$(OCAMLOPT) -o arbogen $(SRCS)
 
+arbogen.byte: $(SRCS)
+	$(OCAMLC) -o arbogen.byte $(SRCS)
+
 
 install:: arbogen
 	mkdir -p $(BINDIR)
@@ -31,5 +34,12 @@ install:: arbogen
 	cp -f doc/$(TARGS).1 /usr/local/man/man1/$(TARGS).1
 
 clean:
-	rm arbogen
-	rm *.cmi *.cmx *.o
+	rm -f *~
+	rm -f *.cmi 
+	rm -f *.cmx
+	rm -f *.cmo 
+	rm -f *.o
+
+cleanall: clean
+	rm -f arbogen
+	rm -f arbogen.byte
