@@ -28,7 +28,7 @@ arbogen: $(SRCS)
 
 arbogen.byte: $(SRCS)
 	mkdir bin
-	$(OCAMLC) -o bin/arbogen.byte $(SRCS)
+	$(OCAMLC) $(OCAMLFLAG) -o bin/arbogen.byte $(SRCS)
 
 
 install:: arbogen
