@@ -1,28 +1,50 @@
-# where to install
-PREFIX = @prefix@
-BINDIR = $(PREFIX)/bin
+# where to install the binaries
+prefix=/usr/local
+exec_prefix=${prefix}
+BINDIR=${exec_prefix}/bin
 
-SRCS = $(wildcard src/*.ml src/*.mli src/*.mll src/*.mly)
-TARGS = arbogen
-KIND = native # d.byte
-FLAGS = -w,Ae,-warn-error,A
+# where to install the man page
+MANDIR=${prefix}/share/man
 
-all: $(TARGS)
+# other variables set by ./configure
+OCAMLC   = ocamlc
+OCAMLOPT = ocamlopt
+OCAMLDEP = ocamldep
+OCAMLLEX = ocamllex
+OCAMLYACC= ocamlyacc
+OCAMLLIB = /usr/lib/ocaml
+OCAMLBEST= op
 
-arbogen: _build/src/Arbogen.$(KIND)
-	cp $< $@
+OCAMLFLAG= -I src/
+
+SRCS = src/Options.ml src/Util.ml src/Grammar.ml src/CombSys.ml src/OracleSimple.ml src/Tree.ml src/Gen.ml src/GParser.ml src/ArboLib.ml src/Arbogen.ml
+
+
+all: arbogen
+
+arbogen: $(SRCS)
+	mkdir bin
+	$(OCAMLOPT) $(OCAMLFLAG) -o bin/arbogen $(SRCS)
+
+arbogen.byte: $(SRCS)
+	mkdir bin
+	$(OCAMLC) -o bin/arbogen.byte $(SRCS)
+
 
 install:: arbogen
 	mkdir -p $(BINDIR)
-	mv arbogen $(BINDIR)
+	mv bin/arbogen $(BINDIR)
 	mkdir -p $(MANDIR)/man1
 	cp -f doc/$(TARGS).1 /usr/local/man/man1/$(TARGS).1
 
-_build/src/%.$(KIND): $(SRCS)
-	ocamlbuild -cflags $(FLAGS) -no-links -I src $*.$(KIND)
-
 clean:
-	@ocamlbuild -clean
-	@rm -f *~ $(TARGS)
+	rm -f src/*~
+	rm -f src/*.cmi 
+	rm -f src/*.cmx
+	rm -f src/*.cmo 
+	rm -f src/*.o
 
-.PHONY: all clean
+cleanall: clean
+	rm -f bin/arbogen
+	rm -f bin/arbogen.byte
+	rm -rf bin
