@@ -1,7 +1,6 @@
 #!/bin/sh
 #packaging.sh
 #creates an install package for using the files in its directory
-#the verision is passed as a parameter
 
 pack=arbogen_`cat VERSION`
 

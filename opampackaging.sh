@@ -3,7 +3,7 @@
 #creates an opam package
 #the verision is passed as a parameter
 
-file=arbogen.$1
+file=arbogen.`cat VERSION`
 mkdir $file
 
 cat <<EOF > $file/descr
