@@ -23,11 +23,11 @@ SRCS = src/Options.ml src/Util.ml src/Grammar.ml src/CombSys.ml src/OracleSimple
 all: arbogen
 
 arbogen: $(SRCS)
-	mkdir bin
+	mkdir -p bin
 	$(OCAMLOPT) $(OCAMLFLAG) -o bin/arbogen $(SRCS)
 
 arbogen.byte: $(SRCS)
-	mkdir bin
+	mkdir -p bin
 	$(OCAMLC) $(OCAMLFLAG) -o bin/arbogen.byte $(SRCS)
 
 

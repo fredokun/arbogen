@@ -175,7 +175,9 @@ let gen_tree
 	let queue = Queue.create () in
 	let (first_rule,_) = List.hd g in
 	Queue.push first_rule queue;
+	(* printf "BEFORE GEN STACK" ; *)
 	let (stack,size) = gen_stack_tree 1 queue (Stack.create ()) map sizemax leafs in
+	(* printf "AFTER GEN STACK" ; !!! SHOULD BE TAIL RECURSIVE ! *)  
 	gen_tree_of_stack (stack,size) with_prefix idprefix
 
 (* TODO: à documenter *)
@@ -206,7 +208,9 @@ let generator
                   
 		let rec try_gen (nb_try:int) (nb_smaller:int) (nb_bigger:int) : ((tree * int) option * int * int) =
 			if nb_try > 0 then
-				(match gen_tree g with_prefix idprefix sizemax y with
+			  let result = 
+			    gen_tree g with_prefix idprefix sizemax y in
+				(match result with
 				| (Some tree,size) ->
                                   if global_options.verbosity >= 3
                                   then printf "[GEN]: Generated tree of size = %d\n%!" size ;

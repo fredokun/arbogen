@@ -36,7 +36,7 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 
 let name_of_elem (elt:elem) =
 	match elt with
-		|SEQ(name) -> name
+		|SEQ(name) -> "SEQ(" ^ name ^ ")"
 		|ELEM(name) -> name ;;
 
 let names_of_component (_,comps) =
