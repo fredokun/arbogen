@@ -6,4 +6,4 @@ set min 100;
 set max 200;
 set try 500;
 
-Node ::=  Leaf + Node * Node *  SEQ(Node) * <z>;
+Node ::=  Leaf * <z> + Node * Node *  SEQ(Node) * <z>;

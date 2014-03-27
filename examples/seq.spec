@@ -7,4 +7,4 @@ set min 100;
 set max 200;
 set try 50;
 
-BinNode ::=   SEQ(BinNode) * <z>;
+BinNode ::=  Leaf * <z> +  SEQ(BinNode) * <z>;
