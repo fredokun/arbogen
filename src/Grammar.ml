@@ -36,7 +36,7 @@ let (plane_tree:(Elem.t * (int * Elem.t list) list) list) = [ (ELEM("T"),[(0,[SE
 
 let name_of_elem (elt:elem) =
 	match elt with
-		|SEQ(name) -> "SEQ(" ^ name ^ ")"
+		|SEQ(name) -> name
 		|ELEM(name) -> name ;;
 
 let names_of_component (_,comps) =
@@ -70,15 +70,18 @@ let count (elt:elem) (liste: elem list) =
 
 (* printing *)
 
-(*TODO à revoir *)
+let string_of_elem = function
+  | ELEM name -> name
+  | SEQ name -> "SEQ(" ^ name ^ ")"
+
 let string_of_component (weight,refs) =
   let rec strz w =
     if w=0 then ""
     else " * <z>" ^ (strz (w-1))
   in let rec strrefs = function
     | [] -> ""
-    | [ref] -> name_of_elem ref
-    | ref::refs -> (name_of_elem ref) ^ " * " ^ (strrefs refs)
+    | [ref] -> string_of_elem ref
+    | ref::refs -> (string_of_elem ref) ^ " * " ^ (strrefs refs)
      in
      (strrefs refs) ^ (strz weight) ;;
 

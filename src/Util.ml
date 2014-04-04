@@ -19,11 +19,11 @@ let fold_map mop fop finit a =
 
 
 let string_of_list str_of_elem op dl cl l =
-  	let rec aux = function
-  | [] -> cl
-  | [e] -> op ^ (str_of_elem e) ^ cl
-  | e::l' -> op ^ (str_of_elem e) ^ dl ^ (aux l')
-in op ^ (aux l)
+  let rec aux = function
+    | [] -> cl
+    | [e] -> op ^ (str_of_elem e) ^ cl
+    | e::l' -> op ^ (str_of_elem e) ^ dl ^ (aux l')
+  in op ^ (aux l)
 
 let rec output_list out output_elem op dl cl l = match l with
   | [] -> output_string out cl
@@ -37,19 +37,22 @@ let rec output_list out output_elem op dl cl l = match l with
     output_string out dl ;
     output_list out output_elem "" dl cl l'
 
-let rec concat_n l n =
-	match n with
-	| 0 -> []
-	| n -> List.append l (concat_n l (n-1))
+let concat_n l n =
+  let rec aux l n acc =
+    match n with
+    | 0 -> acc
+    | n -> (aux l (n-1) (l @ acc))
+  in
+  aux l n []
 
 (* Queue utilities *)
 let npop n q =
-	let rec npop_rec n q l=
-		match n with
-		|0 -> l
-		|_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
-	in
-	npop_rec n q []
+  let rec npop_rec n q l=
+    match n with
+    |0 -> l
+    |_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
+  in
+  npop_rec n q []
 
 (* Array utilities *)
 
@@ -65,8 +68,8 @@ let array_unop (op:'a -> 'b) (init:'b) (a:'a array) : 'b array =
   in
   let b = Array.make n init
   in 
-	aux 0 n b;
-	b
+  aux 0 n b;
+  b
 
 let array_binop (op:'a -> 'b -> 'c) (init:'c) (a:'a array) (b:'b array) : 'c array =
   let rec aux i len c =
@@ -80,11 +83,11 @@ let array_binop (op:'a -> 'b -> 'c) (init:'c) (a:'a array) (b:'b array) : 'c arr
   in
   let c = Array.make n init
   in 
-	aux 0 n c; 
-	c 
+  aux 0 n c; 
+  c 
 
 let string_of_array (tostr:'a -> string) (a : 'a array) : string =
-	"[" ^ (Array.fold_left (fun str e -> str ^  (tostr e) ^ ",") "" a) ^ "]" 
+  "[" ^ (Array.fold_left (fun str e -> str ^  (tostr e) ^ ",") "" a) ^ "]" 
 
 
 
@@ -110,7 +113,7 @@ let array_fold_it (f:int -> 'a -> 'b -> 'b) (tab:'a array) (unt:'b) : 'b =
 
 
 let array_clone (a:'a array) (b:'a array) : unit =
-	Array.blit a 0 b 0 (Array.length a)
+  Array.blit a 0 b 0 (Array.length a)
 
 (* string set *)
 
@@ -121,60 +124,60 @@ module StringSet = Set.Make (String) ;;
 module StringMap = Map.Make (String) ;;
 
 let compareStrArr (s:string) (a:string array) : bool =
-	let l = Array.length a in
-	let theend = l - 1 in
-	let r = ref false in
-	for i = 0 to theend do
-		if String.compare s a.(i) = 0 then
-			 r := true
-	done;
-	!r
+  let l = Array.length a in
+  let theend = l - 1 in
+  let r = ref false in
+  for i = 0 to theend do
+    if String.compare s a.(i) = 0 then
+      r := true
+  done;
+  !r
 
 let findIndexstr (st:string array) (s:string) : int = 
-	let l = Array.length st in
-	let theend = l - 1 in
-	let r = ref 100 in
-	for i = 0 to theend do
-		if String.compare s st.(i) = 0 then
-			 r := i
-	done;
-	!r
-	
+  let l = Array.length st in
+  let theend = l - 1 in
+  let r = ref 100 in
+  for i = 0 to theend do
+    if String.compare s st.(i) = 0 then
+      r := i
+  done;
+  !r
+    
 
 let interval (i1:int)  (i2:int) (x:int) : bool =
-	if (x >= i1) && (x <= i2) 
-	then
-		true
-	else
-		false
+  if (x >= i1) && (x <= i2) 
+  then
+    true
+  else
+    false
 
 let sumTab (t : int array) : int =
-	let l = Array.length t in
-	let e = l - 1 in
-	let r = ref 0 in
-	for i = 0 to e do
-		r := !r + t.(i)
-        done;
-	!r
+  let l = Array.length t in
+  let e = l - 1 in
+  let r = ref 0 in
+  for i = 0 to e do
+    r := !r + t.(i)
+  done;
+  !r
 
 
 (* 0 signifie rien, 1 signifie < à l'interval,-1 signifie > à l'interval *) 
 let ifAtLeast8Smallerin10OthersBigger (p1:int) (p2:int) (tab:int array) : bool  =
-	let restab = Array.make 10 0 in
-	for i = 0 to 9 do
-		if tab.(i) < p1 then
-			restab.(i) <- 1
-		else
-			if tab.(i) > p2 then 
-                        	restab.(i) <- -1 			
-                        else 				
-                                restab.(i) <- 0
-        done;
-        let thesumTab = sumTab restab in
-        if thesumTab >= 6 then
-                 true
-        else
-                 false	
+  let restab = Array.make 10 0 in
+  for i = 0 to 9 do
+    if tab.(i) < p1 then
+      restab.(i) <- 1
+    else
+      if tab.(i) > p2 then 
+        restab.(i) <- -1 			
+      else 				
+        restab.(i) <- 0
+  done;
+  let thesumTab = sumTab restab in
+  if thesumTab >= 6 then
+    true
+  else
+    false	
 
 
 

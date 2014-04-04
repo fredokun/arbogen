@@ -28,10 +28,10 @@ let contains (s1:string) (s2:string) =
       if String.sub s1 i len = s2 then raise Exit
     done;
     false
-  with Exit -> true  
+  with Exit -> true
 
 let is_space = function
-  | Char(ch) -> ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r'
+  | Char(ch) -> ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r'
   | EOF -> false ;;
 
 let get_char (str:string) (i:int) = 
@@ -108,7 +108,7 @@ let next_word (str:string) (i:int) =
       | Char(ch) -> 
         if is_space ichar then
           (List.rev word,i)
-        else if ch='*' or ch='+' or ch=';' then
+        else if ch='*' || ch='+' || ch=';' then
           (match word with
             | [] -> ([ch], i+1)
             | _ -> (List.rev word, i))
@@ -130,27 +130,27 @@ let parse_component (str:string) (i:int) =
       let (next,i'') = next_word str i' in
       (if next="*" then
           aux i'' (weight+1) refs
-       else if next="+" or next=";" then
+       else if next="+" || next=";" then
          match refs with
            | [] -> raise (Parse_Error "Missing reference after <z>")
            | _ -> ((weight+1,List.rev refs),i')
        else
          raise (Parse_Error "Expecting '*', '+' or ';' after <z>"))
-    else if componentName="*" or componentName="+" then
+    else if componentName="*" || componentName="+" then
       raise (Parse_Error ("Unexpected '" ^ componentName ^ "'"))
     else if (contains componentName "SEQ(") == true then
        let start = String.index componentName '(' in
         let stop = String.index componentName ')' in
           let name = String.sub componentName (start+1) (stop-start-1) in
             let (next,i'') = next_word str i' in
-              if next="+" or next =";" then
+              if next="+" || next =";" then
                 ((weight,List.rev ((SEQ name)::refs)),i')
               else if next="*" then
                 aux i'' weight ((SEQ name)::refs)
               else raise (Parse_Error "Expecting '+', ';' or '*'")
     else (* component Name is ok *)
       let (next,i'') = next_word str i' in
-      if next="+" or next =";" then
+      if next="+" || next =";" then
         ((weight,List.rev ((ELEM componentName)::refs)),i')
       else if next="*" then
         aux i'' weight ((ELEM componentName)::refs)
