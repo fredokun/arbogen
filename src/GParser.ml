@@ -306,5 +306,5 @@ let parse_from_file (fname:string) =
   let grm = parse_grammar input
   in 
     if Options.global_options.verbosity >= 3
-    then printf "[GEN]: Parsed grammar = %s\n%!" (Grammar.string_of_grammar (List.map (fun (n,l) -> (ELEM n,l)) grm)) ;
+    then printf "[GEN]: Parsed grammar = %s\n%!" (Grammar.string_of_grammar grm) ;
     grm ;;

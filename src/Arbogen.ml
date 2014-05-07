@@ -167,6 +167,11 @@ let grammar =
 if (global_options.verbosity) > 0
 then printf "==> Grammar file loaded\n%!" ;;
 
+if (global_options.verbosity) > 2
+then begin
+  printf "==> Grammar completion:\n%!" ;
+  printf "%s%!" (Grammar.string_of_grammar (Grammar.completion grammar))
+end ;;
 
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;

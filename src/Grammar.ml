@@ -83,14 +83,19 @@ let string_of_component (weight,refs) =
     | [ref] -> string_of_elem ref
     | ref::refs -> (string_of_elem ref) ^ " * " ^ (strrefs refs)
      in
-     (strrefs refs) ^ (strz weight) ;;
+     (match refs with
+       | [] -> "1"
+       | _ -> (strrefs refs)) ^ (strz weight) ;;
 
 let string_of_rule (rname,comps) =
 	 let rec strcomps = function
 		| [] -> ""
 		| [comp] -> (string_of_component comp) ^ " ;"
 		| comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
-	 in ((name_of_elem rname) ^ " ::= " ^ (strcomps comps)) ;;
+	 in let rstr = match comps with
+	   | [] -> "<empty>"
+	   | _ -> strcomps comps
+	    in rname ^ " ::= " ^ rstr ;;
 
 let rec string_of_grammar = function
   | [] -> ""
