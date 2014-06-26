@@ -52,6 +52,11 @@ Arg.parse [
         eprintf "Error: wrong maximum size %d => must be strictly positive\n...aborting\n%!" n ;
         exit 1;
       end
+    else if n < global_options.size_min then
+      begin 
+        eprintf "Error: wrong maximum size %d => must be strictly bigger than minimum\n...aborting\n%!" n ;
+        exit 1;
+      end
     else  begin
       global_options.size_max <- n;
       global_options.size_max_set <- true
