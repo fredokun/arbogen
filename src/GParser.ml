@@ -222,6 +222,8 @@ let parse_option (str:string) (i:int) =
     in
       (if max_val < 0 
        then raise (Option_Error (sprintf "incorrect maximal size %d => should be positive" max_val))
+       else if max_val < global_options.size_min
+       then raise (Option_Error(sprintf "incorrect maximal size %d ==> should be bigger than minimum" max_val)) 
        else if not global_options.size_max_set
        then global_options.size_max <- max_val) ;
       advance str i' ";"
