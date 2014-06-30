@@ -18,8 +18,8 @@ open Util
 (* Elements of grammar *)
 type elem = SEQ of string | ELEM of string ;;
 
-type component = int * elem list ;; (* weight , sub-components *)
-     
+type component =  CALL of elem | CONS of int * component list
+
 type rule = string * component list ;;
 
 type grammar = rule list ;;
