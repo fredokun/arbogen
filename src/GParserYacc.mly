@@ -1,6 +1,9 @@
+%{
 open Parsing
 open Lexing
 open Hashtbl
+%}
+
 
 %token <int> NUM
 %token <string> VIDENT
@@ -12,7 +15,7 @@ open Hashtbl
 %token EOF
 
 %start grammar
-%type <Grammar.grammar> grammar
+%type <Ast_parsed.grammar> grammar
 
 %%
 
@@ -32,16 +35,16 @@ components:
  | component { $1 }
 
 component:
- | elem TIMES component
+ | elem TIMES component {}
 
 seq:
-SEQ LPAREN VIDENT RPAREN { SEQ $3$ }
+ |SEQ LPAREN VIDENT RPAREN { SEQ $3$ }
 
 elem:
-VIDENT { ELEM $1 }
+ |VIDENT { ELEM $1 }
 
 weight:
-LWEIGHT NUM RWEIGHT { $2$ }
+ |LWEIGHT NUM RWEIGHT { $2$ }
 
 one:
-ONE { 1 }
+ |ONE { 1 }
