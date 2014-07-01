@@ -16,13 +16,16 @@ open Util
 (* Grammar encoding *)
 
 (* Elements of grammar *)
-type elem = SEQ of string | ELEM of string ;;
+type elem = SEQ of string | ELEM of string
 
-type component =  CALL of elem | CONS of int * component list
+(*type call = elem
+type cons = int * (call list)*)
 
-type rule = string * component list ;;
+type component =  CALL of elem | CONS of int * (elem list)
 
-type grammar = rule list ;;
+type rule = string * component list
+
+type grammar = rule list
 
 (* example of grammar  
 let bintree = [ (ELEM("BinNode"), [ (1,[ELEM("Leaf")]) ; 
