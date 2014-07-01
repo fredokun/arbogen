@@ -1,29 +1,32 @@
-GParserYacc.cmi : ast_parsed.cmi
-ast_parsed.cmi :
+Parser.cmi : Ast.cmo
 ArboLib.cmo : Util.cmo Tree.cmo OracleSimple.cmo Grammar.cmo Gen.cmo \
     CombSys.cmo
 ArboLib.cmx : Util.cmx Tree.cmx OracleSimple.cmx Grammar.cmx Gen.cmx \
     CombSys.cmx
 Arbogen.cmo : Tree.cmo Options.cmo Grammar.cmo Gen.cmo GParser.cmo
 Arbogen.cmx : Tree.cmx Options.cmx Grammar.cmx Gen.cmx GParser.cmx
+Ast.cmo : Grammar.cmo
+Ast.cmx : Grammar.cmx
 CombSys.cmo : Util.cmo Grammar.cmo
 CombSys.cmx : Util.cmx Grammar.cmx
-GLexer.cmo : GParserYacc.cmi
-GLexer.cmx : GParserYacc.cmx
 GParser.cmo : Options.cmo Grammar.cmo
 GParser.cmx : Options.cmx Grammar.cmx
-GParserYacc.cmo : ast_parsed.cmi GParserYacc.cmi
-GParserYacc.cmx : ast_parsed.cmi GParserYacc.cmi
 Gen.cmo : Util.cmo Tree.cmo OracleSimple.cmo Options.cmo Grammar.cmo \
     CombSys.cmo
 Gen.cmx : Util.cmx Tree.cmx OracleSimple.cmx Options.cmx Grammar.cmx \
     CombSys.cmx
 Grammar.cmo : Util.cmo
 Grammar.cmx : Util.cmx
+Lexer.cmo : Parser.cmi
+Lexer.cmx : Parser.cmx
 Options.cmo :
 Options.cmx :
 OracleSimple.cmo : Util.cmo CombSys.cmo
 OracleSimple.cmx : Util.cmx CombSys.cmx
+Parser.cmo : Ast.cmo Parser.cmi
+Parser.cmx : Ast.cmx Parser.cmi
+Test.cmo : Parser.cmi Lexer.cmo Grammar.cmo Ast.cmo
+Test.cmx : Parser.cmx Lexer.cmx Grammar.cmx Ast.cmx
 Tree.cmo : Util.cmo
 Tree.cmx : Util.cmx
 Util.cmo :

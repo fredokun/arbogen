@@ -1,5 +1,5 @@
 {
-open GParserYacc
+open Parser
 open Hashtbl
 open Parsing
 
@@ -12,13 +12,13 @@ let () =
     ]
 }
 
-let var_ident = ['A'-'Z']['-' '_' 'a'-'z''0'-'9']*
-let kwd_ident = ['A'-'Z']*
+let ident = ['A'-'Z']['-' '_' 'a'-'z''0'-'9''A'-'Z']*
 let num = ['0'-'9']*
 let lparen = '('
 let rparen = ')'
 let lweight = "<z^"
 let rweight = '>'
+let z = "<z>"
 let one = "<1>"
 
 let plus = '+'
@@ -36,18 +36,16 @@ rule token = parse
     Lexing.new_line lexbuf;
     token lexbuf
   }
-  | kwd_ident as s {
+  | ident as s {
     try
       Hashtbl.find keyword_table s
     with Not_found ->
-      failwith ("Unknown keyword : " ^ s)
-  }
-  | var_ident as s {
-    VIDENT (s)
+      IDENT (s)
   }
   | num as n {
     NUM (int_of_string n)
   }
+  | z { Z }
   | one { ONE }
   | lweight { LWEIGHT }
   | rweight { RWEIGHT }

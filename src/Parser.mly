@@ -2,6 +2,7 @@
 open Parsing
 open Lexing
 open Hashtbl
+open Ast
 
 let add_option a b =
   match a,b with
@@ -13,16 +14,16 @@ let add_option a b =
 
 
 %token <int> NUM
-%token <string> VIDENT
+%token <string> IDENT
 
 %token SEQ
 
-%token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE
+%token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
 %token EOF
 
 %start start
-%type <Ast_parsed.grammar> start
+%type <Ast.ast> start
 
 %%
 
@@ -37,7 +38,7 @@ rules:
 
 /* string * (int option * elem list) list */
 rule:
- | VIDENT EQUAL components { ($1, $3) }
+ | IDENT EQUAL components { ($1, $3) }
 
 
 /* (int option * (elem option) list) list */
@@ -63,16 +64,20 @@ sub_component:
  | elem { (None, Some $1) }
  | seq { (Some 0, Some $1) }
  | weight { ($1, None) }
+ | z { ($1, None) }
  | one { ($1, None) }
 
 seq:
- |SEQ LPAREN VIDENT RPAREN { Ast_parsed.SEQ $3 }
+ | SEQ LPAREN IDENT RPAREN { Ast.Seq $3 }
 
 elem:
- |VIDENT { Ast_parsed.ELEM $1 }
+ | IDENT { Ast.Elem $1 }
 
 weight:
- |LWEIGHT NUM RWEIGHT { Some $2 }
+ | LWEIGHT NUM RWEIGHT { Some $2 }
+
+z:
+ | Z { Some 1 }
 
 one:
- |ONE { Some 0 }
+ | ONE { Some 0 }

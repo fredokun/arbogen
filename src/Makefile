@@ -1,54 +1,3 @@
-# # where to install the binaries
-# prefix=/usr/local
-# exec_prefix=${prefix}
-# BINDIR=${exec_prefix}/bin
-
-# # where to install the man page
-# MANDIR=${prefix}/share/man
-
-# # other variables set by ./configure
-# OCAMLC   = ocamlc
-# OCAMLOPT = ocamlopt
-# OCAMLDEP = ocamldep
-# OCAMLLEX = ocamllex
-# OCAMLYACC= ocamlyacc
-# OCAMLLIB = /usr/lib/ocaml
-# OCAMLBEST= op
-
-# OCAMLFLAG= -I src/
-
-# SRCS = src/Options.ml src/Util.ml src/Grammar.ml src/CombSys.ml src/OracleSimple.ml src/Tree.ml src/Gen.ml src/GParser.ml src/ArboLib.ml src/Arbogen.ml
-
-
-# all: arbogen
-
-# arbogen: $(SRCS)
-# 	mkdir -p bin
-# 	$(OCAMLOPT) $(OCAMLFLAG) -o bin/arbogen $(SRCS)
-
-# arbogen.byte: $(SRCS)
-# 	mkdir -p bin
-# 	$(OCAMLC) $(OCAMLFLAG) -o bin/arbogen.byte $(SRCS)
-
-
-# install:: arbogen
-# 	mkdir -p $(BINDIR)
-# 	mv bin/arbogen $(BINDIR)
-# 	mkdir -p $(MANDIR)/man1
-# 	cp -f doc/$(TARGS).1 /usr/local/man/man1/$(TARGS).1
-
-# clean:
-# 	rm -f src/*~
-# 	rm -f src/*.cmi 
-# 	rm -f src/*.cmx
-# 	rm -f src/*.cmo 
-# 	rm -f src/*.o
-
-# cleanall: clean
-# 	rm -f bin/arbogen
-# 	rm -f bin/arbogen.byte
-# 	rm -rf bin
-
 #*********************************************************************#
 #                                                                     #
 #                           Objective Caml                            #
@@ -117,7 +66,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = GLexer.mll GParserYacc.mly GParserYacc.ml GLexer.mll Options.ml Util.ml Grammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml GParser.ml ArboLib.ml Arbogen.ml
+SOURCES = Parser.mly Lexer.mll Ast.ml Options.ml Util.ml Grammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml GParser.ml ArboLib.ml Arbogen.ml
 
 # The executable file to generate
 
