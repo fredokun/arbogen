@@ -117,7 +117,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = src/GLexer.mll src/GParserYacc.mly src/Options.ml src/Util.ml src/Grammar.ml src/CombSys.ml src/OracleSimple.ml src/Tree.ml src/Gen.ml src/GParser.ml src/ArboLib.ml src/Arbogen.ml
+SOURCES = GLexer.mll GParserYacc.mly GParserYacc.ml GLexer.mll Options.ml Util.ml Grammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml GParser.ml ArboLib.ml Arbogen.ml
 
 # The executable file to generate
 

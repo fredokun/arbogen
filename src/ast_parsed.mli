@@ -1,7 +1,7 @@
 type elem = SEQ of string | ELEM of string
 
-type component =  int * elem list
+type component = int option * ((elem option) list)
 
-type rule = string * component list
+type rule = string * (component list)
 
 type grammar = rule list
