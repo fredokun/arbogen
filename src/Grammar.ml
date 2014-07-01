@@ -68,17 +68,21 @@ let string_of_elem = function
 let string_of_component comp =
   let strz w =
     if w=0 then ""
-    else " * <z^" ^ (string_of_int w) ^ ">"
+    else "<z^" ^ (string_of_int w) ^ ">"
   in
   let rec strcons cons_list=
     match cons_list with
-    | [] -> ""
+    | [] -> "1"
     | [ref] -> string_of_elem ref
     | ref::refs -> (string_of_elem ref) ^ " * " ^ (strcons refs)
   in
   match comp with
   | Call e -> "Call(" ^ e ^ ")"
-  | Cons (weight, cons_list) -> "Cons(" ^ (strcons cons_list) ^ (strz weight) ^ ")"
+  | Cons (weight, cons_list) ->
+    if weight != 0 then
+      "Cons(" ^ (strcons cons_list) ^ " * " ^ (strz weight) ^ ")"
+    else
+      "Cons(" ^ (strcons cons_list) ^  ")"
 
 let string_of_rule (rname,comps) =
 	 let rec strcomps = function

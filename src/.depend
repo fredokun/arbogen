@@ -25,8 +25,8 @@ OracleSimple.cmo : Util.cmo CombSys.cmo
 OracleSimple.cmx : Util.cmx CombSys.cmx
 Parser.cmo : Ast.cmo Parser.cmi
 Parser.cmx : Ast.cmx Parser.cmi
-Test.cmo : Parser.cmi Lexer.cmo Grammar.cmo Ast.cmo
-Test.cmx : Parser.cmx Lexer.cmx Grammar.cmx Ast.cmx
+Test.cmo : Parser.cmi Lexer.cmo Grammar.cmo CombSys.cmo Ast.cmo
+Test.cmx : Parser.cmx Lexer.cmx Grammar.cmx CombSys.cmx Ast.cmx
 Tree.cmo : Util.cmo
 Tree.cmx : Util.cmx
 Util.cmo :
