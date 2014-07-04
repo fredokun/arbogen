@@ -181,7 +181,7 @@ $(EXEC).opt: $(OPTOBJS)
 	$(CAMLYACC) $<
 
 clean:
-	rm -f src/*.cm[iox] src/*~ src/.*~ src/*.o #*#
+	rm -f *.cm[iox] *~ .*~ *.o #*#
 	rm -f $(EXEC)
 	rm -f $(EXEC).opt
 

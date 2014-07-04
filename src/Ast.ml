@@ -1,5 +1,3 @@
-open Grammar
-
 (* AST *)
 
 type elem = Seq of string | Elem of string
@@ -49,4 +47,4 @@ let grm_rule_of_ast_rule (name,comps) =
   (name, List.map grm_comp_of_ast_comp comps)
 
 let grammar_of_ast ast =
-  List.map grm_rule_of_ast_rule ast
+  Grammar.completion (List.map grm_rule_of_ast_rule ast)
