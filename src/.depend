@@ -11,10 +11,10 @@ CombSys.cmo : Util.cmo Grammar.cmo
 CombSys.cmx : Util.cmx Grammar.cmx
 GParser.cmo : Options.cmo Grammar.cmo
 GParser.cmx : Options.cmx Grammar.cmx
-Gen.cmo : Util.cmo Tree.cmo OracleSimple.cmo Options.cmo Grammar.cmo \
-    CombSys.cmo
-Gen.cmx : Util.cmx Tree.cmx OracleSimple.cmx Options.cmx Grammar.cmx \
-    CombSys.cmx
+Gen.cmo : WeightedGrammar.cmo Util.cmo Tree.cmo OracleSimple.cmo Options.cmo \
+    Grammar.cmo CombSys.cmo
+Gen.cmx : WeightedGrammar.cmx Util.cmx Tree.cmx OracleSimple.cmx Options.cmx \
+    Grammar.cmx CombSys.cmx
 Grammar.cmo : Util.cmo
 Grammar.cmx : Util.cmx
 Lexer.cmo : Parser.cmi
