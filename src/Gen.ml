@@ -1,4 +1,4 @@
-(*********************************************************
+(********************************************************
 * Arbogen-lib : fast uniform random generation of trees *
 *********************************************************
 * Module: Gen                                           *
@@ -20,6 +20,8 @@ open CombSys
 open Grammar
 open OracleSimple
     
+
+
 (* let pondere2 (g:grammar) (y:float array)
 	(*: (float StringMap * (string list * float) list StringMap )*) =
   let g_comp = completion g in
@@ -57,40 +59,60 @@ open OracleSimple
   in
   List.fold_left aux StringMap.empty g_comp *)
 
+let rec find_component rdm_float componentList = 
+  match componentList with
+  | [comp] -> comp
+  | comp::list_comp -> let (freq,composant) = comp in
+                            if rdm_float <= freq then
+                              comp
+                            else
+                              find_component (rdm_float-.freq) list_comp
+  | _ -> failwith "find_component failed !!!" 
 
-let getNext rule map =      (* from a rule i should be able to use the map to return the thing i need to apply*)
+let rec get_next_rule (name_rule:string) wgrm =      
+  let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
+    let rdm_float = Random.float total_weight in 
+      let comp = (find_component rdm_float component_list) in
+        match comp with 
+        | Call elem -> get_next_rule (name_of_elem elem) wgrm 
+
+        | Cons w,elem_list -> List.fold_left 
+                              (fun elem next_rules -> match elem with
+                                                      | Elem name -> name :: next_rules
+                                                      | Seq name -> let (w,_) = StringMap.find name_rule wgrm in
+                                                                    let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
+                                                                             next_rules @ (concat_n [name] n'-1)
+                              )
+                              []
+                              elem_list 
+        | _ -> printf "Lol"
 
 
+let rec count_rules counters elements =
+  match elements with 
+  |elem::elems -> let nb = StringMap.find (name_of_elem elem) counters in
+                          let new_map = StringMap.add (name_of_elem elem) (nb+1) counters in
+                            count_rules new_map elems;
+  | _ -> counters
 
+let  find_non_zero counters = 
+  let filterd_map = StringMap.filter (fun _ n -> n <> 0) counters in
+    StringMap.choose filterd_map
 
-let rec sim(size:int)(mapQueue) map (sizemax:int) leafs = 
-  if (StringMap.is_empty mapQueue) then                 (* if no longer have anything left then return size *)
+let rec sim(size:int) counters wgrm (sizemax:int) leafs current_rule =
+  if (StringMap.for_all (fun _ n -> n == 0 ) counters) || (size>sizemax)  then
     size
-  else(
-    if size<sizemax then(                        
-        let next_rule = (List.hd mapQueue) in               (* get the next rule in mapQueue and decrease its value by one How to get the first element.*)
-          size = size + 1;
-        let nb = (StringMap.find next_rule mapQueue) in
-            StringMap.remove next_rule mapQueue;
-            if nb > 1 then
-              StringMap.add next_rule (nb-1) mapQueue;
-        let son = getNext next_rule map in                                                         
-          if (List.exists son leafs) then(           (* dont add to the list but just add the poids to size till now assume poid is 1 *)
-              size = size + 1;
-          )else(
-              if (List.exist mapQueue son) then
-                let nb = StringMap.find son mapQueue in
-                  StringMap.remove son mapQueue;
-                  StringMap.add son (nb+1) mapQueue;
-              else
-                StringMap.add son 1;
-              )
-        sim size mapQueue map sizemax leafs;  
-    )else
-      size
-)
+  else
+      if (StringSet.exists (fun n -> (n == (fst current_rule))) leafs) then
+         let(total_weight,_) = (StringMap.find (fst current_rule) wgrm) in
+          sim (size+total_weight) counters wgrm sizemax leafs (find_non_zero counters)
+      else
+        let (poid,elem) = get_next_rule (fst current_rule) wgrm in
+            let new_counters = (count_rules counters (List.tl next_rules)) in 
+            sim (size+weight) new_counters wgrm sizemax leafs (List.hd elem)
 
-let generator
+
+ let generator
     (g:grammar)
     (self_seed:bool) (seed:int)
     (sizemin:int) (sizemax:int)
@@ -100,7 +122,7 @@ let generator
     (max_try:int) (ratio_rejected:float)
     (max_refine:int)(zstart:float)
     : (tree*int) option = 
-      let sys = combsys_of_grammar(completion g) in
+    let sys = combsys_of_grammar(completion g) in
       let rec gen epsilon1 epsilon2 zmin zmax nb_refine zstart =
         let (zmin',zmax',y) = 
           (if global_options.verbosity >= 2
@@ -109,8 +131,19 @@ let generator
               (if global_options.verbosity >= 2
               then printf "          ==> found singularity at z=%f\n%!" zmin') ; 
 
-        let rec try_gen(nb_try:int)(nb_smaller:int) : ((tree * int) option * int * int) =
-          if self_seed
+        (* let rec try_gen(nb_try:int)(nb_smaller:int) : ((tree * int) option * int * int) =
+         *)  
+          Random.init 123123;
+          let leafs = leafs_of_grammar g in 
+          let(first_rule,_) = List.hd g in 
+          let counters = StringMap.empty in
+          (* need to fill the counter with 0 ?? *)
+          let res = sim 0 counters wgrm sizemax (fst first_rule) in
+            printf "res  : %d\n" res;
+       in
+          gen epsilon1 epsilon2 0. 1. 1 zstart 
+
+        (* if self_seed
           then
             Random.init seed;
           else
@@ -120,9 +153,9 @@ let generator
           let map = pondere2 g y in
           let leafs = leafs_of_grammar g in
           let (first_rule,_) = List.hd g in
-          let mapQueue = StringMap.empty in
-              StringMap.add first_rule 1 mapQueue; 
-              let res = sim 0 mapQueue map leafs sizemax in
+          let counters = StringMap.empty in
+              StringMap.add first_rule 1 counters; 
+              let res = sim 0 counters map leafs sizemax in
               if res >= sizemin && res <= sizemax then
                   begin
                     Ranom.init seed;
@@ -137,4 +170,4 @@ let generator
                     else
                         try_gen (nb_try-1) nb_smaller (nb_bigger+1)       (* Partie de rafinement on a le besoin ou pas ??? *)
           in
-          gen epsilon1 epsilon2 0. 1. 1 zstart
+          gen epsilon1 epsilon2 0. 1. 1 zstart  *)
