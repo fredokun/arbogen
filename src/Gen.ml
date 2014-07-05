@@ -19,6 +19,7 @@ open Util
 open CombSys
 open WeightedGrammar
 open OracleSimple
+open Grammar
 
 
 
@@ -95,21 +96,27 @@ let rec count_rules counters elements =
   | _ -> counters
 
 let  find_non_zero counters = 
-  let filterd_map = StringMap.filter (fun _ n -> n <> 0) counters in
-  StringMap.choose filterd_map
+  let filterd_map = StringMap.filter (fun _ n -> -n <> 0) counters in
+  fst (StringMap.choose filterd_map)
 
-let rec sim(size:float) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:float) leafs current_rule =
+let rec sim(size:float) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:float) leafs (current_rule:string) =
   if (StringMap.for_all (fun _ n -> n == 0 ) counters) || (size>sizemax)  then
     size
   else
-    if (StringSet.exists (fun n -> (n == (fst current_rule))) leafs) then
-      let(total_weight,_) = (StringMap.find (fst current_rule) wgrm) in
+    if (List.exists (fun n -> (n == current_rule)) leafs) then
+      let(total_weight,_) = (StringMap.find current_rule wgrm) in
       sim (size+.total_weight) counters wgrm sizemax leafs (find_non_zero counters)
     else
-      let next_rules = get_next_rule (fst current_rule) wgrm in
+      let next_rules = get_next_rule current_rule wgrm in
       let new_counters = (count_rules counters (List.tl next_rules)) in 
-        sim (size) new_counters wgrm sizemax leafs current_rule   (* needs to be modified here *)
+          printf "%s\n" (List.hd next_rules);
+          sim (size) new_counters wgrm sizemax leafs (List.hd next_rules)
 
+let rec init_counter g map =
+  match g with
+  | rul::rules -> StringMap.add (fst rul) 0 map
+  | _ -> map 
+ 
 (* 
 let generator
     (g:grammar)
