@@ -82,7 +82,7 @@ let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar)
         | (Grammar.Elem name) -> name :: next_rules
         | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in
                                 let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
-                                next_rules @ (concat_n [name] (n'-1))
+                                         next_rules @ (concat_n [name] (n'-1))
       )
       []
       elem_list
@@ -98,19 +98,19 @@ let  find_non_zero counters =
   let filterd_map = StringMap.filter (fun _ n -> n <> 0) counters in
   StringMap.choose filterd_map
 
-let rec sim(size:int) counters wgrm (sizemax:int) leafs current_rule =
+let rec sim(size:float) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:float) leafs current_rule =
   if (StringMap.for_all (fun _ n -> n == 0 ) counters) || (size>sizemax)  then
     size
   else
     if (StringSet.exists (fun n -> (n == (fst current_rule))) leafs) then
       let(total_weight,_) = (StringMap.find (fst current_rule) wgrm) in
-      sim (size+total_weight) counters wgrm sizemax leafs (find_non_zero counters)
+      sim (size+.total_weight) counters wgrm sizemax leafs (find_non_zero counters)
     else
-      let (elem,poid) = get_next_rule (fst current_rule) wgrm in
+      let next_rules = get_next_rule (fst current_rule) wgrm in
       let new_counters = (count_rules counters (List.tl next_rules)) in 
-      sim (size+weight) new_counters wgrm sizemax leafs (List.hd elem)
+        sim (size) new_counters wgrm sizemax leafs current_rule   (* needs to be modified here *)
 
-
+(* 
 let generator
     (g:grammar)
     (self_seed:bool) (seed:int)
@@ -140,7 +140,7 @@ let generator
     let res = sim 0 counters wgrm sizemax (fst first_rule) in
     printf "res  : %d\n" res;
   in
-  gen epsilon1 epsilon2 0. 1. 1 zstart 
+  gen epsilon1 epsilon2 0. 1. 1 zstart  *)
 
 (* if self_seed
    then
