@@ -25,10 +25,10 @@ OracleSimple.cmo : Util.cmo CombSys.cmo
 OracleSimple.cmx : Util.cmx CombSys.cmx
 Parser.cmo : Ast.cmo Parser.cmi
 Parser.cmx : Ast.cmx Parser.cmi
-Test.cmo : WeightedGrammar.cmo Parser.cmi OracleSimple.cmo Lexer.cmo \
-    Grammar.cmo CombSys.cmo Ast.cmo
-Test.cmx : WeightedGrammar.cmx Parser.cmx OracleSimple.cmx Lexer.cmx \
-    Grammar.cmx CombSys.cmx Ast.cmx
+Test.cmo : WeightedGrammar.cmo Util.cmo Parser.cmi OracleSimple.cmo \
+    Lexer.cmo Grammar.cmo Gen.cmo CombSys.cmo Ast.cmo
+Test.cmx : WeightedGrammar.cmx Util.cmx Parser.cmx OracleSimple.cmx \
+    Lexer.cmx Grammar.cmx Gen.cmx CombSys.cmx Ast.cmx
 Tree.cmo : Util.cmo
 Tree.cmx : Util.cmx
 Util.cmo :
