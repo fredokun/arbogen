@@ -29,8 +29,8 @@ let _ =
       let counters = init_counter grammar StringMap.empty in
       let (first_rule,_) = List.hd grammar in 
       let new_counters = StringMap.add first_rule 1 counters in
-      let res = sim 0.0 new_counters wgrm 100.0 first_rule in
-      printf "Size of Tree simulated %f\n" res; 
+      let res = sim 0 new_counters wgrm 100 first_rule in
+      printf "Size of Tree simulated %d\n" res; 
 
       print_newline();
       flush stdout;   

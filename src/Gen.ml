@@ -40,6 +40,7 @@ let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar)
   match comp with
     | (Grammar.Call elem), _ -> get_next_rule elem wgrm 
     | (Grammar.Cons( w, elem_list)), _ ->
+      (w, 
       List.fold_left 
 	(fun next_rules elem ->
           match elem with
@@ -49,7 +50,7 @@ let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar)
                                     next_rules @ (concat_n [name] (n'-1))
 	)
 	[]
-	elem_list
+	elem_list)
 
 
 let rec count_rules counters elements =
@@ -63,21 +64,20 @@ let  find_non_zero counters =
   let filterd_map = StringMap.filter (fun _ n -> -n <> 0) counters in
   fst (StringMap.choose filterd_map)
 
-let rec sim(size:float) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:float) (current_rule:string) =
+let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
   if (StringMap.for_all (fun _ n -> n = 0 ) counters) || (size>sizemax)  then
     size
   else
-    let(total_weight,_) = (StringMap.find current_rule wgrm) in
-    printf "total_weight = %f\n" total_weight; 
-    let next_rules = get_next_rule current_rule wgrm in
+    let(_,_) = (StringMap.find current_rule wgrm) in 
+    let (total_weight,next_rules) = get_next_rule current_rule wgrm in
     if (List.length next_rules) > 0 then
       let new_counters = (count_rules counters (List.tl next_rules)) in  
-      sim (size+.total_weight) new_counters wgrm sizemax  (List.hd next_rules)
+      sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules)
     else
       let non_zero = find_non_zero counters in
       let nb = StringMap.find non_zero counters in
       let new_nb = nb - 1 in
-      sim (size+.total_weight) (StringMap.add non_zero new_nb counters) wgrm sizemax non_zero
+      sim (size+total_weight) (StringMap.add non_zero new_nb counters) wgrm sizemax non_zero
         
 let rec init_counter g map =
   match g with
