@@ -24,16 +24,14 @@ let _ =
       print_endline (string_of_weighted_grammar wgrm);
       (* print_endline (fst @@ string_of_combsys combsys); wont compile on my pc therefore was commented*)
       print_newline();
-
+      
       Random.self_init () ;
       let counters = init_counter grammar StringMap.empty in
-      let(first_rule,_) = List.hd grammar in 
+      let (first_rule,_) = List.hd grammar in 
       let new_counters = StringMap.add first_rule 1 counters in
       let res = sim 0.0 new_counters wgrm 100.0 first_rule in
       printf "Size of Tree simulated %f\n" res; 
 
-      
-      
       print_newline();
       flush stdout;   
     done

@@ -66,11 +66,11 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = Parser.mly Lexer.mll Ast.ml Options.ml Util.ml Grammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml ArboLib.ml Arbogen.ml
+SOURCES = Parser.mly Lexer.mll Options.ml Util.ml Grammar.ml Ast.ml WeightedGrammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml Test.ml
 
 # The executable file to generate
 
-EXEC = a.out
+EXEC = test
 
 ########################## Advanced user's variables #####################
 #
@@ -88,7 +88,7 @@ CAMLYACC = ocamlyacc
 # LIBS=$(WITHGRAPHICS) $(WITHUNIX) $(WITHSTR) $(WITHNUMS) $(WITHTHREADS)\
 # $(WITHDBM)
 
-LIBS=$(WITHGRAPHICS)
+LIBS= # $(WITHGRAPHICS)
 
 # Should be set to -custom if you use any of the libraries above
 # or if any C code have to be linked with your program
