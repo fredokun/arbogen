@@ -37,7 +37,7 @@ let equal = "::="
 
 let space = [' ' '\t']*
 let newline = ['\n' '\r']
-let comment = '#' [^ '\n' '\r']*
+let comment = "//" [^ '\n' '\r']*
 
 rule token = parse
   | space {token lexbuf}

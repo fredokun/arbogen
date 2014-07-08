@@ -3,8 +3,8 @@ ArboLib.cmo : Util.cmo Tree.cmo OracleSimple.cmo Grammar.cmo Gen.cmo \
     CombSys.cmo
 ArboLib.cmx : Util.cmx Tree.cmx OracleSimple.cmx Grammar.cmx Gen.cmx \
     CombSys.cmx
-Arbogen.cmo : Tree.cmo ParseUtil.cmo Options.cmo Gen.cmo
-Arbogen.cmx : Tree.cmx ParseUtil.cmx Options.cmx Gen.cmx
+Arbogen.cmo : ParseUtil.cmo Options.cmo Gen.cmo Ast.cmo
+Arbogen.cmx : ParseUtil.cmx Options.cmx Gen.cmx Ast.cmx
 Ast.cmo : Grammar.cmo
 Ast.cmx : Grammar.cmx
 CombSys.cmo : Util.cmo Grammar.cmo

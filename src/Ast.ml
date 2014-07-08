@@ -53,8 +53,8 @@ let grm_comp_of_ast_comp (w,comp) =
 let grm_rule_of_ast_rule (name,comps) =
   (name, List.map grm_comp_of_ast_comp comps)
 
-let grammar_of_ast ast =
-  Grammar.completion (List.map grm_rule_of_ast_rule (snd ast))
+let grammar_of_ast_grammar ast_grammar =
+  Grammar.completion (List.map grm_rule_of_ast_rule ast_grammar)
 
 let options_of_ast ast =
   fst ast

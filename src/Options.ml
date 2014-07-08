@@ -29,6 +29,8 @@ type options_record = {
   mutable ratio_rejected_set: bool;
   mutable max_refine: int;
   mutable max_refine_set: bool;
+  mutable max_refine_seed: int;
+  mutable max_refine_seed_set: bool;
   mutable output_type: int;
   mutable fileName: string;
   mutable zstart: float;
@@ -65,6 +67,8 @@ let global_options = {
   ratio_rejected_set = false;
   max_refine = 8;
   max_refine_set = false;
+  max_refine_seed = 2;
+  max_refine_seed_set = false;
   output_type = 0;
   fileName = "tree";
   zstart = 0.0;
