@@ -113,6 +113,39 @@ Arg.parse [
       global_options.epsilon2_factor_set <- true
     end),
    "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
+  ("-reject_ratio", Arg.Float (fun x ->
+    if x <  0.0 then
+      begin
+        eprintf "Error: wrong ratio of rejection %f => must be positive\n...aborting\n%!" x ;
+        exit 1;
+      end
+    else begin
+      global_options.ratio_rejected <- x;
+      global_options.ratio_rejected_set <- true
+    end),
+   "<x> : set the rejection's ratio (a strictly positive float number)");
+  ("-max_refine", Arg.Int (fun x ->
+    if x <= 0 then
+      begin
+        eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
+        exit 1;
+      end
+    else begin
+      global_options.max_refine <- x;
+      global_options.max_refine_set <- true
+    end),
+   "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
+  ("-max_refine_seed", Arg.Int (fun x ->
+    if x <= 0 then
+      begin
+        eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
+        exit 1;
+      end
+    else begin
+      global_options.max_refine_seed <- x;
+      global_options.max_refine_seed_set <- true
+    end),
+   "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)");
   ("-try", Arg.Int (fun n ->
     if n <= 0 then
       begin
