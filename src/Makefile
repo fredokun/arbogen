@@ -66,11 +66,11 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = Parser.mly Lexer.mll Options.ml Util.ml Grammar.ml Ast.ml WeightedGrammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml Test.ml
+SOURCES = Parser.mly Lexer.mll Options.ml Util.ml Grammar.ml Ast.ml WeightedGrammar.ml CombSys.ml OracleSimple.ml Tree.ml Gen.ml Options.ml Arbogen.ml
 
 # The executable file to generate
 
-EXEC = test
+EXEC = arbogen
 
 ########################## Advanced user's variables #####################
 #
