@@ -13,10 +13,13 @@ let add_option a b =
 %}
 
 
-%token <int> NUM
-%token <string> IDENT
+%token <int> NUMI
+%token <float> NUMF
+%token <string> UIDENT LIDENT
 
 %token SEQ
+
+%token SET
 
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
@@ -28,8 +31,21 @@ let add_option a b =
 %%
 
 start:
- | rules EOF { $1 }
+ | options rules EOF { $1,$2 }
+ | rules EOF { [],$1 }
  | EOF { raise End_of_file }
+
+
+options:
+ | option options { $1 :: $2 }
+ | option { [$1] }
+
+
+option:
+ | SET LIDENT NUMF { Param ($2, Vfloat $3) }
+ | SET LIDENT NUMI { Param ($2, Vint $3) }
+ | SET LIDENT LIDENT { Param ($2, Vstring $3) }
+
 
 rules:
  | rule rules { $1::$2 }
@@ -38,7 +54,7 @@ rules:
 
 /* string * (int option * elem list) list */
 rule:
- | IDENT EQUAL components { ($1, $3) }
+ | UIDENT EQUAL components { ($1, $3) }
 
 
 /* (int option * (elem option) list) list */
@@ -67,17 +83,22 @@ sub_component:
  | z { ($1, None) }
  | one { ($1, None) }
 
+
 seq:
- | SEQ LPAREN IDENT RPAREN { Ast.Seq $3 }
+ | SEQ LPAREN UIDENT RPAREN { Ast.Seq $3 }
+
 
 elem:
- | IDENT { Ast.Elem $1 }
+ | UIDENT { Ast.Elem $1 }
+
 
 weight:
- | LWEIGHT NUM RWEIGHT { Some $2 }
+ | LWEIGHT NUMI RWEIGHT { Some $2 }
+
 
 z:
  | Z { Some 1 }
+
 
 one:
  | ONE { Some 0 }
