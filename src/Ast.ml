@@ -1,15 +1,22 @@
-(* AST *)
-
+(* Grammar *)
 type elem = Seq of string | Elem of string
 
 type component = int option * elem option list
 
 type rule = string * component list
 
-type ast = rule list
+type grammar = rule list
 
-(* AST to Grammar *)
+(* Parameter *)
+type value = Vint of int | Vfloat of float | Vstring of string
 
+type parameter = Param of string * value
+
+(* Ast *)
+type ast = parameter list * grammar
+
+
+(* Ast.grammar to Grammar.grammar *)
 let grm_elem_of_ast_elem = function
   | Seq s -> Grammar.Seq s
   | Elem s -> Grammar.Elem s
@@ -47,4 +54,7 @@ let grm_rule_of_ast_rule (name,comps) =
   (name, List.map grm_comp_of_ast_comp comps)
 
 let grammar_of_ast ast =
-  Grammar.completion (List.map grm_rule_of_ast_rule ast)
+  Grammar.completion (List.map grm_rule_of_ast_rule (snd ast))
+
+let options_of_ast ast =
+  fst ast
