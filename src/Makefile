@@ -181,6 +181,7 @@ $(EXEC).opt: $(OPTOBJS)
 	$(CAMLYACC) $<
 
 clean:
+	rm -f Lexer.ml Parser.mli Parser.ml
 	rm -f *.cm[iox] *~ .*~ *.o #*#
 	rm -f $(EXEC)
 	rm -f $(EXEC).opt
