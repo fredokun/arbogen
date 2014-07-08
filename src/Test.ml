@@ -26,11 +26,13 @@ let _ =
       print_newline();
       
       Random.self_init () ;
-      let counters = init_counter grammar StringMap.empty in
+      (* let counters = init_counter grammar StringMap.empty in
       let (first_rule,_) = List.hd grammar in 
       let new_counters = StringMap.add first_rule 1 counters in
       let res = sim 0 new_counters wgrm 100 first_rule in
       printf "Size of Tree simulated %d\n" res; 
+ *)
+      generator grammar true 0 100000 110000 0.01 0.1 0.01 0.1 1000 100 100 0.9;   
 
       print_newline();
       flush stdout;   
