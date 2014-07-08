@@ -174,7 +174,8 @@ then printf "==> Grammar file loaded\n%!" ;;
 
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;
- 
+
+printf "in arbogen : %d\n" global_options.size_min;; 
 
 let result =
   Gen.generator

@@ -93,6 +93,8 @@ let rec gen_aux_aux wgrm grm nb_try nb_smaller nb_bigger sizemin sizemax  =
     let new_counters = StringMap.add first_rule 1 counters in
     let res = sim 0 new_counters wgrm sizemax first_rule in
     printf "res = %d\n" res;
+    printf "sizemin = %d\n" sizemin;
+    printf "sizemax = %d\n" sizemax;
     if res < sizemin then
       begin
         printf "smaller \n";
@@ -110,9 +112,8 @@ let rec gen_aux_aux wgrm grm nb_try nb_smaller nb_bigger sizemin sizemax  =
 
 (* the loop to change the seed each time and loop nb_change_seed times *)
 let rec gen_aux wgrm grm nb_change_seed nb_try nb_smaller nb_bigger = 
+  printf "new_seed \n";
   if nb_change_seed > 0 then
-    let new_seed = Random.int 11231231 in
-    Random.init new_seed;
     let (size,new_nb_smaller,new_nb_bigger) = gen_aux_aux wgrm grm nb_try 0 0 nb_smaller nb_bigger in
     match size with
     | Some size -> (Some(size),(new_nb_smaller+nb_smaller),(nb_bigger+new_nb_bigger)) 
@@ -121,7 +122,7 @@ let rec gen_aux wgrm grm nb_change_seed nb_try nb_smaller nb_bigger =
     (None,nb_smaller,nb_bigger)
 
       (* the loop the refines the values after each time and loops nb_refine_seed times should also do the ratio thing for now not sure about it*)
-let rec gen nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax= 
+let rec gen nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed= 
   printf "just called gen : nb : %d\n" nb_refine_seed;
   let (zmin',zmax',y) = 
     (if global_options.verbosity >= 2
@@ -132,11 +133,18 @@ let rec gen nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax z
   let wgrm = weighted_grm_of_grm g y in     
   let (size,nb_smaller,nb_bigger) = gen_aux wgrm g nb_change_seed nb_try sizemin sizemax in
   match size with
-  | Some size -> Some(size)
+  | Some size -> Some(size,seed)
   | None  -> if nb_refine_seed > 0 then
-      gen  (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax
-    else
-      None 
+            begin
+              if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
+                 gen (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed
+              else
+                 let new_seed = Random.int 11231231 in
+                    Random.init new_seed;
+                    gen (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax  ratio_rejected new_seed         
+            end
+            else
+              None 
 
 
 
@@ -158,14 +166,20 @@ let generator
     (max_refine_seed:int)
     (zstart:float)
     =
-  (if self_seed
-   then Random.self_init ()
-   else Random.init seed) ;
+   if self_seed then 
+   begin
+   Random.self_init ();
+   let seed = Random.int 11231231 in
+                 Random.init seed;
+   end
+   else 
+   Random.init seed;
   let sys = combsys_of_grammar (completion g) in
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
   ); 
-  let final_size = gen max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax in
-  match final_size with 
-  | Some final_size -> printf "J'ai trouve %d \n" final_size;
+  printf "sizemin in generator = %d\n" sizemin;
+  let res = gen max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed in
+  match res with 
+  | Some(final_size,seed) -> printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
   | None -> printf "J'ai rien trouve";
