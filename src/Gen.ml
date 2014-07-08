@@ -23,39 +23,39 @@ open Grammar
 
 
 
-let rec find_component rdm_float componentList = 
+let rec find_component (rdm_float:float) componentList = 
   match componentList with
-  | [comp] -> comp
-  | comp::list_comp -> let (composant,freq) = comp in
-			                 if rdm_float <= freq then
-                         comp
-			                 else
-                         find_component (rdm_float-.freq) list_comp
-  | _ -> failwith "find_component failed !!!" 
+    | [comp] -> comp
+    | comp::list_comp -> let (composant,freq) = comp in
+			 if rdm_float <= freq then
+                           comp
+			 else
+                           find_component (rdm_float-.freq) list_comp
+    | _ -> failwith "find_component failed !!!" 
 
 let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar) =      
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = Random.float total_weight in
   let comp = (find_component rdm_float component_list) in
   match comp with
-  | (Grammar.Call elem), _ -> get_next_rule elem wgrm 
-  | (Grammar.Cons( w, elem_list)), _ ->
-    (w, 
-     List.fold_left 
-	     (fun next_rules elem ->
-         match elem with
-         | (Grammar.Elem name) -> name :: next_rules
-         | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in
-                                 let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
-                                 next_rules @ (concat_n [name] (n'-1))
-	     )
-	     []
-	     elem_list)
+    | (Grammar.Call elem), _ -> get_next_rule elem wgrm 
+    | (Grammar.Cons( w, elem_list)), _ ->
+      (w, 
+       List.fold_left 
+	 (fun next_rules elem ->
+           match elem with
+             | (Grammar.Elem name) -> name :: next_rules
+             | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in
+                                     let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
+                                     next_rules @ (concat_n [name] (n'-1))
+	 )
+	 []
+	 elem_list)
 
-let rec init_counter g map =
+let rec init_counter (g:grammar) map =
   match g with
-  | rul::rules -> StringMap.add (fst rul) 0 map
-  | _ -> map 
+    | rul::rules -> StringMap.add (fst rul) 0 map
+    | _ -> map 
 
 let rec count_rules counters elements =
   match elements with 
@@ -85,24 +85,19 @@ let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:
 
 
 
-(* the loop to generate nb_try trees with the same Seed *)
-let rec gen_aux_aux wgrm grm nb_try nb_smaller nb_bigger sizemin sizemax  =
+
+let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     let counters = init_counter grm StringMap.empty in
     let (first_rule,_) = List.hd grm in 
     let new_counters = StringMap.add first_rule 1 counters in
     let res = sim 0 new_counters wgrm sizemax first_rule in
-    printf "res = %d\n" res;
-    printf "sizemin = %d\n" sizemin;
-    printf "sizemax = %d\n" sizemax;
     if res < sizemin then
       begin
-        printf "smaller \n";
         gen_aux_aux wgrm grm (nb_try - 1)  (nb_smaller+1) nb_bigger sizemin sizemax
       end
     else if res > sizemax then
       begin
-        printf "bigger \n";
         gen_aux_aux wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
@@ -110,9 +105,7 @@ let rec gen_aux_aux wgrm grm nb_try nb_smaller nb_bigger sizemin sizemax  =
     else
       (None,nb_smaller,nb_bigger)
 
-(* the loop to change the seed each time and loop nb_change_seed times *)
-let rec gen_aux wgrm grm nb_change_seed nb_try nb_smaller nb_bigger = 
-  printf "new_seed \n";
+let rec simulator_aux (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_change_seed:int) (nb_try:int) (nb_smaller:int) (nb_bigger:int) = 
   if nb_change_seed > 0 then
     let (size,new_nb_smaller,new_nb_bigger) = gen_aux_aux wgrm grm nb_try 0 0 nb_smaller nb_bigger in
     match size with
@@ -121,9 +114,7 @@ let rec gen_aux wgrm grm nb_change_seed nb_try nb_smaller nb_bigger =
   else
     (None,nb_smaller,nb_bigger)
 
-      (* the loop the refines the values after each time and loops nb_refine_seed times should also do the ratio thing for now not sure about it*)
-let rec gen nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed= 
-  printf "just called gen : nb : %d\n" nb_refine_seed;
+let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed= 
   let (zmin',zmax',y) = 
     (if global_options.verbosity >= 2
      then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
@@ -146,9 +137,7 @@ let rec gen nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax z
             else
               None 
 
-
-
-(* max_try avec un seed ,  change du seed repeter max_try (max_refine_seed fois) si ca marche pas en refine max_refine_seed  *)        
+       
 
 let generator
     (g:grammar)
@@ -178,8 +167,7 @@ let generator
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
   ); 
-  printf "sizemin in generator = %d\n" sizemin;
-  let res = gen max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed in
+  let res = simulator max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed in
   match res with 
   | Some(final_size,seed) -> printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
   | None -> printf "J'ai rien trouve";
