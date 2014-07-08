@@ -133,7 +133,7 @@ Arg.parse [
       |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
             exit 1;
   ),
-  "<n>: set the type of output generated at the end");
+  "<n>: set the type [arb|dot|xml|all] of output generated at the end");
   ("-file",Arg.String(fun x->
     global_options.fileName <- x;
     ),
@@ -151,7 +151,7 @@ Arg.parse [
   "<x>: sets the value of zstart");
 ]
   (fun arg ->
-    if (String.compare global_options.grammar_file "")=0
+    if (String.compare global_options.grammar_file "") == 0
     then global_options.grammar_file <- arg
     else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 0))
   usage;
@@ -166,17 +166,10 @@ then (eprintf "Error: grammar file not specified\n... arborting.\n%!"; exit 0) ;
 if (global_options.verbosity) > 0
 then printf "Loading grammar file: %s\n%!" global_options.grammar_file
 
-let grammar =
-  GParser.parse_from_file global_options.grammar_file ;;
+let (_,grammar) = ParseUtil.parse_from_file global_options.grammar_file ;;
 
 if (global_options.verbosity) > 0
 then printf "==> Grammar file loaded\n%!" ;;
-
-if (global_options.verbosity) > 2
-then begin
-  printf "==> Grammar completion:\n%!" ;
-  printf "%s%!" (Grammar.string_of_grammar (Grammar.completion grammar))
-end ;;
 
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;
@@ -193,8 +186,6 @@ let result =
     global_options.epsilon1_factor
     global_options.epsilon2
     global_options.epsilon2_factor
-    global_options.with_prefix
-    global_options.idprefix
     global_options.max_try
     global_options.ratio_rejected
     global_options.max_refine
