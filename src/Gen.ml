@@ -33,12 +33,12 @@ let rec find_component (rdm_float:float) componentList =
                            find_component (rdm_float-.freq) list_comp
     | _ -> failwith "find_component failed !!!" 
 
-let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar) =      
+let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar) (isCall:bool) =      
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = Random.float total_weight in
   let comp = (find_component rdm_float component_list) in
   match comp with
-    | (Grammar.Call elem), _ -> get_next_rule elem wgrm 
+    | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
     | (Grammar.Cons( w, elem_list)), _ ->
       (w, 
        List.fold_left 
@@ -50,7 +50,7 @@ let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar)
                                      next_rules @ (concat_n [name] (n'-1))
 	 )
 	 []
-	 elem_list)
+	 elem_list,isCall)
 
 let rec init_counter (g:grammar) map =
   match g with
@@ -69,11 +69,11 @@ let  find_non_zero counters =
   fst (StringMap.choose filterd_map)
 
 let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
-  if ((StringMap.for_all (fun _ n -> n = 0 ) counters) && size > 0) || (size>sizemax)  then
+  if ((StringMap.for_all (fun _ n -> n == 0 ) counters) && size > 0) || (size>sizemax)  then
     size
   else
     let(_,_) = (StringMap.find current_rule wgrm) in 
-    let (total_weight,next_rules) = get_next_rule current_rule wgrm in
+    let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
     if (List.length next_rules) > 0 then
       let new_counters = (count_rules counters (List.tl next_rules)) in  
       sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules)
@@ -121,6 +121,7 @@ let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin 
   (if global_options.verbosity >= 2
    then printf "          ==> found singularity at z=%f\n%!" zmin');
   let wgrm = weighted_grm_of_grm g y in     
+  printf "%s\n" (string_of_weighted_grammar wgrm);
   let (size,nb_smaller,nb_bigger) = simulator_aux wgrm g nb_change_seed nb_try sizemin sizemax in
   match size with
   | Some size -> Some(size,seed,wgrm)
@@ -146,7 +147,7 @@ let rec gen_tree (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (si
     else
       begin
       let(_,_) = (StringMap.find current_rule wgrm) in 
-      let (total_weight,next_rules) = get_next_rule current_rule wgrm in
+      let (total_weight,next_rules,_) = get_next_rule current_rule wgrm false in
       Stack.push (current_rule,(List.length next_rules)) rules;
       if (List.length next_rules) > 0 then
         let new_counters = (count_rules counters (List.tl next_rules)) in  
@@ -172,9 +173,17 @@ let rec try_tree (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:i
         try_tree wgrm grm (nb_try - 1) sizemin sizemax
       end
     else
-      Some(res)
+      Some(rules,res)
     else
       None
+
+let rec create_tree stack =
+  if (Stack.is_empty stack) then
+    ()
+  else
+    let(rul,arity) = Stack.pop stack in
+      printf "rul = %s arity = %d\n" rul arity;
+      create_tree stack
 
 let generator
     (g:grammar)
@@ -211,7 +220,7 @@ let generator
                                   Random.init seed;
                                   let final = try_tree wgrm g 1000 sizemin sizemax in
                                   match final with
-                                  | Some(res) -> printf "final res = %d\n" res;
+                                  | Some(rules,res) -> printf "final res = %d\n" res; (* create_tree rules; *)
                                   | None -> printf "Shit happened";
                                   end
   | None -> printf "J'ai rien trouve";
