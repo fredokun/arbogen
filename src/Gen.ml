@@ -149,8 +149,9 @@ let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin 
             else
               None 
 
+type 'a queue = 'a Queue.t
 
-let rec gen_tree (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) rules=
+let rec gen_tree_stack (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) rules=
   if (size>sizemax) then
     (Stack.create () , 0)
   else
@@ -160,43 +161,64 @@ let rec gen_tree (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (si
 	Stack.push (current_rule,(List.length next_rules),total_weight) rules;
 	if (List.length next_rules) > 0 then
           let new_counters = (count_rules counters (List.tl next_rules)) in  
-          gen_tree (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules) rules
+          gen_tree_stack (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules) rules
 	else
           begin
 	    let non_zero = find_non_zero counters in
 	    match non_zero with
 	      | Some s ->let nb = StringMap.find s counters in        
 			 let new_nb = nb - 1 in
-			 gen_tree (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s rules      
+			 gen_tree_stack (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s rules      
 	      | None -> (rules,(size+total_weight))
 	  end
       end
 
-let rec try_tree (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (sizemin:int) (sizemax:int)  =
+let rec try_tree_stack (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     let counters = init_counter grm StringMap.empty in
     let (first_rule,_) = List.hd grm in 
-    let (rules,res) = gen_tree 0 counters wgrm sizemax first_rule (Stack.create ()) in
+    let (rules,res) = gen_tree_stack 0 counters wgrm sizemax first_rule (Stack.create ()) in
     if res < sizemin then
       begin
-        try_tree wgrm grm (nb_try - 1) sizemin sizemax
+        try_tree_stack wgrm grm (nb_try - 1) sizemin sizemax
       end
     else if res > sizemax then
       begin
-        try_tree wgrm grm (nb_try - 1) sizemin sizemax
+        try_tree_stack wgrm grm (nb_try - 1) sizemin sizemax
       end
     else
       Some(rules,res)
     else
       None
 
-let rec create_tree stack =
-  if (Stack.is_empty stack) then
-    ()
-  else
-    let(rul,arity,weight) = Stack.pop stack in
-      printf "rul = %s arity = %d weight = %d \n" rul arity weight;
-      create_tree stack
+
+
+
+let rec aux_rec
+    (stack,size)
+    (current_rules: tree queue)
+    (with_prefix:bool) (idprefix:string) =
+  match (Stack.is_empty stack) with
+  |true -> ()
+  |false -> let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
+	    let (rule,arity,_) = Stack.pop stack in
+	    let next_rule = 
+	      if arity=0 then
+		Leaf(rule,prefix)
+	      else
+		let sons = npop arity current_rules in Node(rule,prefix,sons)
+	    in
+	    Queue.push next_rule current_rules;
+	    aux_rec (stack,size-1) current_rules with_prefix idprefix
+
+let aux
+    (stack,size)
+    (with_prefix:bool) (idprefix:string) =
+  let queue = Queue.create () in
+  match size with
+  | 0 -> (None,0)
+  | _ -> aux_rec (stack,size) queue with_prefix idprefix;
+    (Some(Queue.pop queue),size)
 
 let generator
     (g:grammar)
@@ -234,9 +256,12 @@ let generator
   | Some(final_size,seed,wgrm) -> begin
                                   printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
                                   Random.init seed;
-                                  let final = try_tree wgrm g 1000 sizemin sizemax in
+                                  let final = try_tree_stack wgrm g 1000 sizemin sizemax in
                                   match final with
-                                  | Some(rules,res) -> printf "length of final %d \n" (Stack.length rules); printf "final res = %d\n" res; create_tree rules; 
-                                  | None -> printf "Shit happened";
+                                  | Some(rules,res) -> let x  = aux (rules,res) false "" in
+						       match x with
+						       | (Some t,s) -> Tree.file_of_dot true (global_options.fileName^".dot") t;
+						       | (None,_) -> printf "vdm";
+                                  | _ -> printf "Shit happened";
                                   end
   | None -> printf "J'ai rien trouve";
