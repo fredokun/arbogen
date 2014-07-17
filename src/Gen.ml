@@ -74,13 +74,18 @@ let  find_non_zero counters =
   else
     Some(fst (StringMap.choose filterd_map))
 
+let rec printList list = 
+  match list with
+    |[] -> ()
+    |x :: l -> printf "%s \n" x; printList l
+
 let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
   if (size>sizemax)  then
     size
   else
     begin
     let(_,_) = (StringMap.find current_rule wgrm) in 
-    let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
+    let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in 
     if (List.length next_rules) > 0 then 
       begin
       let new_counters = (count_rules counters (List.tl next_rules)) in 
@@ -97,12 +102,19 @@ let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:
       end
     end
 
+let rec avance_seed n =
+match n with 
+  | 0 -> ()
+  | _ -> Random.int n; avance_seed (n-1)
 
 
 let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     let counters = init_counter grm StringMap.empty in
-    let (first_rule,_) = List.hd grm in 
+    let (first_rule,_) = List.hd grm in
+    let new_seed = Random.int 1232131 in
+    Random.init new_seed;
+    avance_seed 40;
     let res = sim 0 counters wgrm sizemax first_rule in
     if res < sizemin then
       begin
@@ -113,71 +125,61 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_
         simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
-      (Some(res),nb_smaller,nb_bigger)
+      (Some(res),nb_smaller,nb_bigger,Some(new_seed))
     else
-      (None,nb_smaller,nb_bigger)
+      (None,nb_smaller,nb_bigger,None)
 
-let rec simulator_aux (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_change_seed:int) (nb_try:int) (nb_smaller:int) (nb_bigger:int) = 
-  if nb_change_seed > 0 then
-    let (size,new_nb_smaller,new_nb_bigger) = simulate_seed wgrm grm nb_try 0 0 nb_smaller nb_bigger in
-    match size with
-    | Some size -> (Some(size),(new_nb_smaller+nb_smaller),(nb_bigger+new_nb_bigger)) 
-    | None -> simulator_aux wgrm grm (nb_change_seed - 1) nb_try (new_nb_smaller+nb_smaller) (nb_bigger+new_nb_bigger)
-  else
-    (None,nb_smaller,nb_bigger)
 
-let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed= 
+
+let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected= 
   let (zmin',zmax',y) = 
     (if global_options.verbosity >= 2
      then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
     searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
   (if global_options.verbosity >= 2
    then printf "          ==> found singularity at z=%f\n%!" zmin');
-  let wgrm = weighted_grm_of_grm g y in     
-  let (size,nb_smaller,nb_bigger) = simulator_aux wgrm g nb_change_seed nb_try sizemin sizemax in
+  let wgrm = weighted_grm_of_grm g y in
+  (if global_options.verbosity >= 2
+   then printf "Weighted Grammar ==>  %s\n%!" (string_of_weighted_grammar wgrm));
+  let (size,nb_smaller,nb_bigger,seed) = simulate_seed wgrm g nb_try 0 0 sizemin sizemax in
   match size with
-  | Some size -> Some(size,seed,wgrm)
-  | None  -> if nb_refine_seed > 0 then
-            begin
-              if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-                 simulator (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed
-              else
-                 let new_seed = Random.int 11231231 in
-                    Random.init new_seed;
-                    simulator (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax  ratio_rejected new_seed         
-            end
-            else
-              None 
+    | Some size -> (match seed with
+	|Some seed -> Some(size,seed,wgrm)
+	|None -> failwith "should never be here")
+    | None  -> if nb_refine_seed > 0 then
+        begin
+          if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
+	    simulator (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected
+          else
+	    failwith "try with other parameters Trees too big"
+        end
+      else
+        None 
 
 type 'a queue = 'a Queue.t
 
-let rec gen_tree_stack (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) rules=
+let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules (sizemax:int) =
   if (size>sizemax) then
     (Stack.create () , 0)
   else
-      begin
-	let(_,_) = (StringMap.find current_rule wgrm) in 
-	let (total_weight,next_rules,_) = get_next_rule current_rule wgrm false in
-	Stack.push (current_rule,(List.length next_rules),total_weight) rules;
-	if (List.length next_rules) > 0 then
-          let new_counters = (count_rules counters (List.tl next_rules)) in  
-          gen_tree_stack (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules) rules
-	else
-          begin
-	    let non_zero = find_non_zero counters in
-	    match non_zero with
-	      | Some s ->let nb = StringMap.find s counters in        
-			 let new_nb = nb - 1 in
-			 gen_tree_stack (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s rules      
-	      | None -> (rules,(size+total_weight))
-	  end
-      end
+    begin
+      if (Queue.is_empty next_rules)  then
+	 (rules,size)
+      else
+	let current_rule = Queue.pop next_rules in
+	let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in
+	Stack.push (current_rule,(List.length next_rules_list)) rules;
+	List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
+	gen_stack_tree wgrm (size+total_weight) next_rules rules sizemax
+    end
+
 
 let rec try_tree_stack (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
-    let counters = init_counter grm StringMap.empty in
     let (first_rule,_) = List.hd grm in 
-    let (rules,res) = gen_tree_stack 0 counters wgrm sizemax first_rule (Stack.create ()) in
+    let queue = Queue.create () in
+    Queue.push first_rule queue;
+    let (rules,res) = gen_stack_tree wgrm 0 queue (Stack.create ()) sizemax in
     if res < sizemin then
       begin
         try_tree_stack wgrm grm (nb_try - 1) sizemin sizemax
@@ -192,8 +194,6 @@ let rec try_tree_stack (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb
       None
 
 
-
-
 let rec aux_rec
     (stack,size)
     (current_rules: tree queue)
@@ -201,7 +201,7 @@ let rec aux_rec
   match (Stack.is_empty stack) with
   |true -> ()
   |false -> let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
-	    let (rule,arity,_) = Stack.pop stack in
+	    let (rule,arity) = Stack.pop stack in
 	    let next_rule = 
 	      if arity=0 then
 		Leaf(rule,prefix)
@@ -218,7 +218,7 @@ let aux
   match size with
   | 0 -> (None,0)
   | _ -> aux_rec (stack,size) queue with_prefix idprefix;
-    (Some(Queue.pop queue),size)
+    (Some(Queue.pop queue),size) 
 
 let generator
     (g:grammar)
@@ -236,14 +236,14 @@ let generator
     (max_refine_seed:int)
     (zstart:float)
     =
-   let seed2 =  
-   if self_seed then 
-     begin
-     Random.self_init ();
-     Random.int 11231231;                  
-     end
-   else
-    seed 
+  let seed2 =  
+    if self_seed then 
+      begin
+	Random.self_init ();
+	Random.int 11231231;                  
+      end
+    else
+      seed 
   in
   Random.init seed2;
   printf "seed = %d\n" seed2;
@@ -251,17 +251,19 @@ let generator
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
   ); 
-  let res = simulator max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected seed in
+  let res = simulator max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected in
   match res with 
-  | Some(final_size,seed,wgrm) -> begin
-                                  printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
-                                  Random.init seed;
-                                  let final = try_tree_stack wgrm g 1000 sizemin sizemax in
-                                  match final with
-                                  | Some(rules,res) -> let x  = aux (rules,res) false "" in
-						       match x with
-						       | (Some t,s) -> Tree.file_of_dot true (global_options.fileName^".dot") t;
-						       | (None,_) -> printf "vdm";
-                                  | _ -> printf "Shit happened";
-                                  end
+    | Some(final_size,seed,wgrm) -> 
+      begin
+	printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
+	Random.init seed2;
+	let final = try_tree_stack wgrm g 1000 sizemin sizemax in
+	match final with
+          | Some(rules,res) -> (let x  = aux (rules,res) false "" in
+				match x with
+				  | (Some t,s) -> Tree.file_of_dot true (global_options.fileName^".dot") t;
+				  | (None,_) -> printf "vdm";)
+				                						     
+        | None -> printf "Shit happened";
+      end
   | None -> printf "J'ai rien trouve";

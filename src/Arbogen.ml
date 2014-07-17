@@ -208,6 +208,8 @@ then printf "==> Grammar file loaded\n%!" ;;
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;
 
+printf "min size = %d \n" global_options.size_min ;;
+printf "max size = %d \n" global_options.size_max ;;
 
 
 let result =
