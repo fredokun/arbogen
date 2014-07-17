@@ -208,8 +208,6 @@ then printf "==> Grammar file loaded\n%!" ;;
 if (global_options.verbosity) > 0
 then printf "Generating tree\n%!" ;;
 
-printf "min size = %d \n" global_options.size_min ;;
-printf "max size = %d \n" global_options.size_max ;;
 
 
 let result =
@@ -223,32 +221,34 @@ let result =
     global_options.epsilon1_factor
     global_options.epsilon2
     global_options.epsilon2_factor
+    global_options.with_prefix
+    global_options.idprefix
     global_options.max_try
     global_options.ratio_rejected
     global_options.max_refine
     global_options.max_refine_seed
     global_options.zstart
-(* in match result with *)
-(*   None -> *)
-(*     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ; *)
-(*     exit 1 *)
-(* | Some (tree,size) -> *)
-(*   if (global_options.verbosity) > 0  *)
-(*   then begin *)
-(*     printf "==> Tree generated with size=%d\n%!" size ; *)
-(*     match global_options.output_type with *)
-(*     |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; *)
-(*           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; *)
-(*     |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName; *)
-(*           Tree.file_of_dot true (global_options.fileName^".dot") tree;  *)
-(*     |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName; *)
-(*           Tree.file_of_xml (global_options.fileName^".xml") tree; *)
-(*     |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName; *)
-(*           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; *)
-(*           Tree.file_of_dot true (global_options.fileName^".dot") tree; *)
-(*           Tree.file_of_xml (global_options.fileName^".xml") tree;  *)
-(*     |_ -> printf "Error \n";      (\* unreachable case *\) *)
-(*          printf "==> file saved\n%!" *)
-(*   end   *)
+in match result with 
+   None -> 
+     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ; 
+     exit 1 
+ | Some (tree,size) -> 
+   if (global_options.verbosity) > 0  
+   then begin 
+     printf "==> Tree generated with size=%d\n%!" size ; 
+     match global_options.output_type with 
+     |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; 
+           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
+     |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName; 
+           Tree.file_of_dot true (global_options.fileName^".dot") tree;  
+     |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName; 
+           Tree.file_of_xml (global_options.fileName^".xml") tree; 
+     |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName; 
+           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
+           Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+           Tree.file_of_xml (global_options.fileName^".xml") tree;  
+     |_ -> printf "Error \n";      (* unreachable case *) 
+          printf "==> file saved\n%!"
+   end  
 
  

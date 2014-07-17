@@ -116,17 +116,27 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_
     Random.init new_seed;
     avance_seed 40;
     let res = sim 0 counters wgrm sizemax first_rule in
+    if global_options.verbosity >= 3
+    then printf "[GEN]: Generated tree of size = %d\n%!" res ;
     if res < sizemin then
       begin
+        (if global_options.verbosity >= 3
+         then printf "     ==> tree is too small => reject\n%!");
         simulate_seed wgrm grm (nb_try - 1)  (nb_smaller+1) nb_bigger sizemin sizemax
       end
     else if res > sizemax then
       begin
+	(if global_options.verbosity >= 3
+         then printf "      ==> tree is too large\n%!") ;
         simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
-      (Some(res),nb_smaller,nb_bigger,Some(new_seed))
-    else
+      begin
+	(if global_options.verbosity >= 3
+         then printf "     ==> tree matches expecte size, select\n%!");
+	(Some(res),nb_smaller,nb_bigger,Some(new_seed))
+      end
+    else  (* max number of tries *)
       (None,nb_smaller,nb_bigger,None)
 
 
@@ -139,13 +149,11 @@ let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin 
   (if global_options.verbosity >= 2
    then printf "          ==> found singularity at z=%f\n%!" zmin');
   let wgrm = weighted_grm_of_grm g y in
-  (if global_options.verbosity >= 2
-   then printf "Weighted Grammar ==>  %s\n%!" (string_of_weighted_grammar wgrm));
   let (size,nb_smaller,nb_bigger,seed) = simulate_seed wgrm g nb_try 0 0 sizemin sizemax in
   match size with
     | Some size -> (match seed with
 	|Some seed -> Some(size,seed,wgrm)
-	|None -> failwith "should never be here")
+	|None -> failwith "should never be here")  (* unreachable case *) 
     | None  -> if nb_refine_seed > 0 then
         begin
           if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
@@ -194,7 +202,7 @@ let rec try_tree_stack (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb
       None
 
 
-let rec aux_rec
+let rec gen_tree_of_stack_rec
     (stack,size)
     (current_rules: tree queue)
     (with_prefix:bool) (idprefix:string) =
@@ -209,15 +217,15 @@ let rec aux_rec
 		let sons = npop arity current_rules in Node(rule,prefix,sons)
 	    in
 	    Queue.push next_rule current_rules;
-	    aux_rec (stack,size-1) current_rules with_prefix idprefix
+	    gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
 
-let aux
+let gen_tree_of_stack
     (stack,size)
     (with_prefix:bool) (idprefix:string) =
   let queue = Queue.create () in
   match size with
   | 0 -> (None,0)
-  | _ -> aux_rec (stack,size) queue with_prefix idprefix;
+  | _ -> gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
     (Some(Queue.pop queue),size) 
 
 let generator
@@ -230,6 +238,8 @@ let generator
     (epsilon1_factor:float)
     (epsilon2:float)
     (epsilon2_factor:float)
+    (with_prefix:bool)
+    (idprefix:string)
     (max_try:int)
     (ratio_rejected:float)
     (max_refine:int)
@@ -246,7 +256,7 @@ let generator
       seed 
   in
   Random.init seed2;
-  printf "seed = %d\n" seed2;
+  printf "starting seed = %d\n" seed2;
   let sys = combsys_of_grammar (completion g) in
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
@@ -255,15 +265,15 @@ let generator
   match res with 
     | Some(final_size,seed,wgrm) -> 
       begin
-	printf "J'ai trouve %d \n" final_size; printf "With seed %d\n" seed;
+	printf "final seed  %d\n" seed;
 	Random.init seed2;
 	let final = try_tree_stack wgrm g 1000 sizemin sizemax in
 	match final with
-          | Some(rules,res) -> (let x  = aux (rules,res) false "" in
+          | Some(rules,res) -> (let x  = gen_tree_of_stack (rules,res) with_prefix idprefix in
 				match x with
-				  | (Some t,s) -> Tree.file_of_dot true (global_options.fileName^".dot") t;
-				  | (None,_) -> printf "vdm";)
+				  | (Some t,s) -> Some(t,s)
+				  | (None,_) -> None  (* unreachable case *) )
 				                						     
-        | None -> printf "Shit happened";
+        | None -> None
       end
-  | None -> printf "J'ai rien trouve";
+  | None -> None
