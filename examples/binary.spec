@@ -1,7 +1,7 @@
 
 // grammar file for binary trees (counting leaves)
 
-BinNode ::=  Leaf * <z> + BinNode * BinNode * <z>;
+BinNode ::=  Leaf * <z> + BinNode * BinNode * <z>
 
 /* variant : binary trees (counting internal nodes)
 
@@ -44,16 +44,16 @@ dot file  (with or without labels) :
 
 digraph {
   // nodes
-  node N1 [label="BinNode"];
-  node N2 [label="Leaf"];
-  node N3 [label="BinNode"];
-  node N4 [label="Leaf"];
-  node N5 [label="Leaf"];
+  node N1 [label="BinNode"]
+  node N2 [label="Leaf"]
+  node N3 [label="BinNode"]
+  node N4 [label="Leaf"]
+  node N5 [label="Leaf"]
   // edges
-  N1 -> N2;
-  N1 -> N3;
-  N3 -> N4;
-  N3 -> N5;
+  N1 -> N2
+  N1 -> N3
+  N3 -> N4
+  N3 -> N5
 }
 
 */
