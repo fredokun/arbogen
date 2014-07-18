@@ -35,6 +35,8 @@ type options_record = {
   mutable fileName: string;
   mutable zstart: float;
   mutable zstart_set: bool;
+  mutable with_state:bool;
+  mutable state_file:string;
 } ;;
 
 let global_options = {
@@ -73,6 +75,8 @@ let global_options = {
   fileName = "tree";
   zstart = 0.0;
   zstart_set = false;
+  with_state = false;
+  state_file = ""
 } ;;
 
 exception Option_Error of string ;;

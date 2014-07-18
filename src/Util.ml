@@ -11,7 +11,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-
 (* List utilities *)
 
 let fold_map mop fop finit a =
@@ -36,6 +35,7 @@ let rec output_list out output_elem op dl cl l = match l with
     output_elem out e ;
     output_string out dl ;
     output_list out output_elem "" dl cl l'
+
 
 let concat_n l n =
   let rec aux l n acc =
@@ -71,4 +71,5 @@ module StringSet = Set.Make (String) ;;
 (* string map *)
 
 module StringMap = Map.Make (String) ;;
+
 

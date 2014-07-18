@@ -1,7 +1,7 @@
 open Printf
 
 open Options
-
+open GenState
 
 let version_str = "arbogen v0.20121006 (beta)"
 
@@ -164,24 +164,30 @@ Arg.parse [
       |"xml" -> global_options.output_type <- 2;
       |"all" -> global_options.output_type <- 3;  
       |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
-            exit 1;
-  ),
-  "<n>: set the type [arb|dot|xml|all] of output generated at the end");
+        exit 1;
+   ),
+   "<n>: set the type [arb|dot|xml|all] of output generated at the end");
   ("-file",Arg.String(fun x->
     global_options.fileName <- x;
-    ),
-  "<x>: set the name of the file to be created at end of execution"
+   ),
+   "<x>: set the name of the file to be created at end of execution"
   );
   ("-zstart", Arg.Float(fun x -> 
     if(x > 1.0 || x < 0.0) then(
-            eprintf "Error: value must be between 0 and 1\n...arborting\n";
-            exit 1;
+      eprintf "Error: value must be between 0 and 1\n...arborting\n";
+      exit 1;
     )else(
       global_options.zstart <- x;
       global_options.zstart_set <- true;
     )
-  ),
-  "<x>: sets the value of zstart");
+   ),
+   "<x>: sets the value of zstart");
+  
+  ("-state",Arg.String(fun x ->
+    global_options.state_file <- x;
+    global_options.with_state <- true;
+   ),
+   "<n>: set the name of state file");
 ]
   (fun arg ->
     if (String.compare global_options.grammar_file "") == 0
@@ -193,62 +199,80 @@ Arg.parse [
 if (global_options.verbosity) > 0
 then printf "%s\n%!" banner;;
 
-if (String.compare global_options.grammar_file "") == 0
-then (eprintf "Error: grammar file not specified\n... arborting.\n%!"; exit 0) ;;
 
-if (global_options.verbosity) > 0
-then printf "Loading grammar file: %s\n%!" global_options.grammar_file
-
-let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file ;;
-let grammar = Ast.grammar_of_ast_grammar ast_grammar ;;
-
-if (global_options.verbosity) > 0
-then printf "==> Grammar file loaded\n%!" ;;
-
-if (global_options.verbosity) > 0
-then printf "Generating tree\n%!" ;;
+if (global_options.with_state)
+then(
+    let in_channel = open_in global_options.state_file in
+    printf "print state file %s \n%!" global_options.state_file;
+    let state = Marshal.from_channel in_channel in
+    printf "%s \ n%!"state.first_rule;
+    close_in in_channel;
+    (* let(rules,res) = Gen.try_tree_stack state in *)
+    (* printf "size = %d\n" res; *)
+    (* exit 0 *)
+);;
 
 
+ if (String.compare global_options.grammar_file "") == 0
+ then (eprintf "Error: grammar file not specified\n... arborting.\n%!"; exit 0) ;;
 
-let result =
-  Gen.generator
-    grammar
-    global_options.self_seed
-    global_options.random_seed
-    global_options.size_min
-    global_options.size_max
-    global_options.epsilon1
-    global_options.epsilon1_factor
-    global_options.epsilon2
-    global_options.epsilon2_factor
-    global_options.with_prefix
-    global_options.idprefix
-    global_options.max_try
-    global_options.ratio_rejected
-    global_options.max_refine
-    global_options.max_refine_seed
-    global_options.zstart
-in match result with 
-   None -> 
-     eprintf "Error: no tree generated ==> try to use different parameters\n%!" ; 
-     exit 1 
- | Some (tree,size) -> 
-   if (global_options.verbosity) > 0  
-   then begin 
-     printf "==> Tree generated with size=%d\n%!" size ; 
-     match global_options.output_type with 
-     |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; 
-           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
-     |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName; 
-           Tree.file_of_dot true (global_options.fileName^".dot") tree;  
-     |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName; 
-           Tree.file_of_xml (global_options.fileName^".xml") tree; 
-     |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName; 
-           Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
-           Tree.file_of_dot true (global_options.fileName^".dot") tree; 
-           Tree.file_of_xml (global_options.fileName^".xml") tree;  
-     |_ -> printf "Error \n";      (* unreachable case *) 
-          printf "==> file saved\n%!"
-   end  
+  if (global_options.verbosity) > 0
+  then printf "Loading grammar file: %s\n%!" global_options.grammar_file
 
+  let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file ;;
+  let grammar = Ast.grammar_of_ast_grammar ast_grammar ;;
+
+  if (global_options.verbosity) > 0
+  then printf "==> Grammar file loaded\n%!" ;;
+
+  if (global_options.verbosity) > 0
+  then printf "Generating tree\n%!" ;;
+
+
+  printf "value = %b\n" global_options.with_state ;;
+
+  let result =
+    Gen.generator
+      grammar
+      global_options.self_seed
+      global_options.random_seed
+      global_options.size_min
+      global_options.size_max
+      global_options.epsilon1
+      global_options.epsilon1_factor
+      global_options.epsilon2
+      global_options.epsilon2_factor
+      global_options.with_prefix
+      global_options.idprefix
+      global_options.max_try
+      global_options.ratio_rejected
+      global_options.max_refine
+      global_options.max_refine_seed
+      global_options.zstart
+  in match result with 
+      None -> 
+	eprintf "Error: no tree generated ==> try to use different parameters\n%!" ; 
+	exit 1 
+    | Some (tree,size,state) -> 
+      if (global_options.verbosity) > 0  
+      then begin 
+	printf "==> Tree generated with size=%d\n%!" size ; 
+	let out_state = open_out  (global_options.fileName^".state") in
+	printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
+	Marshal.to_channel out_state state [Marshal.Closures];
+	close_out out_state;
+	match global_options.output_type with 
+	  |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; 
+            Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
+	  |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName; 
+            Tree.file_of_dot true (global_options.fileName^".dot") tree;  
+	  |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName; 
+            Tree.file_of_xml (global_options.fileName^".xml") tree; 
+	  |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName; 
+            Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
+            Tree.file_of_dot true (global_options.fileName^".dot") tree; 
+            Tree.file_of_xml (global_options.fileName^".xml") tree;  
+	  |_ -> printf "Error \n";      (* unreachable case *) 
+            printf "==> file saved\n%!";
+      end  	
  
