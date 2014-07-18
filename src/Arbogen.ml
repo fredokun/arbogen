@@ -135,17 +135,17 @@ Arg.parse [
       global_options.max_refine_set <- true
     end),
    "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
-  ("-max_refine_seed", Arg.Int (fun x ->
-    if x <= 0 then
-      begin
-        eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.max_refine_seed <- x;
-      global_options.max_refine_seed_set <- true
-    end),
-   "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)");
+  (* ("-max_refine_seed", Arg.Int (fun x -> *)
+  (*   if x <= 0 then *)
+  (*     begin *)
+  (*       eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ; *)
+  (*       exit 1; *)
+  (*     end *)
+  (*   else begin *)
+  (*     global_options.max_refine_seed <- x; *)
+  (*     global_options.max_refine_seed_set <- true *)
+  (*   end), *)
+  (*  "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)"); *)
   ("-try", Arg.Int (fun n ->
     if n <= 0 then
       begin
@@ -212,10 +212,6 @@ then(
     (* exit 0 *)
 );;
 
-
- if (String.compare global_options.grammar_file "") == 0
- then (eprintf "Error: grammar file not specified\n... arborting.\n%!"; exit 0) ;;
-
   if (global_options.verbosity) > 0
   then printf "Loading grammar file: %s\n%!" global_options.grammar_file
 
@@ -228,8 +224,6 @@ then(
   if (global_options.verbosity) > 0
   then printf "Generating tree\n%!" ;;
 
-
-  printf "value = %b\n" global_options.with_state ;;
 
   let result =
     Gen.generator
@@ -247,7 +241,6 @@ then(
       global_options.max_try
       global_options.ratio_rejected
       global_options.max_refine
-      global_options.max_refine_seed
       global_options.zstart
   in match result with 
       None -> 

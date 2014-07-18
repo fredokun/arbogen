@@ -25,15 +25,15 @@ open GenState
 
 let rec find_component (rdm_float:float) componentList = 
   match componentList with
-    | [comp] -> comp
-    | comp::list_comp -> let (composant,freq) = comp in
-			 if rdm_float <= freq then
-                           comp
-			 else
-                           find_component (rdm_float-.freq) list_comp
-    | _ -> failwith "find_component failed !!!" 
+  | [comp] -> comp
+  | comp::list_comp -> let (composant,freq) = comp in
+			                 if rdm_float <= freq then
+                         comp
+			                 else
+                         find_component (rdm_float-.freq) list_comp
+  | _ -> failwith "find_component failed !!!" 
 
-let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar) (isCall:bool) =      
+let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =      
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = Random.float total_weight in
   let comp = (find_component rdm_float component_list) in
@@ -60,6 +60,13 @@ let rec init_counter (g:grammar) map =
     | [] -> map 
     | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
       
+      
+
+let rec init_counter (g:grammar) map =
+  match g with
+  | [] -> map 
+  | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
+
 let rec count_rules counters elements =
   match elements with 
     |elem::elems -> let nb = StringMap.find elem counters in
@@ -97,12 +104,13 @@ let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:
                        sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s      
 	    | None -> (size+total_weight)
 	end
-    end
+end
 
 
 
 
-let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
+let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
+    (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     let counters = init_counter grm StringMap.empty in
     let (first_rule,_) = List.hd grm in
@@ -118,13 +126,13 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_
       end
     else if res > sizemax then
       begin
-	(if global_options.verbosity >= 3
+	      (if global_options.verbosity >= 3
          then printf "      ==> tree is too large\n%!") ;
         simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
       begin
-	(if global_options.verbosity >= 3
+	      (if global_options.verbosity >= 3
          then printf "     ==> tree matches expecte size, select\n%!");
 	(Some(res),nb_smaller,nb_bigger,Some(rdm_state))
       end
@@ -158,6 +166,7 @@ let rec simulator nb_refine_seed nb_try g epsilon1 epsilon2 zmin zmax zstart eps
       else
         None 
 
+
 type 'a queue = 'a Queue.t
 
 let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules =
@@ -169,7 +178,7 @@ let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_
     Stack.push (current_rule,(List.length next_rules_list)) rules;
     List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
     gen_stack_tree wgrm (size+total_weight) next_rules rules
-      
+
 
 
 let try_tree_stack gen_state  =
@@ -221,14 +230,13 @@ let generator
     (max_try:int)
     (ratio_rejected:float)
     (max_refine:int)
-    (max_refine_seed:int)
     (zstart:float)
     =
   let seed2 =  
     if self_seed then 
       begin
-	Random.self_init ();
-	Random.int 11231231;                  
+	      Random.self_init ();
+	      Random.int 11231231;                  
       end
     else
       seed 
@@ -251,3 +259,4 @@ let generator
       let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in
       Some(tree,size,state)				                	      
     | None -> None
+
