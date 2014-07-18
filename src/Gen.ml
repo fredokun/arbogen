@@ -103,9 +103,9 @@ let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:
     end
 
 let rec avance_seed n =
-match n with 
+  match n with 
   | 0 -> ()
-  | _ -> Random.int n; avance_seed (n-1)
+  | _ -> ignore(Random.int n); avance_seed (n-1)
 
 
 let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
@@ -117,7 +117,7 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_
     avance_seed 40;
     let res = sim 0 counters wgrm sizemax first_rule in
     if global_options.verbosity >= 3
-    then printf "[GEN]: Generated tree of size = %d\n%!" res ;
+    then printf "[SIM]: Generated tree of size = %d\n%!" res ;
     if res < sizemin then
       begin
         (if global_options.verbosity >= 3
@@ -147,8 +147,10 @@ let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin 
      then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
     searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
   (if global_options.verbosity >= 2
-   then printf "          ==> found singularity at z=%f\n%!" zmin');
+   then printf "          ==> found singularity at z=%f\n\n%!" zmin');
   let wgrm = weighted_grm_of_grm g y in
+  (if global_options.verbosity >= 2
+   then printf "[SIM]: weighted grammar is :\n%s\n" (WeightedGrammar.string_of_weighted_grammar wgrm));
   let (size,nb_smaller,nb_bigger,seed) = simulate_seed wgrm g nb_try 0 0 sizemin sizemax in
   match size with
     | Some size -> (match seed with
@@ -256,7 +258,10 @@ let generator
       seed 
   in
   Random.init seed2;
-  printf "starting seed = %d\n" seed2;
+  (if global_options.verbosity >= 2
+   then printf "[GEN]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g)
+  ); 
+  printf "[SEED] starting seed = %d\n\n" seed2;
   let sys = combsys_of_grammar (completion g) in
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
@@ -265,7 +270,7 @@ let generator
   match res with 
     | Some(final_size,seed,wgrm) -> 
       begin
-	printf "final seed  %d\n" seed;
+	printf "\n[SEED] final seed  %d\n\n" seed;
 	Random.init seed2;
 	let final = try_tree_stack wgrm g 1000 sizemin sizemax in
 	match final with
