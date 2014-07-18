@@ -207,9 +207,9 @@ then(
     let state:gen_state = input_value in_channel in
     printf "%s \ n%!"state.first_rule;
     close_in in_channel;
-    (* let(rules,res) = Gen.try_tree_stack state in *)
-    (* printf "size = %d\n" res; *)
-    (* exit 0 *)
+    let(rules,res) = Gen.try_tree_stack state in
+    printf "size = %d\n" res;
+    exit 0
 );;
 
   if (global_options.verbosity) > 0

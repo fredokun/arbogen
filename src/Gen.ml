@@ -257,6 +257,6 @@ let generator
       let final_state = {rnd_state = state;weighted_grammar = wgrm;first_rule = first_rule} in
       let (rules,res)  = try_tree_stack final_state in
       let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in
-      Some(tree,size,state)				                	      
+      Some(tree,size,final_state)				                	      
     | None -> None
 
