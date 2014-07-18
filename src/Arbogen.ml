@@ -204,7 +204,7 @@ if (global_options.with_state)
 then(
     let in_channel = open_in global_options.state_file in
     printf "print state file %s \n%!" global_options.state_file;
-    let state = Marshal.from_channel in_channel in
+    let state:gen_state = input_value in_channel in
     printf "%s \ n%!"state.first_rule;
     close_in in_channel;
     (* let(rules,res) = Gen.try_tree_stack state in *)
@@ -252,7 +252,7 @@ then(
 	printf "==> Tree generated with size=%d\n%!" size ; 
 	let out_state = open_out  (global_options.fileName^".state") in
 	printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
-	Marshal.to_channel out_state state [Marshal.Closures];
+	output_value out_state state;
 	close_out out_state;
 	match global_options.output_type with 
 	  |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; 
