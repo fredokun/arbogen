@@ -25,40 +25,40 @@ open Grammar
 
 let rec find_component (rdm_float:float) componentList = 
   match componentList with
-    | [comp] -> comp
-    | comp::list_comp -> let (composant,freq) = comp in
-			 if rdm_float <= freq then
-                           comp
-			 else
-                           find_component (rdm_float-.freq) list_comp
-    | _ -> failwith "find_component failed !!!" 
+  | [comp] -> comp
+  | comp::list_comp -> let (composant,freq) = comp in
+			                 if rdm_float <= freq then
+                         comp
+			                 else
+                         find_component (rdm_float-.freq) list_comp
+  | _ -> failwith "find_component failed !!!" 
 
-let rec get_next_rule (name_rule:string) (wgrm:WeightedGrammar.weighted_grammar) (isCall:bool) =      
+let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =      
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = Random.float total_weight in
   let comp = (find_component rdm_float component_list) in
   match comp with
-    | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
-    | (Grammar.Cons( w, elem_list)), _ ->
-      begin
+  | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
+  | (Grammar.Cons( w, elem_list)), _ ->
+    begin
       (w, 
        List.fold_left 
-	 (fun next_rules elem ->
+	       (fun next_rules elem ->
            match elem with
-             | (Grammar.Elem name) -> name :: next_rules
-             | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in
-                                     let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
-                                     next_rules @ (concat_n [name] (n'-1))
-	 )
-	 []
-	 elem_list,isCall)
-  end
+           | (Grammar.Elem name) -> name :: next_rules
+           | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in
+                                   let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
+                                   next_rules @ (concat_n [name] (n'-1))
+	       )
+	       []
+	       elem_list,isCall)
+    end
       
 
 let rec init_counter (g:grammar) map =
   match g with
-    | [] -> map 
-    | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
+  | [] -> map 
+  | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
     
 let rec count_rules counters elements =
   match elements with 
@@ -76,30 +76,30 @@ let  find_non_zero counters =
 
 let rec printList list = 
   match list with
-    |[] -> ()
-    |x :: l -> printf "%s \n" x; printList l
+  |[] -> ()
+  |x :: l -> printf "%s \n" x; printList l
 
 let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
   if (size>sizemax)  then
     size
   else
     begin
-    let(_,_) = (StringMap.find current_rule wgrm) in 
-    let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in 
-    if (List.length next_rules) > 0 then 
-      begin
-      let new_counters = (count_rules counters (List.tl next_rules)) in 
-        sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules)
-       end 
-    else
-      begin
-      let non_zero = find_non_zero counters in
-      match non_zero with
-      | Some s ->let nb = StringMap.find s counters in        
-                  let new_nb = nb - 1 in
+      let(_,_) = (StringMap.find current_rule wgrm) in 
+      let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in 
+      if (List.length next_rules) > 0 then 
+        begin
+          let new_counters = (count_rules counters (List.tl next_rules)) in 
+          sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules)
+        end 
+      else
+        begin
+          let non_zero = find_non_zero counters in
+          match non_zero with
+          | Some s ->let nb = StringMap.find s counters in        
+                     let new_nb = nb - 1 in
                      sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s      
-      | None -> (size+total_weight)
-      end
+          | None -> (size+total_weight)
+        end
     end
 
 let rec avance_seed n =
@@ -108,7 +108,8 @@ let rec avance_seed n =
   | _ -> ignore(Random.int n); avance_seed (n-1)
 
 
-let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
+let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
+    (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     let counters = init_counter grm StringMap.empty in
     let (first_rule,_) = List.hd grm in
@@ -126,15 +127,15 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar) (grm:grammar) (nb_
       end
     else if res > sizemax then
       begin
-	(if global_options.verbosity >= 3
+	      (if global_options.verbosity >= 3
          then printf "      ==> tree is too large\n%!") ;
         simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
       begin
-	(if global_options.verbosity >= 3
+	      (if global_options.verbosity >= 3
          then printf "     ==> tree matches expecte size, select\n%!");
-	(Some(res),nb_smaller,nb_bigger,Some(new_seed))
+	      (Some(res),nb_smaller,nb_bigger,Some(new_seed))
       end
     else  (* max number of tries *)
       (None,nb_smaller,nb_bigger,None)
@@ -153,18 +154,18 @@ let rec simulator nb_refine_seed nb_change_seed nb_try g epsilon1 epsilon2 zmin 
    then printf "[SIM]: weighted grammar is :\n%s\n" (WeightedGrammar.string_of_weighted_grammar wgrm));
   let (size,nb_smaller,nb_bigger,seed) = simulate_seed wgrm g nb_try 0 0 sizemin sizemax in
   match size with
-    | Some size -> (match seed with
-	|Some seed -> Some(size,seed,wgrm)
-	|None -> failwith "should never be here")  (* unreachable case *) 
-    | None  -> if nb_refine_seed > 0 then
-        begin
-          if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-	    simulator (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected
-          else
-	    failwith "try with other parameters Trees too big"
-        end
-      else
-        None 
+  | Some size -> (match seed with
+	  |Some seed -> Some(size,seed,wgrm)
+	  |None -> failwith "should never be here")  (* unreachable case *) 
+  | None  -> if nb_refine_seed > 0 then
+      begin
+        if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
+	        simulator (nb_refine_seed - 1)  nb_change_seed nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected
+        else
+	        failwith "try with other parameters Trees too big"
+      end
+    else
+      None 
 
 type 'a queue = 'a Queue.t
 
@@ -174,13 +175,13 @@ let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_
   else
     begin
       if (Queue.is_empty next_rules)  then
-	 (rules,size)
+	      (rules,size)
       else
-	let current_rule = Queue.pop next_rules in
-	let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in
-	Stack.push (current_rule,(List.length next_rules_list)) rules;
-	List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-	gen_stack_tree wgrm (size+total_weight) next_rules rules sizemax
+	      let current_rule = Queue.pop next_rules in
+	      let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in
+	      Stack.push (current_rule,(List.length next_rules_list)) rules;
+	      List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
+	      gen_stack_tree wgrm (size+total_weight) next_rules rules sizemax
     end
 
 
@@ -211,15 +212,15 @@ let rec gen_tree_of_stack_rec
   match (Stack.is_empty stack) with
   |true -> ()
   |false -> let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
-	    let (rule,arity) = Stack.pop stack in
-	    let next_rule = 
-	      if arity=0 then
-		Leaf(rule,prefix)
-	      else
-		let sons = npop arity current_rules in Node(rule,prefix,sons)
-	    in
-	    Queue.push next_rule current_rules;
-	    gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
+	          let (rule,arity) = Stack.pop stack in
+	          let next_rule = 
+	            if arity=0 then
+		            Leaf(rule,prefix)
+	            else
+		            let sons = npop arity current_rules in Node(rule,prefix,sons)
+	          in
+	          Queue.push next_rule current_rules;
+	          gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
 
 let gen_tree_of_stack
     (stack,size)
@@ -245,14 +246,13 @@ let generator
     (max_try:int)
     (ratio_rejected:float)
     (max_refine:int)
-    (max_refine_seed:int)
     (zstart:float)
     =
   let seed2 =  
     if self_seed then 
       begin
-	Random.self_init ();
-	Random.int 11231231;                  
+	      Random.self_init ();
+	      Random.int 11231231;                  
       end
     else
       seed 
@@ -266,19 +266,19 @@ let generator
   (if global_options.verbosity >= 2
    then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
   ); 
-  let res = simulator max_refine max_refine_seed max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected in
+  let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected in
   match res with 
-    | Some(final_size,seed,wgrm) -> 
-      begin
-	printf "\n[SEED] final seed  %d\n\n" seed;
-	Random.init seed2;
-	let final = try_tree_stack wgrm g 1000 sizemin sizemax in
-	match final with
-          | Some(rules,res) -> (let x  = gen_tree_of_stack (rules,res) with_prefix idprefix in
-				match x with
-				  | (Some t,s) -> Some(t,s)
-				  | (None,_) -> None  (* unreachable case *) )
-				                						     
-        | None -> None
-      end
+  | Some(final_size,seed,wgrm) -> 
+    begin
+	    printf "\n[SEED] final seed  %d\n\n" seed;
+	    Random.init seed2;
+	    let final = try_tree_stack wgrm g 1000 sizemin sizemax in
+	    match final with
+      | Some(rules,res) -> (let x  = gen_tree_of_stack (rules,res) with_prefix idprefix in
+				                    match x with
+				                    | (Some t,s) -> Some(t,s)
+				                    | (None,_) -> None  (* unreachable case *) )
+				
+      | None -> None
+    end
   | None -> None

@@ -56,5 +56,4 @@ let grm_rule_of_ast_rule (name,comps) =
 let grammar_of_ast_grammar ast_grammar =
   Grammar.completion (List.map grm_rule_of_ast_rule ast_grammar)
 
-let options_of_ast ast =
-  fst ast
+  

@@ -135,17 +135,17 @@ Arg.parse [
       global_options.max_refine_set <- true
     end),
    "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
-  ("-max_refine_seed", Arg.Int (fun x ->
-    if x <= 0 then
-      begin
-        eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.max_refine_seed <- x;
-      global_options.max_refine_seed_set <- true
-    end),
-   "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)");
+  (* ("-max_refine_seed", Arg.Int (fun x -> *)
+  (*   if x <= 0 then *)
+  (*     begin *)
+  (*       eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ; *)
+  (*       exit 1; *)
+  (*     end *)
+  (*   else begin *)
+  (*     global_options.max_refine_seed <- x; *)
+  (*     global_options.max_refine_seed_set <- true *)
+  (*   end), *)
+  (*  "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)"); *)
   ("-try", Arg.Int (fun n ->
     if n <= 0 then
       begin
@@ -200,6 +200,7 @@ if (global_options.verbosity) > 0
 then printf "Loading grammar file: %s\n%!" global_options.grammar_file
 
 let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file ;;
+ParseUtil.set_options options ;;
 let grammar = Ast.grammar_of_ast_grammar ast_grammar ;;
 
 if (global_options.verbosity) > 0
@@ -226,7 +227,6 @@ let result =
     global_options.max_try
     global_options.ratio_rejected
     global_options.max_refine
-    global_options.max_refine_seed
     global_options.zstart
 in match result with 
    None -> 

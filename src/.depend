@@ -1,3 +1,4 @@
+GenState.cmi :
 Parser.cmi : Ast.cmo
 ArboLib.cmo : Util.cmo Tree.cmo OracleSimple.cmo Grammar.cmo Gen.cmo \
     CombSys.cmo
@@ -13,6 +14,8 @@ Gen.cmo : WeightedGrammar.cmo Util.cmo Tree.cmo OracleSimple.cmo Options.cmo \
     Grammar.cmo CombSys.cmo
 Gen.cmx : WeightedGrammar.cmx Util.cmx Tree.cmx OracleSimple.cmx Options.cmx \
     Grammar.cmx CombSys.cmx
+GenState.cmo : GenState.cmi
+GenState.cmx : GenState.cmi
 Grammar.cmo : Util.cmo
 Grammar.cmx : Util.cmx
 Lexer.cmo : Parser.cmi
@@ -21,8 +24,8 @@ Options.cmo :
 Options.cmx :
 OracleSimple.cmo : Util.cmo CombSys.cmo
 OracleSimple.cmx : Util.cmx CombSys.cmx
-ParseUtil.cmo : Parser.cmi Lexer.cmo
-ParseUtil.cmx : Parser.cmx Lexer.cmx
+ParseUtil.cmo : Parser.cmi Options.cmo Lexer.cmo Ast.cmo
+ParseUtil.cmx : Parser.cmx Options.cmx Lexer.cmx Ast.cmx
 Parser.cmo : Ast.cmo Parser.cmi
 Parser.cmx : Ast.cmx Parser.cmi
 Test.cmo : WeightedGrammar.cmo Util.cmo Parser.cmi OracleSimple.cmo \
