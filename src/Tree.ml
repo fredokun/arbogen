@@ -7,6 +7,7 @@
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
  *           Antonine Genitrini, Matthieu Dien           *
+ *           Marwan Ghanem                               *
  *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
@@ -44,7 +45,7 @@ let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
        then (if show_id then ":" else "") ^ typ
        else "")
   in
-    match tree with
+  match tree with
     | Leaf(typ,id) -> output_string out (label typ id)
     | Node(typ,id,ts) ->
       output_string out (label typ id) ;
@@ -52,12 +53,12 @@ let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
         out 
         (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
         "[" "," "]" ts  ;;
-        
+
 let file_of_tree (show_type:bool) (show_id:bool) (fname:string) (tree:tree) =
   let out = open_out fname
   in 
-    tree_out show_type show_id tree out ;
-    close_out out
+  tree_out show_type show_id tree out ;
+  close_out out
     
 
 let xml_of_tree (t:tree) = 
@@ -94,14 +95,14 @@ let dot_of_tree (show_type:bool) (t:tree) =
     | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
-  let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
+let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
   let out = open_out fname
   in 
-    output_string out (dot_of_tree show_type tree); 
-    close_out out
+  output_string out (dot_of_tree show_type tree); 
+  close_out out
     
 let file_of_xml (fname:string) (tree:tree) = 
   let out = open_out fname
   in
-    output_string out(xml_of_tree tree);
-    close_out out;  
+  output_string out(xml_of_tree tree);
+  close_out out;  

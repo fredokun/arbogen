@@ -7,6 +7,7 @@
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
  *           Antonine Genitrini, Matthieu Dien           *
+ *           Marwan Ghanem                               *
  *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
@@ -40,8 +41,8 @@ let rec output_list out output_elem op dl cl l = match l with
 let concat_n l n =
   let rec aux l n acc =
     match n with
-    | 0 -> acc
-    | n -> (aux l (n-1) (l @ acc))
+      | 0 -> acc
+      | n -> (aux l (n-1) (l @ acc))
   in
   aux l n []
 
@@ -49,8 +50,8 @@ let concat_n l n =
 let npop n q =
   let rec npop_rec n q l=
     match n with
-    |0 -> l
-    |_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
+      |0 -> l
+      |_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
   in
   npop_rec n q []
 

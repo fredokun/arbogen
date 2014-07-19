@@ -8,7 +8,8 @@
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
  *           Antonine Genitrini, Matthieu Dien           *
- *           under the                                   *
+ *           Marwan Ghanem                               *
+ *	     under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 

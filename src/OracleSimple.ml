@@ -7,6 +7,7 @@
  * -------                                               *
  * (C) 2011, Xuming Zhan, Frederic Peschanski            *
  *           Antonine Genitrini, Matthieu Dien           *
+ *           Marwan Ghanem                               *
  *           under the                                   *
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
@@ -22,13 +23,13 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
   let rec iterate (y:float array): float array = 
     let y' = evaluation phi z y
     in
-	if (Array.fold_left (fun pred x -> pred || (x > 1.)) false y')
-		then (Array.make (Array.length y') (-1.0))
-	else
-		if (normInf_diff y y') <= epsilon
-			then y'
-		else 
-			iterate y'
+    if (Array.fold_left (fun pred x -> pred || (x > 1.)) false y')
+    then (Array.make (Array.length y') (-1.0))
+    else
+      if (normInf_diff y y') <= epsilon
+      then y'
+      else 
+	iterate y'
   in
   iterate (Array.make (combsys_size phi) 0.0)
 
@@ -45,15 +46,15 @@ let diverge (y:float array) (epsilon:float):bool =
 
 (* output:zmin,zmax,vectorY *)
 let rec searchSingularity (phi:combsys) (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
-	if zmax -. zmin < epsilon1 then
-		(zmin,zmax,iterationSimple phi zmin epsilon2)
-	else
-		let z = zstart in
-		let y = iterationSimple phi z epsilon2 in
-		if diverge y epsilon2 = true then
-			searchSingularity phi zmin zstart epsilon1 epsilon2 ((zmin+.zstart)/.2.)
-		else
-			searchSingularity phi zstart zmax epsilon1 epsilon2 ((zmax+.zstart)/.2.)
+  if zmax -. zmin < epsilon1 then
+    (zmin,zmax,iterationSimple phi zmin epsilon2)
+  else
+    let z = zstart in
+    let y = iterationSimple phi z epsilon2 in
+    if diverge y epsilon2 = true then
+      searchSingularity phi zmin zstart epsilon1 epsilon2 ((zmin+.zstart)/.2.)
+    else
+      searchSingularity phi zstart zmax epsilon1 epsilon2 ((zmax+.zstart)/.2.)
 	
 	 
 

@@ -1,3 +1,19 @@
+
+(*********************************************************
+ * Arbogen-lib : fast uniform random generation of trees *
+ *********************************************************
+ * Module: Arbogen                                       *
+ * -------                                               *
+ * Main module and Argument parser                       *
+ * -------                                               *
+ * (C) 2011, Xuming Zhan, Frederic Peschanski            *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           Marwan Ghanem                               *
+ *           under the                                   *
+ *           GNU GPL v.3 licence (cf. LICENSE file)      *
+ *********************************************************)
+
+
 open Printf
 
 open Options
@@ -205,7 +221,6 @@ then(
     let in_channel = open_in global_options.state_file in
     printf "print state file %s \n%!" global_options.state_file;
     let state:gen_state = input_value in_channel in
-    printf "%s \ n%!"state.first_rule;
     close_in in_channel;
     let(rules,res) = Gen.try_tree_stack state in
     printf "size = %d\n" res;

@@ -7,6 +7,7 @@
 * -------                                               *
 * (C) 2011, Xuming Zhan, Frederic Peschanski            *
 *           Antonine Genitrini, Matthieu Dien           *
+*           Marwan Ghanem                               *
 *           under the                                   *
 *           GNU GPL v.3 licence (cf. LICENSE file)      *
 *********************************************************)
@@ -25,13 +26,13 @@ open GenState
 
 let rec find_component (rdm_float:float) componentList = 
   match componentList with
-  | [comp] -> comp
-  | comp::list_comp -> let (composant,freq) = comp in
-			                 if rdm_float <= freq then
-                         comp
-			                 else
-                         find_component (rdm_float-.freq) list_comp
-  | _ -> failwith "find_component failed !!!" 
+    | [comp] -> comp
+    | comp::list_comp -> let (composant,freq) = comp in
+			 if rdm_float <= freq then
+                           comp
+			 else
+                           find_component (rdm_float-.freq) list_comp
+    | _ -> failwith "find_component failed !!!" 
 
 let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =      
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
@@ -64,8 +65,8 @@ let rec init_counter (g:grammar) map =
 
 let rec init_counter (g:grammar) map =
   match g with
-  | [] -> map 
-  | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
+    | [] -> map 
+    | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)  
 
 let rec count_rules counters elements =
   match elements with 
@@ -104,7 +105,7 @@ let rec sim(size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:
                        sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s      
 	    | None -> (size+total_weight)
 	end
-end
+    end
 
 
 
@@ -126,13 +127,13 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
       end
     else if res > sizemax then
       begin
-	      (if global_options.verbosity >= 3
+	(if global_options.verbosity >= 3
          then printf "      ==> tree is too large\n%!") ;
         simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
       end
     else
       begin
-	      (if global_options.verbosity >= 3
+	(if global_options.verbosity >= 3
          then printf "     ==> tree matches expecte size, select\n%!");
 	(Some(res),nb_smaller,nb_bigger,Some(rdm_state))
       end
@@ -211,8 +212,8 @@ let gen_tree_of_stack
     (with_prefix:bool) (idprefix:string) =
   let queue = Queue.create () in
   begin
-  gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
-  ((Queue.pop queue),size) 
+    gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
+    ((Queue.pop queue),size) 
   end
 
 let generator
@@ -235,8 +236,8 @@ let generator
   let seed2 =  
     if self_seed then 
       begin
-	      Random.self_init ();
-	      Random.int 11231231;                  
+	Random.self_init ();
+	Random.int 11231231;                  
       end
     else
       seed 
