@@ -20,9 +20,9 @@ type weighted_grammar = ( float * (Grammar.component * float) list ) StringMap.t
 let rule_names_to_index grm =
   let rec rn_to_ind grm index_map index =
     match grm with
-      | [] -> index_map
-      | (rule_name, _) :: grm' ->
-	rn_to_ind grm' (StringMap.add rule_name index index_map) (index-1)
+    | [] -> index_map
+    | (rule_name, _) :: grm' ->
+	    rn_to_ind grm' (StringMap.add rule_name index index_map) (index-1)
   in
   let n = List.length grm in
   let index_map = StringMap.empty in
@@ -30,32 +30,33 @@ let rule_names_to_index grm =
 
 let cpnt_to_wcpnt rules_indexes values component =
   match component with
-    | Call ref as cpnt->
-      begin
-	let rule_index = StringMap.find ref rules_indexes in
-	(cpnt, values.(rule_index))
-      end
-    | Cons (_,l) as cpnt ->
-      begin
-	let w =
-          List.fold_left
-            (fun total_weight elem ->
-              match elem with
-		| Elem name ->
-		  begin
-                    let rule_index = StringMap.find name rules_indexes in
-                    total_weight *. values.(rule_index)
-		  end
-		| Seq name ->
-		  begin
-                    let rule_index = StringMap.find name rules_indexes in
-                    total_weight /. (1. -. values.(rule_index))
-		  end
-            )
-            1.
-            l
-	in (cpnt, w)
-      end
+  | Call ref as cpnt->
+    begin
+	    let rule_index = StringMap.find ref rules_indexes in
+	    (cpnt, values.(rule_index))
+    end
+  | Cons (_,l) as cpnt ->
+    begin
+	    let w =
+        List.fold_left
+          (fun total_weight elem ->
+            match elem with
+		        | Elem name ->
+		          begin
+                let rule_index = StringMap.find name rules_indexes in
+                total_weight *. values.(rule_index)
+		          end
+		        | Seq name ->
+		          begin
+                let rule_index = StringMap.find name rules_indexes in
+                total_weight *. values.(rule_index)
+                (* total_weight /. (1. -. values.(rule_index)) *)
+		          end
+          )
+          1.
+          l
+	    in (cpnt, w)
+    end
 
 let weighted_grm_of_grm
     (grm:Grammar.grammar)
@@ -68,14 +69,14 @@ let weighted_grm_of_grm
       (values:float array)
       : weighted_grammar =
     match grm with
-      | [] -> wgrm
-      | (rule_name, components) :: grm' ->
-	begin
-          let components_weight = List.map (cpnt_to_wcpnt rules_indexes values) components in
-          let rule_weight = List.fold_left (fun r (_,w) -> r+.w) 0. components_weight in
-          let wgrm' = StringMap.add rule_name (rule_weight, components_weight) wgrm in
-          wgrm_of_grm grm' wgrm' rules_indexes values
-	end
+    | [] -> wgrm
+    | (rule_name, components) :: grm' ->
+	    begin
+        let components_weight = List.map (cpnt_to_wcpnt rules_indexes values) components in
+        let rule_weight = List.fold_left (fun r (_,w) -> r+.w) 0. components_weight in
+        let wgrm' = StringMap.add rule_name (rule_weight, components_weight) wgrm in
+        wgrm_of_grm grm' wgrm' rules_indexes values
+	    end
   in
   let rules_indexes = rule_names_to_index grm in
   let wgrm = StringMap.empty in
