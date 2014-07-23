@@ -47,7 +47,7 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
 	       (fun next_rules elem ->
            match elem with
            | (Grammar.Elem name) -> name :: next_rules
-           | (Grammar.Seq name) -> let (w,_) = StringMap.find name_rule wgrm in                                       
+           | (Grammar.Seq name) -> let (w,_) = StringMap.find name wgrm in
                                    let n' = int_of_float (floor((log( Random.float 1.)) /. (log w))) in
                                    next_rules @ (concat_n [name] n')
 	       )
