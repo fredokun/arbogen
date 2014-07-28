@@ -8,4 +8,4 @@ set try 100
 set zstart 0.5
 
 Node ::= Seq * <z>
-Seq ::= 1 + Node * Seq
+Seq ::= <1> + Node * Seq
