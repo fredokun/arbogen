@@ -222,7 +222,7 @@ then(
     printf "print state file %s \n%!" global_options.state_file;
     let state:gen_state = input_value in_channel in
     close_in in_channel;
-    let(rules,res) = Gen.try_tree_stack state in
+    let(rules,res) = Gen.gen_stack_tree state in
     printf "size = %d\n" res;
     exit 0
 );;

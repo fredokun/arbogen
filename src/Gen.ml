@@ -170,7 +170,7 @@ let rec simulator nb_refine_seed nb_try g epsilon1 epsilon2 zmin zmax zstart eps
 
 type 'a queue = 'a Queue.t
 
-let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules =
+let rec gen_stack_tree_rec (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules =
   if (Queue.is_empty next_rules)  then
     (rules,size)
   else
@@ -178,17 +178,13 @@ let rec gen_stack_tree (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_
     let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in
     Stack.push (current_rule,(List.length next_rules_list)) rules;
     List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-    gen_stack_tree wgrm (size+total_weight) next_rules rules
+    gen_stack_tree_rec wgrm (size+total_weight) next_rules rules
 
-
-
-let try_tree_stack gen_state  =
+let gen_stack_tree (gen_state:gen_state) =
   Random.set_state gen_state.rnd_state;
   let queue = Queue.create () in
   Queue.push gen_state.first_rule queue;
-  gen_stack_tree gen_state.weighted_grammar 0 queue (Stack.create ())
-
-
+  gen_stack_tree_rec gen_state.weighted_grammar 0 queue (Stack.create ())
 
 let rec gen_tree_of_stack_rec
     (stack,size)
@@ -256,7 +252,7 @@ let generator
   | Some(final_size,state,wgrm) -> 
     let (first_rule,_) = List.hd g in
     let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    let (rules,res)  = try_tree_stack final_state in
+    let (rules,res)  = gen_stack_tree final_state in
     let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in
     Some(tree,size,final_state)				                	      
   | None -> None
