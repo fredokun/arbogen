@@ -9,7 +9,7 @@ main :
 	ocp-build -init
 	ocp-build build arbogen
 	mkdir -p bin
-	cp $(ARBOGEN_BIN_TMP) $(ARBOGEN_DIR_BIN)
+	cp $(ARBOGEN_BIN_TMP) $(ARBOGEN_BIN_DIR)
 
 clean :
 	ocp-build clean

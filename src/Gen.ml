@@ -255,7 +255,7 @@ let generator
   match res with 
   | Some(final_size,state,wgrm) -> 
     let (first_rule,_) = List.hd g in
-    let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule; nb_refine = 0 (*TODO *)} in
+    let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
     let (rules,res)  = try_tree_stack final_state in
     let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in
     Some(tree,size,final_state)				                	      
