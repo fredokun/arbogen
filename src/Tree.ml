@@ -14,9 +14,9 @@
 
 open Util
 
-type tree = 
-    Leaf of string * string     (* node type, node id *)
-  | Node of string * string * (tree list)   (* node type, node id, children *)
+type tree =
+| Leaf of string * string     (* node type, node id *)
+| Node of string * string * (tree list)   (* node type, node id, children *)
 
 let rec string_of_tree = function
   | Leaf(typ,id) -> "Leaf(" ^ typ ^ "," ^ id ^ ")"
@@ -29,59 +29,59 @@ let rec indent_string = function
 let indent_string_of_tree (t:tree) =
   let rec tree level t = match t with
     | Leaf(typ,id) -> (indent_string level) ^ "Leaf[" ^ typ ^ "," ^ id ^ "]"
-    | Node(typ,id,ts) -> 
+    | Node(typ,id,ts) ->
       (indent_string level) ^ "Node[" ^ typ ^ "," ^ id ^ "][\n" ^ (forest (level+1) ts) ^ "]"
   and forest level f = match f with
     | [] -> ""
     | [t] -> tree level t
     | t::f' -> (tree level t) ^ "\n" ^ (forest level f')
-  in tree 0 t     
+  in tree 0 t
 
 
-let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out = 
-  let label typ id = 
+let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
+  let label typ id =
     (if show_id then id else "") ^
-      (if show_type 
+      (if show_type
        then (if show_id then ":" else "") ^ typ
        else "")
   in
   match tree with
-    | Leaf(typ,id) -> output_string out (label typ id)
-    | Node(typ,id,ts) ->
-      output_string out (label typ id) ;
-      output_list 
-        out 
-        (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
-        "[" "," "]" ts  ;;
+  | Leaf(typ,id) -> output_string out (label typ id)
+  | Node(typ,id,ts) ->
+    output_string out (label typ id) ;
+    output_list
+      out
+      (fun (out:out_channel) (t:tree) -> (tree_out show_type show_id t out))
+      "[" "," "]" ts  ;;
 
 let file_of_tree (show_type:bool) (show_id:bool) (fname:string) (tree:tree) =
   let out = open_out fname
-  in 
+  in
   tree_out show_type show_id tree out ;
   close_out out
-    
 
-let xml_of_tree (t:tree) = 
+
+let xml_of_tree (t:tree) =
   let rec aux = function
     | Leaf(typ,id) -> "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
     | Node(typ,id,ts) -> "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">" ^ (string_of_list aux "" "" "</node>" ts)
-  in "<?xml version=\"1.0\"?><tree>" ^ (aux t) ^ "</tree>" 
+  in "<?xml version=\"1.0\"?><tree>" ^ (aux t) ^ "</tree>"
 
 let indent_xml_of_tree (t:tree) =
   let rec tree level t = match t with
     | Leaf(typ,id) -> (indent_string level) ^ "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
-    | Node(typ,id,ts) -> 
+    | Node(typ,id,ts) ->
       (indent_string level) ^ "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">\n" ^ (forest (level+1) ts) ^ "\n" ^ (indent_string level) ^ "</node>"
   and forest level f = match f with
     | [] -> ""
     | [t] -> tree level t
     | t::f' -> (tree level t) ^ "\n" ^ (forest level f')
-  in "<?xml version=\"1.0\"?>\n<tree>\n" ^ (tree 1 t) ^ "\n</tree>\n"     
+  in "<?xml version=\"1.0\"?>\n<tree>\n" ^ (tree 1 t) ^ "\n</tree>\n"
 
 let dot_of_tree (show_type:bool) (t:tree) =
   let rec nodes = function
     | Leaf(typ,id) -> "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
-    | Node(typ,id,ts) -> 
+    | Node(typ,id,ts) ->
       "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
       ^ (string_of_list nodes "" "" "" ts)
   and edges level pred t = match t with
@@ -91,18 +91,18 @@ let dot_of_tree (show_type:bool) (t:tree) =
   "digraph {\n"
   ^ nodes t
   ^ (match t with
-    | Leaf(_,_) -> ""
-    | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
+  | Leaf(_,_) -> ""
+  | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
 let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
   let out = open_out fname
-  in 
-  output_string out (dot_of_tree show_type tree); 
+  in
+  output_string out (dot_of_tree show_type tree);
   close_out out
-    
-let file_of_xml (fname:string) (tree:tree) = 
+
+let file_of_xml (fname:string) (tree:tree) =
   let out = open_out fname
   in
   output_string out(xml_of_tree tree);
-  close_out out;  
+  close_out out;

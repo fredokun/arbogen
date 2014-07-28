@@ -1,4 +1,3 @@
-
 (*********************************************************
  * Arbogen-lib : fast uniform random generation of trees *
  *********************************************************
@@ -13,274 +12,302 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-
 open Printf
 
 open Options
 open GenState
 
-let version_str = "arbogen v0.20121006 (beta)"
+let () =
 
-let usage = "Usage: arbogen <opt> <specfile>.arb"
-let banner = "\n" ^
-"   A      ...:'....:'':...':......\n" ^
-"   R    :''   ._   .  `.  \\   ,   '':\n" ^
-"   B    ':  .   \" .|    \\  `>/   _.-': \n" ^
-"   O   .:'  .`'.   `-.  '. /'  ,..  .:\n" ^
-"   G  :'        `.    `\\| \\./   ' :\n" ^
-"   E  :. ,,-'''''  \"-.   |   | ....:\n" ^
-"   N   '.      ..'''  `\\ :   |\n" ^
-"         ''''''''       \\'   |\n" ^
-"*fast* uniform random    |  =|\n" ^
-"       tree generator    |   |\n" ^
-"                         |-  |\n" ^
-"'''''''''''''''''''''''''''''''''''''''\n" ^ 
-"(C) F. Peschanski et al. under the GPL\n";;
+  let version_str = "arbogen v0.20121006 (beta)" in
 
-Arg.parse [
-  ("-version", Arg.Unit (fun () -> printf "%s\n%!" version_str ; exit 0),
-   "print version information");
-  ("-interactive", Arg.Unit (fun () -> global_options.interactive_mode <- true),
-   "activate interactive mode");
-  ("-verbose", Arg.Int (fun n -> 
-    if n < 0 then
-      begin
-        eprintf "Error: wrong verbosity level %d => must be positive\n...aborting\n%!" n ;
-        exit 1;
-      end
-    else
-      global_options.verbosity <- n),
-   "<n> : set the verbosity level to <n>  (a positive integer)");
-  ("-min", Arg.Int (fun n ->
-    if n <= 0 then
-      begin
-        eprintf "Error: wrong minimum size %d => must be strictly positive\n...aborting\n%!" n ;
-        exit 1;
-      end
-    else begin
-      global_options.size_min <- n;
-      global_options.size_min_set <- true
-    end),
-   "<n> : set the minimum size for the generated tree to <n> (a strictly positive integer)");
-  ("-max", Arg.Int (fun n ->
-    if n <= 0 then
-      begin
-        eprintf "Error: wrong maximum size %d => must be strictly positive\n...aborting\n%!" n ;
-        exit 1;
-      end
-    else if n < global_options.size_min then
-      begin 
-        eprintf "Error: wrong maximum size %d => must be strictly bigger than minimum\n...aborting\n%!" n ;
-        exit 1;
-      end
-    else  begin
-      global_options.size_max <- n;
-      global_options.size_max_set <- true
-    end),
-   "<n> : set the maximum size for the generated tree to <n> (a strictly positive integer)");
-  ("-seed", Arg.Int (fun n ->
-    begin
-      global_options.self_seed <- false ;
-      global_options.random_seed <- n;
-      global_options.random_seed_set <- true
-    end),
-   "<n> : set the random generator seed to <n>");
-  ("-eps1", Arg.Float (fun x ->
-    if x < 0.0 then
-      begin
-        eprintf "Error: wrong epsilon 1 parameter %f => must be positive\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.epsilon1 <- x;
-      global_options.epsilon1_set <- true
-    end),
-   "<x> : set the epsilon for singularity search (a strictly positive float number)");
-  ("-eps1_factor", Arg.Float (fun x ->
-    if x < 0.0 then
-      begin
-        eprintf "Error: wrong epsilon 1 factor parameter %f => must be positive\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.epsilon1_factor <- x;
-      global_options.epsilon1_factor_set <- true
-    end),
-   "<x> : set the refinement factor for epsilon in singularity search (a strictly positive float number)");
-  ("-eps2", Arg.Float (fun x ->
-    if x < 0.0 then
-      begin
-        eprintf "Error: wrong epsilon 2 parameter %f => must be positive\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.epsilon2 <- x;
-      global_options.epsilon2_set <- true
-    end),
-   "<x> : set the epsilon for Newton iteration (a strictly positive float number)");
-  ("-eps2_factor", Arg.Float (fun x ->
-    if x < 0.0 then
-      begin
-        eprintf "Error: wrong epsilon 2 factor parameter %f => must be positive\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.epsilon2_factor <- x;
-      global_options.epsilon2_factor_set <- true
-    end),
-   "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
-  ("-reject_ratio", Arg.Float (fun x ->
-    if x <  0.0 then
-      begin
-        eprintf "Error: wrong ratio of rejection %f => must be positive\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.ratio_rejected <- x;
-      global_options.ratio_rejected_set <- true
-    end),
-   "<x> : set the rejection's ratio (a strictly positive float number)");
-  ("-max_refine", Arg.Int (fun x ->
-    if x <= 0 then
-      begin
-        eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
-        exit 1;
-      end
-    else begin
-      global_options.max_refine <- x;
-      global_options.max_refine_set <- true
-    end),
-   "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
-  (* ("-max_refine_seed", Arg.Int (fun x -> *)
-  (*   if x <= 0 then *)
-  (*     begin *)
-  (*       eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ; *)
-  (*       exit 1; *)
-  (*     end *)
-  (*   else begin *)
-  (*     global_options.max_refine_seed <- x; *)
-  (*     global_options.max_refine_seed_set <- true *)
-  (*   end), *)
-  (*  "<n> : set the maximum number of refinement of the seed before the refinement of the Newton's parameter (a strictly positive integer number)"); *)
-  ("-try", Arg.Int (fun n ->
-    if n <= 0 then
-      begin
-        eprintf "Error: wrong try number %d => must be strictly positive\n...aborting\n%!" n ;
-        exit 1;
-      end
-    else begin
-      global_options.max_try <- n;
-      global_options.max_try_set <- true
-    end),
-   "<n> : set the maximum of tries when generating trees");
-  ("-type", Arg.String(fun x ->
-    match x with
-      |"arb" -> global_options.output_type <- 0;
-      |"dot" -> global_options.output_type <- 1;
-      |"xml" -> global_options.output_type <- 2;
-      |"all" -> global_options.output_type <- 3;  
-      |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
-        exit 1;
-   ),
-   "<n>: set the type [arb|dot|xml|all] of output generated at the end");
-  ("-file",Arg.String(fun x->
-    global_options.fileName <- x;
-   ),
-   "<x>: set the name of the file to be created at end of execution"
-  );
-  ("-zstart", Arg.Float(fun x -> 
-    if(x > 1.0 || x < 0.0) then(
-      eprintf "Error: value must be between 0 and 1\n...arborting\n";
-      exit 1;
-    )else(
-      global_options.zstart <- x;
-      global_options.zstart_set <- true;
-    )
-   ),
-   "<x>: sets the value of zstart");
-  
-  ("-state",Arg.String(fun x ->
-    global_options.state_file <- x;
-    global_options.with_state <- true;
-   ),
-   "<n>: set the name of state file");
-]
-  (fun arg ->
-    if (String.compare global_options.grammar_file "") == 0
-    then global_options.grammar_file <- arg
-    else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 0))
-  usage;
-;;
+  let usage = "Usage: arbogen <opt> <specfile>.arb" in
 
-if (global_options.verbosity) > 0
-then printf "%s\n%!" banner;;
+  let banner = "
+     A      ...:'....:'':...':......
+     R    :''   ._   .  `.  \\   ,   '':
+     B    ':  .   \" .|    \\  `>/   _.-':
+     O   .:'  .`'.   `-.  '. /'  ,..  .:
+     G  :'        `.    `\\| \\./   ' :
+     E  :. ,,-'''''  \"-.   |   | ....:
+     N   '.      ..'''  `\\ :   |
+           ''''''''       \\'   |
+  *fast* uniform random    |  =|
+         tree generator    |   |
+                           |-  |
+  '''''''''''''''''''''''''''''''''''''''
+  (C) F. Peschanski et al. under the GPL\n" in
 
 
-if (global_options.with_state)
-then(
-    let in_channel = open_in global_options.state_file in
-    printf "print state file %s \n%!" global_options.state_file;
-    let state:gen_state = input_value in_channel in
-    close_in in_channel;
-    let(rules,res) = Gen.gen_stack_tree state in
-    printf "size = %d\n" res;
-    exit 0
-);;
+  Arg.parse [
+    ("-version", Arg.Unit
+      (fun () -> printf "%s\n%!" version_str ; exit 0),
+     "print version information");
+    ("-interactive", Arg.Unit
+      (fun () -> global_options.interactive_mode <- true),
+     "activate interactive mode");
+    ("-verbose", Arg.Int
+      (fun n ->
+        if n < 0 then
+          begin
+            eprintf "Error: wrong verbosity level %d => must be positive\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else
+          global_options.verbosity <- n),
+     "<n> : set the verbosity level to <n>  (a positive integer)");
+    ("-min", Arg.Int
+      (fun n ->
+        if n <= 0 then
+          begin
+            eprintf "Error: wrong minimum size %d => must be strictly positive\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else begin
+          global_options.size_min <- n;
+          global_options.size_min_set <- true
+        end),
+     "<n> : set the minimum size for the generated tree to <n> (a strictly positive integer)");
+    ("-max", Arg.Int
+      (fun n ->
+        if n <= 0 then
+          begin
+            eprintf "Error: wrong maximum size %d => must be strictly positive\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else if n < global_options.size_min then
+          begin
+            eprintf "Error: wrong maximum size %d => must be strictly bigger than minimum\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else  begin
+          global_options.size_max <- n;
+          global_options.size_max_set <- true
+        end),
+     "<n> : set the maximum size for the generated tree to <n> (a strictly positive integer)");
+    ("-seed", Arg.Int
+      (fun n ->
+        begin
+          global_options.self_seed <- false ;
+          global_options.random_seed <- n;
+          global_options.random_seed_set <- true
+        end),
+     "<n> : set the random generator seed to <n>");
+    ("-eps1", Arg.Float
+      (fun x ->
+        if x < 0.0 then
+          begin
+            eprintf "Error: wrong epsilon 1 parameter %f => must be positive\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.epsilon1 <- x;
+          global_options.epsilon1_set <- true
+        end),
+     "<x> : set the epsilon for singularity search (a strictly positive float number)");
+    ("-eps1_factor", Arg.Float
+      (fun x ->
+        if x < 0.0 then
+          begin
+            eprintf "Error: wrong epsilon 1 factor parameter %f => must be positive\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.epsilon1_factor <- x;
+          global_options.epsilon1_factor_set <- true
+        end),
+     "<x> : set the refinement factor for epsilon in singularity search (a strictly positive float number)");
+    ("-eps2", Arg.Float
+      (fun x ->
+        if x < 0.0 then
+          begin
+            eprintf "Error: wrong epsilon 2 parameter %f => must be positive\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.epsilon2 <- x;
+          global_options.epsilon2_set <- true
+        end),
+     "<x> : set the epsilon for Newton iteration (a strictly positive float number)");
+    ("-eps2_factor", Arg.Float
+      (fun x ->
+        if x < 0.0 then
+          begin
+            eprintf "Error: wrong epsilon 2 factor parameter %f => must be positive\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.epsilon2_factor <- x;
+          global_options.epsilon2_factor_set <- true
+        end),
+     "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
+    ("-reject_ratio", Arg.Float
+      (fun x ->
+        if x <  0.0 then
+          begin
+            eprintf "Error: wrong ratio of rejection %f => must be positive\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.ratio_rejected <- x;
+          global_options.ratio_rejected_set <- true
+        end),
+     "<x> : set the rejection's ratio (a strictly positive float number)");
+    ("-max_refine", Arg.Int
+      (fun x ->
+        if x <= 0 then
+          begin
+            eprintf "Error: wrong maximum number of refinement %d => must be a strictly positive integer number\n...aborting\n%!" x ;
+            exit 1;
+          end
+        else begin
+          global_options.max_refine <- x;
+          global_options.max_refine_set <- true
+        end),
+     "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
+    ("-try", Arg.Int
+      (fun n ->
+        if n <= 0 then
+          begin
+            eprintf "Error: wrong try number %d => must be strictly positive\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else begin
+          global_options.max_try <- n;
+          global_options.max_try_set <- true
+        end),
+     "<n> : set the maximum of tries when generating trees");
+    ("-type", Arg.String
+      (fun x ->
+        match x with
+        |"arb" -> global_options.output_type <- 0;
+        |"dot" -> global_options.output_type <- 1;
+        |"xml" -> global_options.output_type <- 2;
+        |"all" -> global_options.output_type <- 3;
+        |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
+          exit 1;
+      ),
+     "<n>: set the type [arb|dot|xml|all] of output generated at the end");
+    ("-file",Arg.String
+      (fun x->
+        global_options.fileName <- x;
+      ),
+     "<x>: set the name of the file to be created at end of execution"
+    );
+    ("-zstart", Arg.Float
+      (fun x ->
+        if(x > 1.0 || x < 0.0) then(
+          eprintf "Error: value must be between 0 and 1\n...arborting\n";
+          exit 1;
+        )else(
+          global_options.zstart <- x;
+          global_options.zstart_set <- true;
+        )
+      ),
+     "<x>: sets the value of zstart");
 
-  if (global_options.verbosity) > 0
-  then printf "Loading grammar file: %s\n%!" global_options.grammar_file
+    ("-state", Arg.String
+      (fun x ->
+        global_options.state_file <- x;
+        global_options.with_state <- true;
+      ),
+     "<n>: set the name of state file");
+  ]
+    (fun arg ->
+      if (String.compare global_options.grammar_file "") == 0
+      then global_options.grammar_file <- arg
+      else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 0))
+    usage;
 
-  let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file ;;
-  let grammar = Ast.grammar_of_ast_grammar ast_grammar ;;
-
-  if (global_options.verbosity) > 0
-  then printf "==> Grammar file loaded\n%!" ;;
-
-  if (global_options.verbosity) > 0
-  then printf "Generating tree\n%!" ;;
-
+  if (global_options.verbosity) > 0 then
+    printf "%s\n%!" banner;
 
   let result =
-    Gen.generator
-      grammar
-      global_options.self_seed
-      global_options.random_seed
-      global_options.size_min
-      global_options.size_max
-      global_options.epsilon1
-      global_options.epsilon1_factor
-      global_options.epsilon2
-      global_options.epsilon2_factor
-      global_options.with_prefix
-      global_options.idprefix
-      global_options.max_try
-      global_options.ratio_rejected
-      global_options.max_refine
-      global_options.zstart
-  in match result with 
-      None -> 
-	eprintf "Error: no tree generated ==> try to use different parameters\n%!" ; 
-	exit 1 
-    | Some (tree,size,state) -> 
-      if (global_options.verbosity) > 0  
-      then begin 
-	printf "==> Tree generated with size=%d\n%!" size ; 
-	let out_state = open_out  (global_options.fileName^".state") in
-	printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
-	output_value out_state state;
-	close_out out_state;
-	match global_options.output_type with 
-	  |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName; 
-            Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
-	  |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName; 
-            Tree.file_of_dot true (global_options.fileName^".dot") tree;  
-	  |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName; 
-            Tree.file_of_xml (global_options.fileName^".xml") tree; 
-	  |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName; 
-            Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree; 
-            Tree.file_of_dot true (global_options.fileName^".dot") tree; 
-            Tree.file_of_xml (global_options.fileName^".xml") tree;  
-	  |_ -> printf "Error \n";      (* unreachable case *) 
-            printf "==> file saved\n%!";
-      end  	
- 
+    if(not global_options.with_state) then
+      begin
+        if (global_options.verbosity) > 0 then
+          printf "Loading grammar file: %s\n%!" global_options.grammar_file;
+
+        let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+        let grammar = Ast.grammar_of_ast_grammar ast_grammar in
+
+        if (global_options.verbosity) > 0 then
+          printf "==> Grammar file loaded\n%!";
+
+        if (global_options.verbosity) > 0 then
+          printf "Generating tree\n%!";
+
+        Gen.generator
+          grammar
+          global_options.self_seed
+          global_options.random_seed
+          global_options.size_min
+          global_options.size_max
+          global_options.epsilon1
+          global_options.epsilon1_factor
+          global_options.epsilon2
+          global_options.epsilon2_factor
+          global_options.with_prefix
+          global_options.idprefix
+          global_options.max_try
+          global_options.ratio_rejected
+          global_options.max_refine
+          global_options.zstart
+      end
+    else
+      begin
+
+        if (global_options.verbosity) > 0 then
+          printf "Loading state file: %s\n%!" global_options.state_file;
+
+        let in_channel = open_in global_options.state_file in
+        let state:gen_state = input_value in_channel in
+        close_in in_channel;
+
+
+        if (global_options.verbosity) > 0 then
+          printf "==> State file loaded\n%!";
+
+        if (global_options.verbosity) > 0 then
+          printf "Generating tree\n%!";
+
+        let(rules,res) = Gen.gen_stack_tree state in
+        let (tree,size) = Gen.gen_tree_of_stack
+          (rules,res)
+          global_options.with_prefix
+          global_options.idprefix in
+        Some(tree,size,state)
+      end
+  in
+  match result with
+  | None ->
+	    eprintf "Error: no tree generated ==> try to use different parameters\n%!" ;
+	    exit 1
+  | Some (tree,size,state) ->
+    begin
+
+      if (global_options.verbosity) > 0
+      then printf "==> Tree generated with size=%d\n%!" size ;
+
+	    let out_state = open_out  (global_options.fileName^".state") in
+
+      printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
+
+	    output_value out_state state;
+	    close_out out_state;
+
+	    match global_options.output_type with
+	    |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName;
+        Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+	    |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName;
+        Tree.file_of_dot true (global_options.fileName^".dot") tree;
+	    |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName;
+        Tree.file_of_xml (global_options.fileName^".xml") tree;
+	    |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
+        Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
+        Tree.file_of_dot true (global_options.fileName^".dot") tree;
+        Tree.file_of_xml (global_options.fileName^".xml") tree;
+	    |_ -> printf "Error \n";      (* unreachable case *)
+        printf "==> file saved\n%!";
+        exit 0
+    end

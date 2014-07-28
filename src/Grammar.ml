@@ -41,7 +41,7 @@ let names_of_component comp =
     | Cons (_, l) -> List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) names l
 
 
-let names_of_rule (_,comps) = 
+let names_of_rule (_,comps) =
   List.fold_left (fun names comp -> StringSet.union (names_of_component comp) names) (StringSet.empty) comps
 
 let names_of_grammar (grm:grammar) =
@@ -50,11 +50,11 @@ let names_of_grammar (grm:grammar) =
 let rule_names_of_grammar (grm:grammar) =
   List.fold_left (fun rnames (rname,_) -> StringSet.add rname rnames) (StringSet.empty) grm
 
-let leafs_of_grammar (grm:grammar) = 
+let leafs_of_grammar (grm:grammar) =
   let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
   in
   StringSet.fold (fun leaf l -> leaf::l) leafs []
-    
+
 let completion (grm:grammar) =
   let leafs = leafs_of_grammar grm
   in

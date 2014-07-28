@@ -17,47 +17,47 @@ open Grammar
 open Util
 
 (* a system is an array of equations *)
-type combsys = combeq array 
+type combsys = combeq array
 (* an equation is a list of products *)
 and combeq = combprod list
 (* a product is a list of nodes *)
 and combprod = combnode list
 (* a node is either *)
 and combnode =
-  | Z            (* an instance of the variable Z *)
-  | One          (* a unit 1 for the product *)
-  | Refe of int  (* a reference to another equation *)
-  | Seq of int
+| Z            (* an instance of the variable Z *)
+| One          (* a unit 1 for the product *)
+| Refe of int  (* a reference to another equation *)
+| Seq of int
 
 
 let combsys_size = Array.length
 
 (** evalution of a node at a given coordinate z *)
-let eval_combnode (z:float) (y:float array) (cn:combnode):float = 
+let eval_combnode (z:float) (y:float array) (cn:combnode):float =
 	match cn with
-		 Z -> z
-		|One -> 1.0
-		|Refe(i) -> y.(i)
-		|Seq(i) -> 1./.(1.-.y.(i))
+		Z -> z
+	|One -> 1.0
+	|Refe(i) -> y.(i)
+	|Seq(i) -> 1./.(1.-.y.(i))
 
 (** evaluation of a product at a given coordinate z *)
-let eval_combprod (z:float) (y:float array) (cp:combprod):float = 
+let eval_combprod (z:float) (y:float array) (cp:combprod):float =
 	let eval_combnode_s = eval_combnode z y in
 	fold_map eval_combnode_s ( *.) 1.0 cp
 
 (** evaluation of an equation at a given coordinate z *)
-let eval_eq (z:float) (y:float array) (eq:combeq):float = 
+let eval_eq (z:float) (y:float array) (eq:combeq):float =
 	let eval_combprod_s = eval_combprod z y in
 	fold_map eval_combprod_s (+.) 0.0 eq
-	 
+	  
 (** evaluation of a system at a given coordinate z *)
-let evaluation (phi:combsys) (z:float) (y:float array):float array = 
+let evaluation (phi:combsys) (z:float) (y:float array):float array =
 	let u = Array.create (Array.length y) 0.0 in
 	for i=0 to ((Array.length y) - 1)
 	do
 		let vali = eval_eq z y phi.(i)
 		in
-		  u.(i) <- vali
+		u.(i) <- vali
 	done;
 	u
 
@@ -72,13 +72,13 @@ let rec make_refs map refs =
   | [] -> []
   | Grammar.Seq(a)::refs' -> (Seq (StringMap.find a map))::(make_refs map refs')
   | ref::refs' -> (Refe (StringMap.find (name_of_elem ref) map))::(make_refs map refs')
-    
+
 let comprod_of_component map comp =  (* (refs, weight) *)
   match comp with
   | Grammar.Cons (weight, refs) ->  (make_refs map refs) @ (make_z weight)
   | Grammar.Call r -> [Refe (StringMap.find r map)]
 
-let combeq_of_rule map (_,comps) = 
+let combeq_of_rule map (_,comps) =
   List.fold_left (fun eqs comp -> (comprod_of_component map comp)::eqs) [] comps
 
 let refmap_of_grammar grm =
@@ -101,7 +101,7 @@ let combsys_of_grammar grm =
 
 (* printing *)
 
-let string_of_combnode = function 
+let string_of_combnode = function
   | Z -> "z"
   | One -> "1"
   | Seq i ->  "Seq[" ^ (string_of_int i) ^ "]"

@@ -72,7 +72,7 @@ rule token = parse
   | equal { EQUAL }
   | times { TIMES }
   | lparen { LPAREN }
-  | rparen { RPAREN } 
+  | rparen { RPAREN }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
 {

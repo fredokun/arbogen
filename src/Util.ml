@@ -15,7 +15,7 @@
 (* List utilities *)
 
 let fold_map mop fop finit a =
-  List.fold_left (fun r e -> fop (mop e) r) finit a 
+  List.fold_left (fun r e -> fop (mop e) r) finit a
 
 
 let string_of_list str_of_elem op dl cl l =
@@ -27,7 +27,7 @@ let string_of_list str_of_elem op dl cl l =
 
 let rec output_list out output_elem op dl cl l = match l with
   | [] -> output_string out cl
-  | [e] -> 
+  | [e] ->
     output_string out op ;
     output_elem out e ;
     output_string out cl
@@ -41,8 +41,8 @@ let rec output_list out output_elem op dl cl l = match l with
 let concat_n l n =
   let rec aux l n acc =
     match n with
-      | 0 -> acc
-      | n -> (aux l (n-1) (l @ acc))
+    | 0 -> acc
+    | n -> (aux l (n-1) (l @ acc))
   in
   aux l n []
 
@@ -50,8 +50,8 @@ let concat_n l n =
 let npop n q =
   let rec npop_rec n q l=
     match n with
-      |0 -> l
-      |_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
+    |0 -> l
+    |_ -> let a = Queue.pop q in npop_rec (n-1) q (a::l)
   in
   npop_rec n q []
 
@@ -59,7 +59,7 @@ let npop n q =
 
 let array_fold_left_2 (f:'a -> 'b -> 'c -> 'a) (init:'a) (b:'b array) (c:'c array) : 'a =
   let rec aux i len acc =
-    if i=len 
+    if i=len
     then acc
     else aux (i+1) len (f acc b.(i) c.(i))
   in
