@@ -242,6 +242,19 @@ let gen_tree_of_stack
     ((Queue.pop queue),size)
   end
 
+let gen_tree (gen_state:gen_state) =
+  Random.set_state gen_state.rnd_state;
+  let rec aux counters stacks wgrm id =
+    match find_non_zero counters with
+    | Some rule_name ->
+      let n = StringMap.find rule_name counters in
+      let stack = StringMap.find rule_name stacks in
+      List.iter
+        (fun ref_tree ->
+          match !ref_tree with
+          | 
+    
+
 let generator
     (g:grammar)
     (self_seed:bool)
