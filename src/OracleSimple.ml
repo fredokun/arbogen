@@ -20,10 +20,12 @@ open Util
 let normInf_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y') in if z>norm then z else norm) 0.0
 
 let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
+  let open Printf in
+  printf "it simple et z = %f\n" z;
   let rec iterate (y:float array): float array =
-    (* print_endline "lol"; *)
-    (* let open Printf in *)
-    (* Array.iter (fun x -> printf "%f \n" x) y; *)
+    (* print_endline "lol "; *)
+    Array.iter (fun x -> printf "%f " x) y;
+    printf "\n";
     let y' = evaluation phi z y
     in
     if (Array.fold_left (fun pred x -> pred || (x > 1.)) false y')
@@ -48,7 +50,14 @@ let diverge (y:float array) (epsilon:float):bool =
   dvgi 0 ((Array.length y) - 1)
 
 (* output:zmin,zmax,vectorY *)
-let rec searchSingularity (phi:combsys) (zmin:float) (zmax:float) (epsilon1:float) (epsilon2:float)(zstart:float):float *float* float array =
+let rec searchSingularity
+    (phi:combsys)
+    (zmin:float)
+    (zmax:float)
+    (epsilon1:float)
+    (epsilon2:float)
+    (zstart:float)
+    : float *float* float array =
   if zmax -. zmin < epsilon1 then
     (zmin,zmax,iterationSimple phi zmin epsilon2)
   else

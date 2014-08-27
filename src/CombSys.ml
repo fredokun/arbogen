@@ -36,9 +36,9 @@ let combsys_size = Array.length
 let eval_combnode (z:float) (y:float array) (cn:combnode):float =
 	match cn with
 		Z -> z
-	|One -> 1.0
-	|Refe(i) -> y.(i)
-	|Seq(i) -> 1./.(1.-.y.(i))
+	| One -> 1.0
+	| Refe(i) -> y.(i)
+	| Seq(i) -> 1./.(1.-.y.(i))
 
 (** evaluation of a product at a given coordinate z *)
 let eval_combprod (z:float) (y:float array) (cp:combprod):float =
