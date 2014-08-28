@@ -56,6 +56,7 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
   | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
   | (Grammar.Cons (w, elem_list)), _ ->
     begin
+      printf "name_rule %s w %d\n" name_rule w;
 	    (w,
 	     (List.fold_left
 	       (fun next_rules elem ->
@@ -72,14 +73,6 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
        isCall)
     end
 	
-
-let rec init_counter (g:grammar) map =
-  match g with
-  | [] -> map
-  | rul::rules -> init_counter rules (StringMap.add (fst rul) 0 map)
-
-
-
 let rec init_counter (g:grammar) map =
   match g with
   | [] -> map
@@ -102,11 +95,15 @@ let  find_non_zero counters =
 
 
 let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
+    let open Printf in
+    (* printf "sim name %s\n" current_rule; *)
   if (size>sizemax)  then
     size
   else
     begin
       let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
+
+      (* printf "total_w %d\n" total_weight; *)
 
       (* printf "sim debug\n"; *)
       (* List.iter (fun x -> printf "%s " x) next_rules; *)
@@ -192,68 +189,118 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     else
       None
 
-type 'a queue = 'a Queue.t
+(* type 'a queue = 'a Queue.t *)
 
-let rec gen_stack_tree_rec (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules =
-  if (Queue.is_empty next_rules)  then
-    (rules,size)
-  else
-    let current_rule = Queue.pop next_rules in
-    let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in
+(* let rec gen_stack_tree_rec (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules = *)
+(*   if (Queue.is_empty next_rules)  then *)
+(*     (rules,size) *)
+(*   else *)
+(*     let current_rule = Queue.pop next_rules in *)
+(*     let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in *)
 
-    (* printf "gen debug\n"; *)
-    (* List.iter (fun x -> printf "%s " x) next_rules_list; *)
-    (* printf "\n"; *)
+(*     (\* printf "gen debug\n"; *\) *)
+(*     (\* List.iter (fun x -> printf "%s " x) next_rules_list; *\) *)
+(*     (\* printf "\n"; *\) *)
 
-    Stack.push (current_rule,(List.length next_rules_list)) rules;
-    List.iter (fun elt -> Queue.push elt next_rules) next_rules_list;
-    gen_stack_tree_rec wgrm (size+total_weight) next_rules rules
+(*     Stack.push (current_rule,(List.length next_rules_list)) rules; *)
+(*     List.iter (fun elt -> Queue.push elt next_rules) next_rules_list; *)
+(*     gen_stack_tree_rec wgrm (size+total_weight) next_rules rules *)
 
-let gen_stack_tree (gen_state:gen_state) =
+(* let gen_stack_tree (gen_state:gen_state) = *)
+(*   Random.set_state gen_state.rnd_state; *)
+(*   let queue = Queue.create () in *)
+(*   Queue.push gen_state.first_rule queue; *)
+(*   gen_stack_tree_rec gen_state.weighted_grammar 0 queue (Stack.create ()) *)
+
+(* let rec gen_tree_of_stack_rec *)
+(*     (stack,size) *)
+(*     (current_rules: tree queue) *)
+(*     (with_prefix:bool) (idprefix:string) = *)
+(*   if (not (Stack.is_empty stack)) then *)
+(*     begin *)
+(*       let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in *)
+(* 	    let (rule,arity) = Stack.pop stack in *)
+(* 	    let next_rule = *)
+(* 		    if arity = 0 then *)
+(* 		      Leaf(rule,prefix) *)
+(* 		    else *)
+(* 		      let sons = npop arity current_rules in *)
+(*           Node(rule,prefix,sons) *)
+(* 	    in *)
+(* 	    Queue.push next_rule current_rules; *)
+(* 	    gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix *)
+(*     end *)
+
+(* let gen_tree_of_stack *)
+(*     (stack,size) *)
+(*     (with_prefix:bool) (idprefix:string) = *)
+(*   let queue = Queue.create () in *)
+(*   begin *)
+(*     gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix; *)
+(*     ((Queue.pop queue),size) *)
+(*   end *)
+
+let make_n_leaf_refs n =
+  let rec aux n l =
+    if n = 0 then
+      l
+    else
+      aux (n-1) ((ref (Leaf("",""))) :: l)
+  in
+  aux n []
+
+let gen_tree (gen_state:gen_state) with_prefix idprefix =
+  let rec aux counters stacks wgrm id current_rule =
+    let open Printf in
+    printf "gen name %s\n" current_rule;
+    let prefix = if with_prefix then idprefix ^ (string_of_int id) else (string_of_int id) in
+    let (_,next_rules,_) = get_next_rule current_rule wgrm false in
+    let arity = List.length next_rules in
+    let refs = StringMap.find current_rule stacks in
+    let current_ref = List.hd refs in
+    let refs' = List.tl refs in
+    let stacks' = StringMap.add current_rule refs' stacks in
+    if arity = 0 then
+      begin
+        current_ref := Leaf(current_rule,prefix);
+        match find_non_zero counters with
+        | Some rule_name ->
+          let counters' = StringMap.add rule_name ((StringMap.find rule_name counters) - 1) counters in
+          aux counters' stacks' wgrm (id+1) rule_name
+        | None -> (id+1)
+      end
+    else
+      begin
+        let counters' = count_rules counters (List.tl next_rules) in
+        let children_refs = make_n_leaf_refs arity in
+        let stacks'' =
+          List.fold_left2
+            (fun stacks rule_name node_ref ->
+              StringMap.add rule_name
+                (node_ref :: (StringMap.find rule_name stacks))
+                stacks)
+            stacks'
+            next_rules
+            children_refs
+        in
+        current_ref := Node (current_rule, prefix, children_refs);
+        aux counters' stacks'' wgrm (id+1) (List.hd next_rules)
+      end
+  in
   Random.set_state gen_state.rnd_state;
-  let queue = Queue.create () in
-  Queue.push gen_state.first_rule queue;
-  gen_stack_tree_rec gen_state.weighted_grammar 0 queue (Stack.create ())
-
-let rec gen_tree_of_stack_rec
-    (stack,size)
-    (current_rules: tree queue)
-    (with_prefix:bool) (idprefix:string) =
-  if (not (Stack.is_empty stack)) then
-    begin
-      let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in
-	    let (rule,arity) = Stack.pop stack in
-	    let next_rule =
-		    if arity = 0 then
-		      Leaf(rule,prefix)
-		    else
-		      let sons = npop arity current_rules in Node(rule,prefix,sons)
-	    in
-	    Queue.push next_rule current_rules;
-	    gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix
-    end
-
-let gen_tree_of_stack
-    (stack,size)
-    (with_prefix:bool) (idprefix:string) =
-  let queue = Queue.create () in
-  begin
-    gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix;
-    ((Queue.pop queue),size)
-  end
-
-let gen_tree (gen_state:gen_state) =
-  Random.set_state gen_state.rnd_state;
-  let rec aux counters stacks wgrm id =
-    match find_non_zero counters with
-    | Some rule_name ->
-      let n = StringMap.find rule_name counters in
-      let stack = StringMap.find rule_name stacks in
-      List.iter
-        (fun ref_tree ->
-          match !ref_tree with
-          | 
-    
+  let first_ref = ref (Leaf ("","")) in
+  let wgrm = gen_state.weighted_grammar in
+  let first_rule = gen_state.first_rule in
+  let keys = StringMap.fold (fun k _ l -> k :: l) wgrm  [] in
+  let counters = List.fold_left (fun map k -> StringMap.add k 0 map) StringMap.empty keys in
+  let stacks =  List.fold_left
+    (fun map k -> if k = first_rule then
+        StringMap.add k [first_ref] map
+      else
+        StringMap.add k [] map)
+    StringMap.empty keys in
+  let size = aux counters stacks wgrm 0 first_rule in
+  (!first_ref, size)
 
 let generator
     (g:grammar)
@@ -295,8 +342,9 @@ let generator
   | Some(final_size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    let (rules,res)  = gen_stack_tree final_state in
-    let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in
+    (* let (rules,res)  = gen_stack_tree final_state in *)
+    (* let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in *)
+    let tree, size = gen_tree final_state with_prefix idprefix in
     Some(tree,size,final_state)				                	
   | None -> None
 
