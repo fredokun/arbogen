@@ -8,4 +8,4 @@ set try 1000
 UBTree ::= UBLeaf + Unary + Binary
 Unary ::= UBTree * <z>
 Binary ::= UBTree * UBTree * <z>
-UBLeaf ::= Leaf * <z>
+UBLeaf ::= <z>
