@@ -21,7 +21,7 @@ let () =
 
   let version_str = "arbogen v0.20121006 (beta)" in
 
-  let usage = "Usage: arbogen <opt> <specfile>.arb" in
+  let usage = "Usage: arbogen <opt> <specfile>.spec" in
 
   let banner = "
      A      ...:'....:'':...':......
@@ -214,7 +214,7 @@ let () =
      "<n>: set the name of state file");
   ]
     (fun arg ->
-      if (String.compare global_options.grammar_file "") == 0
+      if (String.compare global_options.grammar_file "") = 0
       then global_options.grammar_file <- arg
       else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 0))
     usage;
