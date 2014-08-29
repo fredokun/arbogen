@@ -62,7 +62,8 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
             | (Grammar.Seq name) ->
               begin
                 let (w,_) = StringMap.find name wgrm in
-                let n' = geom w in
+                (* let n' = geom w in *)
+                let n' = int_of_float( snd (modf((log(Random.float 1.))/. (log(1.-.w))))) in
                 (* printf "%d\n" n'; *)
                 next_rules @ (concat_n [name] n')
               end
