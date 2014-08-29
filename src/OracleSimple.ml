@@ -20,12 +20,7 @@ open Util
 let normInf_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y') in if z>norm then z else norm) 0.0
 
 let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
-  let open Printf in
-  printf "it simple et z = %f\n" z;
   let rec iterate (y:float array): float array =
-    (* print_endline "lol "; *)
-    Array.iter (fun x -> printf "%f " x) y;
-    printf "\n";
     let y' = evaluation phi z y
     in
     if (Array.fold_left (fun pred x -> pred || (x > 1.)) false y')

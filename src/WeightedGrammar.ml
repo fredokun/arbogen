@@ -22,14 +22,10 @@ let rule_names_to_index grm =
     match grm with
     | [] -> index_map
     | (rule_name, _) :: grm' ->
-      let open Printf in
-      printf "name %s id %d \n" rule_name index;
-
-	    rn_to_ind grm' (StringMap.add rule_name index index_map) (index+1) (* (index-1) *)
+	    rn_to_ind grm' (StringMap.add rule_name index index_map) (index+1)
   in
-  let n = List.length grm in
   let index_map = StringMap.empty in
-  rn_to_ind grm index_map 0 (* (n-1) *)
+  rn_to_ind grm index_map 0
 
 let cpnt_to_wcpnt z rules_indexes values component =
   match component with
@@ -43,18 +39,17 @@ let cpnt_to_wcpnt z rules_indexes values component =
 	    let w = (z ** (float_of_int zn)) *.
         (List.fold_left
            (fun total_weight elem ->
-             match elem with
-		         | Elem name ->
-		           begin
-                 let rule_index = StringMap.find name rules_indexes in
-                 total_weight *. values.(rule_index)
-		           end
-		         | Seq name ->
-		           begin
-                 let rule_index = StringMap.find name rules_indexes in
-                 total_weight *. values.(rule_index)
-               (* total_weight /. (1. -. values.(rule_index)) *)
-		           end
+            match elem with
+		        | Elem name ->
+		          begin
+                let rule_index = StringMap.find name rules_indexes in
+                total_weight *. values.(rule_index)
+		          end
+		        | Seq name ->
+		          begin
+                let rule_index = StringMap.find name rules_indexes in
+                total_weight /. (1. -. values.(rule_index))
+		          end
            )
            1.
            l)

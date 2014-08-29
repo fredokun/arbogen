@@ -26,7 +26,6 @@ open GenState
 
 let geom p =
   let rec g u s k l p =
-    (* printf "%f %f \n%!" u s; *)
     if u > s then
       let pk = p *. l in
       g u (s +. pk) (k + 1) l pk
@@ -50,29 +49,29 @@ let rec find_component (rdm_float:float) componentList =
 let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = (Random.float 1.) *. total_weight in
-  (* printf "%f %f \n" total_weight rdm_float ; *)
   let comp = (find_component rdm_float component_list) in
   match comp with
   | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
   | (Grammar.Cons (w, elem_list)), _ ->
     begin
-      printf "name_rule %s w %d\n" name_rule w;
 	    (w,
 	     (List.fold_left
-	       (fun next_rules elem ->
-           match elem with
-           | (Grammar.Elem name) -> name :: next_rules
-           | (Grammar.Seq name) -> let (w,_) = StringMap.find name wgrm in
-                                   (* let n' = int_of_float (ceil ( ( (log( Random.float 1.)) -. (log w) ) /.  (log (1. -. w) ) ) ) in *)
-                                   let n' = geom w in
-                                   (* printf "%d \n%!" n'; *)
-                                   next_rules @ (concat_n [name] n')
-	       )
-	       []
-	       elem_list),
+	        (fun next_rules elem ->
+            match elem with
+            | (Grammar.Elem name) -> name :: next_rules
+            | (Grammar.Seq name) ->
+              begin
+                let (w,_) = StringMap.find name wgrm in
+                let n' = geom w in
+                (* printf "%d\n" n'; *)
+                next_rules @ (concat_n [name] n')
+              end
+	        )
+	        []
+	        elem_list),
        isCall)
     end
-	
+	    
 let rec init_counter (g:grammar) map =
   match g with
   | [] -> map
@@ -95,20 +94,11 @@ let  find_non_zero counters =
 
 
 let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) =
-    let open Printf in
-    (* printf "sim name %s\n" current_rule; *)
   if (size>sizemax)  then
     size
   else
     begin
       let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
-
-      (* printf "total_w %d\n" total_weight; *)
-
-      (* printf "sim debug\n"; *)
-      (* List.iter (fun x -> printf "%s " x) next_rules; *)
-      (* printf "\n"; *)
-
       if (List.length next_rules) > 0 then
 	      begin
 	        let new_counters = (count_rules counters (List.tl next_rules)) in
@@ -137,23 +127,23 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
       let rdm_state = Random.get_state () in
       let res = sim 0 counters wgrm sizemax first_rule in
       if global_options.verbosity >= 3
-      then printf "[SIM]: Simulated size of tree = %d\n%!" res ;
+      then printf "[SIM]: Simulated weight of tree = %d\n%!" res ;
       if res < sizemin then
         begin
           (if global_options.verbosity >= 3
-           then printf "     ==> size is too small => reject\n%!");
+           then printf "     ==> weight is too small => reject\n%!");
           simulate_seed wgrm grm (nb_try - 1)  (nb_smaller+1) nb_bigger sizemin sizemax
         end
       else if res > sizemax then
         begin
 	        (if global_options.verbosity >= 3
-           then printf "      ==> size is too big\n%!") ;
-        simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
+           then printf "      ==> weight is too big\n%!") ;
+          simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
         end
       else
         begin
 	        (if global_options.verbosity >= 3
-           then printf "     ==> simulated size matches expecte size, select\n%!");
+           then printf "     ==> simulated weight matches expected weight, select\n%!");
 	        (Some(res),nb_smaller,nb_bigger,Some(rdm_state))
         end
     end
@@ -189,57 +179,6 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     else
       None
 
-(* type 'a queue = 'a Queue.t *)
-
-(* let rec gen_stack_tree_rec (wgrm:WeightedGrammar.weighted_grammar) (size:int) (next_rules: string queue) rules = *)
-(*   if (Queue.is_empty next_rules)  then *)
-(*     (rules,size) *)
-(*   else *)
-(*     let current_rule = Queue.pop next_rules in *)
-(*     let(total_weight,next_rules_list,_) = get_next_rule current_rule wgrm false in *)
-
-(*     (\* printf "gen debug\n"; *\) *)
-(*     (\* List.iter (fun x -> printf "%s " x) next_rules_list; *\) *)
-(*     (\* printf "\n"; *\) *)
-
-(*     Stack.push (current_rule,(List.length next_rules_list)) rules; *)
-(*     List.iter (fun elt -> Queue.push elt next_rules) next_rules_list; *)
-(*     gen_stack_tree_rec wgrm (size+total_weight) next_rules rules *)
-
-(* let gen_stack_tree (gen_state:gen_state) = *)
-(*   Random.set_state gen_state.rnd_state; *)
-(*   let queue = Queue.create () in *)
-(*   Queue.push gen_state.first_rule queue; *)
-(*   gen_stack_tree_rec gen_state.weighted_grammar 0 queue (Stack.create ()) *)
-
-(* let rec gen_tree_of_stack_rec *)
-(*     (stack,size) *)
-(*     (current_rules: tree queue) *)
-(*     (with_prefix:bool) (idprefix:string) = *)
-(*   if (not (Stack.is_empty stack)) then *)
-(*     begin *)
-(*       let prefix = if with_prefix then idprefix ^ (string_of_int (size)) else (string_of_int (size)) in *)
-(* 	    let (rule,arity) = Stack.pop stack in *)
-(* 	    let next_rule = *)
-(* 		    if arity = 0 then *)
-(* 		      Leaf(rule,prefix) *)
-(* 		    else *)
-(* 		      let sons = npop arity current_rules in *)
-(*           Node(rule,prefix,sons) *)
-(* 	    in *)
-(* 	    Queue.push next_rule current_rules; *)
-(* 	    gen_tree_of_stack_rec (stack,size-1) current_rules with_prefix idprefix *)
-(*     end *)
-
-(* let gen_tree_of_stack *)
-(*     (stack,size) *)
-(*     (with_prefix:bool) (idprefix:string) = *)
-(*   let queue = Queue.create () in *)
-(*   begin *)
-(*     gen_tree_of_stack_rec (stack,size) queue with_prefix idprefix; *)
-(*     ((Queue.pop queue),size) *)
-(*   end *)
-
 let make_n_leaf_refs n =
   let rec aux n l =
     if n = 0 then
@@ -249,44 +188,42 @@ let make_n_leaf_refs n =
   in
   aux n []
 
+let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
+  let prefix = if with_prefix then idprefix ^ (string_of_int id) else (string_of_int id) in
+  let (_,next_rules,_) = get_next_rule current_rule wgrm false in
+  let arity = List.length next_rules in
+  let refs = StringMap.find current_rule stacks in
+  let current_ref = List.hd refs in
+  let refs' = List.tl refs in
+  let stacks' = StringMap.add current_rule refs' stacks in
+  if arity = 0 then
+    begin
+      current_ref := Leaf(current_rule,prefix);
+      match find_non_zero counters with
+      | Some rule_name ->
+        let counters' = StringMap.add rule_name ((StringMap.find rule_name counters) - 1) counters in
+        gen_tree_rec counters' stacks' wgrm (id+1) rule_name with_prefix idprefix
+      | None -> (id+1)
+    end
+  else
+    begin
+      let counters' = count_rules counters (List.tl next_rules) in
+      let children_refs = make_n_leaf_refs arity in
+      let stacks'' =
+        List.fold_left2
+          (fun stacks rule_name node_ref ->
+            StringMap.add rule_name
+              (node_ref :: (StringMap.find rule_name stacks))
+              stacks)
+          stacks'
+          next_rules
+          children_refs
+      in
+      current_ref := Node (current_rule, prefix, children_refs);
+      gen_tree_rec counters' stacks'' wgrm (id+1) (List.hd next_rules) with_prefix idprefix
+    end
+
 let gen_tree (gen_state:gen_state) with_prefix idprefix =
-  let rec aux counters stacks wgrm id current_rule =
-    let open Printf in
-    printf "gen name %s\n" current_rule;
-    let prefix = if with_prefix then idprefix ^ (string_of_int id) else (string_of_int id) in
-    let (_,next_rules,_) = get_next_rule current_rule wgrm false in
-    let arity = List.length next_rules in
-    let refs = StringMap.find current_rule stacks in
-    let current_ref = List.hd refs in
-    let refs' = List.tl refs in
-    let stacks' = StringMap.add current_rule refs' stacks in
-    if arity = 0 then
-      begin
-        current_ref := Leaf(current_rule,prefix);
-        match find_non_zero counters with
-        | Some rule_name ->
-          let counters' = StringMap.add rule_name ((StringMap.find rule_name counters) - 1) counters in
-          aux counters' stacks' wgrm (id+1) rule_name
-        | None -> (id+1)
-      end
-    else
-      begin
-        let counters' = count_rules counters (List.tl next_rules) in
-        let children_refs = make_n_leaf_refs arity in
-        let stacks'' =
-          List.fold_left2
-            (fun stacks rule_name node_ref ->
-              StringMap.add rule_name
-                (node_ref :: (StringMap.find rule_name stacks))
-                stacks)
-            stacks'
-            next_rules
-            children_refs
-        in
-        current_ref := Node (current_rule, prefix, children_refs);
-        aux counters' stacks'' wgrm (id+1) (List.hd next_rules)
-      end
-  in
   Random.set_state gen_state.rnd_state;
   let first_ref = ref (Leaf ("","")) in
   let wgrm = gen_state.weighted_grammar in
@@ -299,7 +236,7 @@ let gen_tree (gen_state:gen_state) with_prefix idprefix =
       else
         StringMap.add k [] map)
     StringMap.empty keys in
-  let size = aux counters stacks wgrm 0 first_rule in
+  let size = gen_tree_rec counters stacks wgrm 0 first_rule with_prefix idprefix in
   (!first_ref, size)
 
 let generator
@@ -342,8 +279,6 @@ let generator
   | Some(final_size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    (* let (rules,res)  = gen_stack_tree final_state in *)
-    (* let (tree,size) = gen_tree_of_stack (rules,res) with_prefix idprefix in *)
     let tree, size = gen_tree final_state with_prefix idprefix in
     Some(tree,size,final_state)				                	
   | None -> None

@@ -265,19 +265,12 @@ let () =
         let state:gen_state = input_value in_channel in
         close_in in_channel;
 
-
         if (global_options.verbosity) > 0 then
           printf "==> State file loaded\n%!";
 
         if (global_options.verbosity) > 0 then
           printf "Generating tree\n%!";
 
-        (* let(rules,res) = Gen.gen_stack_tree state in *)
-        (* let (tree,size) = Gen.gen_tree_of_stack *)
-        (*   (rules,res) *)
-        (*   global_options.with_prefix *)
-        (*   global_options.idprefix in *)
-        (* Some(tree,size,state) *)
         let (tree,size) = Gen.gen_tree state
           global_options.with_prefix 
           global_options.idprefix
@@ -292,8 +285,8 @@ let () =
   | Some (tree,size,state) ->
     begin
 
-      if (global_options.verbosity) > 0
-      then printf "==> Tree generated with size=%d\n%!" size ;
+      if global_options.verbosity > 0 then
+        printf "==> Tree generated with %d nodes\n%!" size;
 
 	    let out_state = open_out  (global_options.fileName^".state") in
 

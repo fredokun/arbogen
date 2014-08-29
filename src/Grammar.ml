@@ -31,14 +31,14 @@ type grammar = rule list
 
 let name_of_elem (elt:elem) =
   match elt with
-    |Seq(name) -> name
-    |Elem(name) -> name ;;
+  |Seq(name) -> name
+  |Elem(name) -> name ;;
 
 let names_of_component comp =
   let names = StringSet.empty in
   match comp with
-    | Call ref -> StringSet.add ref names
-    | Cons (_, l) -> List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) names l
+  | Call ref -> StringSet.add ref names
+  | Cons (_, l) -> List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) names l
 
 
 let names_of_rule (_,comps) =
@@ -73,17 +73,17 @@ let string_of_component comp =
   in
   let rec strcons cons_list=
     match cons_list with
-      | [] -> "1"
-      | [ref] -> string_of_elem ref
-      | ref::refs -> (string_of_elem ref) ^ " * " ^ (strcons refs)
+    | [] -> "1"
+    | [ref] -> string_of_elem ref
+    | ref::refs -> (string_of_elem ref) ^ " * " ^ (strcons refs)
   in
   match comp with
-    | Call e -> "Call(" ^ e ^ ")"
-    | Cons (weight, cons_list) ->
-      if weight != 0 then
-	"Cons(" ^ (strcons cons_list) ^ " * " ^ (strz weight) ^ ")"
-      else
-	"Cons(" ^ (strcons cons_list) ^  ")"
+  | Call e -> "Call(" ^ e ^ ")"
+  | Cons (weight, cons_list) ->
+    if weight != 0 then
+	    "Cons(" ^ (strcons cons_list) ^ " * " ^ (strz weight) ^ ")"
+    else
+	    "Cons(" ^ (strcons cons_list) ^  ")"
 
 let string_of_rule (rname,comps) =
   let rec strcomps = function
@@ -91,11 +91,10 @@ let string_of_rule (rname,comps) =
     | [comp] -> (string_of_component comp) ^ " ;"
     | comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
   in let rstr = match comps with
-    | [] -> "<empty>"
-    | _ -> strcomps comps
+  | [] -> "<empty>"
+  | _ -> strcomps comps
      in rname ^ " ::= " ^ rstr ;;
 
 let rec string_of_grammar = function
   | [] -> ""
   | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules)
-
