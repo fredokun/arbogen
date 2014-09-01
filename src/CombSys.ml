@@ -52,7 +52,7 @@ let eval_eq (z:float) (y:float array) (eq:combeq):float =
 	  
 (** evaluation of a system at a given coordinate z *)
 let evaluation (phi:combsys) (z:float) (y:float array):float array =
-	let u = Array.create (Array.length y) 0.0 in
+	let u = Array.make (Array.length y) 0.0 in
 	for i=0 to ((Array.length y) - 1)
 	do
 		let vali = eval_eq z y phi.(i)
@@ -96,7 +96,7 @@ let combsys_of_grammar grm =
       Array.set sys index (combeq_of_rule map rule) ;
       aux grm' map sys
   in
-  aux grm (refmap_of_grammar grm) (Array.create (List.length grm) [])
+  aux grm (refmap_of_grammar grm) (Array.make (List.length grm) [])
 
 
 (* printing *)
