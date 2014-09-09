@@ -212,6 +212,13 @@ let () =
         global_options.with_state <- true;
       ),
      "<n>: set the name of state file");
+    ("-randgen", Arg.String
+      (fun x ->
+        match x with
+        | "ocaml" -> global_options.randgen <- "ocaml"
+        | "randu" -> global_options.randgen <- "randu"
+        | _  -> (eprintf "Error : random number generator %s unknown\n%!" x; exit 1)),
+     "[ocaml | randu] : set the random number generator")
   ]
     (fun arg ->
       if (String.compare global_options.grammar_file "") = 0
@@ -237,6 +244,10 @@ let () =
 
         if (global_options.verbosity) > 0 then
           printf "Generating tree\n%!";
+
+        if (global_options.verbosity) > 0 then
+          printf "Random number generator used  is %s\n%!" global_options.randgen;
+
 
         Gen.generator
           grammar
@@ -265,11 +276,16 @@ let () =
         let state:gen_state = input_value in_channel in
         close_in in_channel;
 
+        global_options.randgen <- state.randgen;
+
         if (global_options.verbosity) > 0 then
           printf "==> State file loaded\n%!";
 
         if (global_options.verbosity) > 0 then
           printf "Generating tree\n%!";
+
+        if (global_options.verbosity) > 0 then
+          printf "Random number generator used  is %s\n%!" global_options.randgen;
 
         let (tree,size) = Gen.gen_tree state
           global_options.with_prefix 

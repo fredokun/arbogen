@@ -23,20 +23,20 @@ open OracleSimple
 open Grammar
 open GenState
 
-
 let rec find_component (rdm_float:float) componentList =
   match componentList with
   | [comp] -> comp
   | comp::list_comp -> let (composant,freq) = comp in
-		       if rdm_float <= freq then
+		                   if rdm_float <= freq then
                          comp
-		       else
+		                   else
                          find_component (rdm_float-.freq) list_comp
   | _ -> failwith "find_component failed !!!"
 
 let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
+  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
-  let rdm_float = (Random.float 1.) *. total_weight in
+  let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
   match comp with
   | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
@@ -44,18 +44,18 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
     begin
       (w,
        (List.fold_left
-	  (fun next_rules elem ->
+	        (fun next_rules elem ->
             match elem with
             | (Grammar.Elem name) -> name :: next_rules
             | (Grammar.Seq name) ->
               begin
                 let (w,_) = StringMap.find name wgrm in
-                let n' = int_of_float( snd (modf((log(Random.float 1.))/. (log(1.-.w))))) in
+                let n' = int_of_float( snd (modf((log(Rand.float 1.))/. (log(1.-.w))))) in
                 next_rules @ (concat_n [name] n')
               end
-	  )
-	  []
-	  elem_list),
+	        )
+	        []
+	        elem_list),
        isCall)
     end
       
@@ -87,19 +87,19 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
     begin
       let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
       if (List.length next_rules) > 0 then
-	begin
-	  let new_counters = (count_rules counters (List.tl next_rules)) in
+	      begin
+	        let new_counters = (count_rules counters (List.tl next_rules)) in
           sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules)
-	end
+	      end
       else
-	begin
-	  let non_zero = find_non_zero counters in
-	  match non_zero with
-	  | Some s ->let nb = StringMap.find s counters in
+	      begin
+	        let non_zero = find_non_zero counters in
+	        match non_zero with
+	        | Some s ->let nb = StringMap.find s counters in
                      let new_nb = nb - 1 in
                      sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s
-	  | None -> (size+total_weight)
-	end
+	        | None -> (size+total_weight)
+	      end
     end
 
 
@@ -109,9 +109,10 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
     (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     begin
+      let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
       let counters = init_counter grm StringMap.empty in
       let (first_rule,_) = List.hd grm in
-      let rdm_state = Random.get_state () in
+      let rdm_state = Rand.get_state () in
       let res = sim 0 counters wgrm sizemax first_rule in
       if global_options.verbosity >= 3
       then printf "[SIM]: Simulated weight of tree = %d\n%!" res ;
@@ -123,15 +124,15 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
         end
       else if res > sizemax then
         begin
-	  (if global_options.verbosity >= 3
+	        (if global_options.verbosity >= 3
            then printf "      ==> weight is too big\n%!") ;
           simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
         end
       else
         begin
-	  (if global_options.verbosity >= 3
+	        (if global_options.verbosity >= 3
            then printf "     ==> simulated weight matches expected weight, select\n%!");
-	  (Some(res),nb_smaller,nb_bigger,Some(rdm_state))
+	        (Some(res),nb_smaller,nb_bigger,Some(rdm_state))
         end
     end
   else  (* max number of tries *)
@@ -159,9 +160,9 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     if nb_refine > 0 then
       begin
         if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-	  simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected
+	        simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected
         else
-	  failwith "try with other parameters Trees too big"
+	        failwith "try with other parameters Trees too big"
       end
     else
       None
@@ -211,7 +212,8 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
     end
 
 let gen_tree (gen_state:gen_state) with_prefix idprefix =
-  Random.set_state gen_state.rnd_state;
+  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
+  Rand.set_state gen_state.rnd_state;
   let first_ref = ref (Leaf ("","")) in
   let wgrm = gen_state.weighted_grammar in
   let first_rule = gen_state.first_rule in
@@ -243,16 +245,17 @@ let generator
     (max_refine:int)
     (zstart:float)
     =
+  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
   let seed2 =
     if self_seed then
       begin
-	Random.self_init ();
-	Random.int 1000000;
+	      Rand.self_init ();
+	      Rand.int 1000000;
       end
     else
       seed
   in
-  Random.init seed2;
+  Rand.init seed2;
   (if global_options.verbosity >= 2
    then printf "[GEN]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g)
   );
@@ -265,7 +268,7 @@ let generator
   match res with
   | Some(final_size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
-    let final_state = {rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
+    let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
     let tree, size = gen_tree final_state with_prefix idprefix in
     Some(tree,size,final_state)				                	
   | None -> None

@@ -1,3 +1,4 @@
+open Util
 
 type options_record = {
   mutable interactive_mode : bool;
@@ -35,6 +36,7 @@ type options_record = {
   mutable zstart_set: bool;
   mutable with_state:bool;
   mutable state_file:string;
+  mutable randgen:string;
 } ;;
 
 let global_options = {
@@ -72,8 +74,14 @@ let global_options = {
   zstart = 0.0;
   zstart_set = false;
   with_state = false;
-  state_file = ""
+  state_file = "";
+  randgen = "ocaml";
 } ;;
+
+let randgen_map =
+  StringMap.add "ocaml" (module RandGen.OcamlRandom : RandGen.Sig)
+    (StringMap.add "randu" (module RandGen.Randu : RandGen.Sig)
+       StringMap.empty) ;;
 
 exception Option_Error of string ;;
 

@@ -66,7 +66,7 @@
 #
 # The Caml sources (including camlyacc and camllex source files)
 
-SOURCES = Parser.mly Lexer.mll Options.ml Util.ml Grammar.ml Ast.ml WeightedGrammar.ml CombSys.ml OracleSimple.ml Tree.ml GenState.ml Gen.ml ParseUtil.ml Arbogen.ml
+SOURCES = RandGen.ml Parser.mly Lexer.mll Options.ml Util.ml Grammar.ml Ast.ml WeightedGrammar.ml CombSys.ml OracleSimple.ml Tree.ml GenState.ml Gen.ml ParseUtil.ml Arbogen.ml
 
 # The executable file to generate
 
