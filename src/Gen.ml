@@ -105,7 +105,7 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
 
 
 
-let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
+let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
     (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     begin
@@ -120,13 +120,13 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
         begin
           (if global_options.verbosity >= 3
            then printf "     ==> weight is too small => reject\n%!");
-          simulate_seed wgrm grm (nb_try - 1)  (nb_smaller+1) nb_bigger sizemin sizemax
+          sim_try wgrm grm (nb_try - 1)  (nb_smaller+1) nb_bigger sizemin sizemax
         end
       else if res > sizemax then
         begin
 	        (if global_options.verbosity >= 3
            then printf "      ==> weight is too big\n%!") ;
-          simulate_seed wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
+          sim_try wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax
         end
       else
         begin
@@ -150,7 +150,7 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
   let wgrm = weighted_grm_of_grm g y zmin' in
   (if global_options.verbosity >= 2
    then printf "[SIM]: weighted grammar is :\n%s\n%!" (WeightedGrammar.string_of_weighted_grammar wgrm));
-  let (size,nb_smaller,nb_bigger,state) = simulate_seed wgrm g nb_try 0 0 sizemin sizemax in
+  let (size,nb_smaller,nb_bigger,state) = sim_try wgrm g nb_try 0 0 sizemin sizemax in
   match size with
   | Some size ->
     (match state with

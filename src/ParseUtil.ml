@@ -164,7 +164,13 @@ let rec set_options options =
 		            | _ -> failwith "type error")
             end
         end
-
+	    | "randgen" ->
+        begin
+          global_options.randgen <-
+		      (match value with
+		      | Vstring s -> s
+		      | _ -> failwith "type error")
+        end
 	    | _ -> failwith "Unknown parameter"
     end;
     set_options q
