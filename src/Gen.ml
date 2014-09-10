@@ -33,13 +33,13 @@ let rec find_component (rdm_float:float) componentList =
                          find_component (rdm_float-.freq) list_comp
   | _ -> failwith "find_component failed !!!"
 
-let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
+let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) =
   let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
   match comp with
-  | (Grammar.Call elem), _ -> get_next_rule elem wgrm true
+  | (Grammar.Call elem), _ -> get_next_rule elem wgrm true elem
   | (Grammar.Cons (w, elem_list)), _ ->
     begin
       (w,
@@ -56,7 +56,7 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
 	        )
 	        []
 	        elem_list),
-       isCall)
+       isCall,name_called)
     end
       
 let rec init_counter (g:grammar) map =
@@ -85,7 +85,7 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
     size
   else
     begin
-      let (total_weight,next_rules,isCall) = get_next_rule current_rule wgrm false in
+      let (total_weight,next_rules,isCall,_) = get_next_rule current_rule wgrm false "" in
       if (List.length next_rules) > 0 then
 	      begin
 	        let new_counters = (count_rules counters (List.tl next_rules)) in
@@ -178,7 +178,7 @@ let make_n_leaf_refs n =
 
 let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
   let prefix = if with_prefix then idprefix ^ (string_of_int id) else (string_of_int id) in
-  let (_,next_rules,_) = get_next_rule current_rule wgrm false in
+  let (_,next_rules,_,name_called) = get_next_rule current_rule wgrm false current_rule in
   let arity = List.length next_rules in
   let refs = StringMap.find current_rule stacks in
   let current_ref = List.hd refs in
@@ -186,7 +186,7 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
   let stacks' = StringMap.add current_rule refs' stacks in
   if arity = 0 then
     begin
-      current_ref := Leaf(current_rule,prefix);
+      current_ref := Leaf(name_called,prefix);
       match find_non_zero counters with
       | Some rule_name ->
         let counters' = StringMap.add rule_name ((StringMap.find rule_name counters) - 1) counters in
@@ -207,7 +207,7 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
           next_rules
           children_refs
       in
-      current_ref := Node (current_rule, prefix, children_refs);
+      current_ref := Node (name_called, prefix, children_refs);
       gen_tree_rec counters' stacks'' wgrm (id+1) (List.hd next_rules) with_prefix idprefix
     end
 
