@@ -78,10 +78,11 @@ let global_options = {
   randgen = "ocaml";
 } ;;
 
-let randgen_map =
-  StringMap.add "ocaml" (module RandGen.OcamlRandom : RandGen.Sig)
-    (StringMap.add "randu" (module RandGen.Randu : RandGen.Sig)
-       StringMap.empty) ;;
+let randgen_tbl = StringHashtbl.create 2
+
+let _ = StringHashtbl.add randgen_tbl "ocaml" (module RandGen.OcamlRandom : RandGen.Sig)
+
+let _ = StringHashtbl.add randgen_tbl "randu" (module RandGen.Randu : RandGen.Sig)
 
 exception Option_Error of string ;;
 

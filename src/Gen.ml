@@ -34,7 +34,7 @@ let rec find_component (rdm_float:float) componentList =
   | _ -> failwith "find_component failed !!!"
 
 let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) =
-  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
+  let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
@@ -109,7 +109,7 @@ let rec simulate_seed (wgrm:WeightedGrammar.weighted_grammar)
     (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  =
   if nb_try > 0 then
     begin
-      let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
+      let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
       let counters = init_counter grm StringMap.empty in
       let (first_rule,_) = List.hd grm in
       let rdm_state = Rand.get_state () in
@@ -212,7 +212,7 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
     end
 
 let gen_tree (gen_state:gen_state) with_prefix idprefix =
-  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
+  let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
   Rand.set_state gen_state.rnd_state;
   let first_ref = ref (Leaf ("","")) in
   let wgrm = gen_state.weighted_grammar in
@@ -245,7 +245,7 @@ let generator
     (max_refine:int)
     (zstart:float)
     =
-  let module Rand = (val (StringMap.find global_options.randgen randgen_map)) in
+  let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
   let seed2 =
     if self_seed then
       begin
