@@ -1,16 +1,16 @@
-TEMPORARY_DIR=_obuild
-ARBOGEN_BIN_DIR_TMP=$(TEMPORARY_DIR)/arbogen
-ARBOGEN_BIN_TMP=$(ARBOGEN_BIN_DIR_TMP)/arbogen.asm $(ARBOGEN_BIN_DIR_TMP)/arbogen.byte
-ARBOGEN_BIN_DIR=bin
+EXEC=bin/arbogen
 
-all : main
+all: $(EXEC)
 
-main :
-	ocp-build -init
-	ocp-build build arbogen
-	mkdir -p bin
-	cp $(ARBOGEN_BIN_TMP) $(ARBOGEN_BIN_DIR)
+$(EXEC):
+	ocamlbuild src/Arbogen.native
+	ocamlbuild src/Arbogen.byte
+	@mkdir -p bin
+	@mv Arbogen.native bin/arbogen.native
+	@mv Arbogen.byte bin/arbogen.byte
 
-clean :
-	ocp-build clean
-	rm bin/arbogen.*
+.PHONY: clean
+
+clean:
+	rm -rf _build bin
+

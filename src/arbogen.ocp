@@ -1,7 +1,0 @@
-+comp="-g"
-+link="-g"
-
-begin program "arbogen"
-      files = [ "Util.ml" "RandGen.ml" "Parser.mly" "Lexer.mll" "Options.ml" "Grammar.ml" "Ast.ml" "WeightedGrammar.ml" "CombSys.ml" "OracleSimple.ml" "Tree.ml" "Gen.ml" "ParseUtil.ml" "Arbogen.ml" "GenState.ml" ]
-      requires = []
-end
