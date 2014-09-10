@@ -26,7 +26,7 @@ The generated tree are generated with a guarantee of uniformity,
  which means that it is the "average" tree for the given size.
 
 ----
-![Tree example](http://github.com/fredokun/arbogen/wiki/images/tree_nary_seq_big.png)
+![Tree example](https://github.com/fredokun/arbogen/wiki/images/tree_nary_seq_big.png)
 
 Note: this example is a plane rooted tree of more than 100.000 nodes obtained in a few seconds on a standard PC.
 
