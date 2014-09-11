@@ -188,7 +188,7 @@ let () =
           exit 1;
       ),
      "<n>: set the type [arb|dot|xml|all] of output generated at the end");
-    ("-file",Arg.String
+    ("-o",Arg.String
       (fun x->
         global_options.fileName <- x;
       ),
@@ -305,24 +305,65 @@ let () =
       if global_options.verbosity > 0 then
         printf "==> Tree generated with %d nodes\n%!" size;
 
-	    let out_state = open_out  (global_options.fileName^".state") in
-
-      printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
+	    let out_state =
+        if global_options.fileName = "" then
+          begin
+            if global_options.verbosity >= 2 then
+              printf "==> Saving state to file 'state'\n%!" ;
+            open_out  "state"
+          end
+        else
+          begin
+            if global_options.verbosity >= 2 then
+              printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
+            open_out (global_options.fileName^".state")
+          end            
+      in
 
 	    output_value out_state state;
 	    close_out out_state;
 
 	    match global_options.output_type with
-	    |0 -> printf "Saving file to '%s.arb'\n%!" global_options.fileName;
-        Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
-	    |1 -> printf "Saving file to '%s.dot'\n%!" global_options.fileName;
-        Tree.file_of_dot true (global_options.fileName^".dot") tree;
-	    |2 -> printf "Saving file to '%s.xml'\n%!" global_options.fileName;
-        Tree.file_of_xml (global_options.fileName^".xml") tree;
-	    |3 -> printf "Saving files to '%s.arb' , '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
-        Tree.file_of_tree true global_options.with_prefix (global_options.fileName^".arb") tree;
-        Tree.file_of_dot true (global_options.fileName^".dot") tree;
-        Tree.file_of_xml (global_options.fileName^".xml") tree;
+	    |0 ->
+        let out =
+          if global_options.fileName = "" then
+            stdout
+          else
+            begin
+              printf "Saving file to '%s.arb'\n%!" global_options.fileName;
+              open_out (global_options.fileName^".arb")
+            end
+        in
+        Tree.file_of_tree true global_options.with_prefix tree out;
+	    |1 ->
+        let out =
+          if global_options.fileName = "" then
+            stdout
+          else
+            begin
+              printf "Saving file to '%s.dot'\n%!" global_options.fileName;
+              open_out (global_options.fileName^".dot")
+            end
+        in
+        Tree.file_of_dot true tree out;
+	    |2 ->
+        let out =
+          if global_options.fileName = "" then
+            stdout
+          else
+            begin
+              printf "Saving file to '%s.xml'\n%!" global_options.fileName;
+              open_out (global_options.fileName^".xml")
+            end
+        in
+        Tree.file_of_xml tree out;
+	    |3 -> 
+        if global_options.fileName = "" then
+          global_options.fileName <- "tree";
+        printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
+        Tree.file_of_tree true global_options.with_prefix tree (open_out (global_options.fileName^".arb"));
+        Tree.file_of_dot true tree (open_out (global_options.fileName^".dot"));
+        Tree.file_of_xml tree (open_out (global_options.fileName^".xml"));
 	    |_ -> printf "Error \n";      (* unreachable case *)
         printf "==> file saved\n%!";
         exit 0

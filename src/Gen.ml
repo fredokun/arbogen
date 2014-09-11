@@ -256,14 +256,17 @@ let generator
       seed
   in
   Rand.init seed2;
-  (if global_options.verbosity >= 2
-   then printf "[GEN]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g)
-  );
-  printf "[SEED] starting seed = %d\n\n" seed2;
+  if global_options.verbosity >= 2 then
+    printf "[GEN]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g);
+
+  if global_options.verbosity >= 2 then
+    printf "[SEED] starting seed = %d\n\n" seed2;
+
   let sys = combsys_of_grammar (completion g) in
-  (if global_options.verbosity >= 2
-   then printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys))
-  );
+
+  if global_options.verbosity >= 2 then
+    printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys));
+
   let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected in
   match res with
   | Some(final_size,state,wgrm) ->

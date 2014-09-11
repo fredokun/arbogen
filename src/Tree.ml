@@ -55,9 +55,7 @@ let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
       (fun (out:out_channel) t -> (tree_out show_type show_id !t out))
       "[" "," "]" ts  ;;
 
-let file_of_tree (show_type:bool) (show_id:bool) (fname:string) (tree:tree) =
-  let out = open_out fname
-  in
+let file_of_tree (show_type:bool) (show_id:bool) (tree:tree) out =
   tree_out show_type show_id tree out ;
   close_out out
 
@@ -98,14 +96,10 @@ let dot_of_tree (show_type:bool) (t:tree) =
   | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
-let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
-  let out = open_out fname
-  in
+let file_of_dot (show_type:bool) (tree:tree) out =
   output_string out (dot_of_tree show_type tree);
   close_out out
 
-let file_of_xml (fname:string) (tree:tree) =
-  let out = open_out fname
-  in
+let file_of_xml (tree:tree) out =
   output_string out (xml_of_tree tree);
   close_out out;
