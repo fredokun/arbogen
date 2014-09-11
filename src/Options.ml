@@ -84,5 +84,7 @@ let _ = StringHashtbl.add randgen_tbl "ocaml" (module RandGen.OcamlRandom : Rand
 
 let _ = StringHashtbl.add randgen_tbl "randu" (module RandGen.Randu : RandGen.Sig)
 
+let _ = StringHashtbl.add randgen_tbl "randnull" (module RandGen.RandNull : RandGen.Sig)
+
 exception Option_Error of string ;;
 

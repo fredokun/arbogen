@@ -217,6 +217,7 @@ let () =
         match x with
         | "ocaml" -> global_options.randgen <- "ocaml"
         | "randu" -> global_options.randgen <- "randu"
+        | "randnull" -> global_options.randgen <- "randnull"
         | _  -> (eprintf "Error : random number generator %s unknown\n%!" x; exit 1)),
      "[ocaml | randu] : set the random number generator")
   ]

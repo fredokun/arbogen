@@ -250,7 +250,7 @@ let generator
     if self_seed then
       begin
 	      Rand.self_init ();
-	      Rand.int 1000000;
+	      Rand.int 274537
       end
     else
       seed

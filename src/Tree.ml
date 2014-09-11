@@ -107,5 +107,5 @@ let file_of_dot (show_type:bool) (fname:string) (tree:tree) =
 let file_of_xml (fname:string) (tree:tree) =
   let out = open_out fname
   in
-  output_string out(xml_of_tree tree);
+  output_string out (xml_of_tree tree);
   close_out out;
