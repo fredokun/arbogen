@@ -53,10 +53,12 @@ let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
     output_list
       out
       (fun (out:out_channel) t -> (tree_out show_type show_id !t out))
-      "[" "," "]" ts  ;;
+      "[" "," "]" ts
+;;
 
 let file_of_tree (show_type:bool) (show_id:bool) (tree:tree) out =
   tree_out show_type show_id tree out ;
+  output_string out "\n";
   close_out out
 
 

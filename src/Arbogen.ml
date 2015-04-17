@@ -310,7 +310,7 @@ let () =
           begin
             if global_options.verbosity >= 2 then
               printf "==> Saving state to file 'state'\n%!" ;
-            open_out  "state"
+            open_out "state"
           end
         else
           begin
