@@ -56,6 +56,16 @@ let () =
         else
           global_options.verbosity <- n),
      "<n> : set the verbosity level to <n>  (a positive integer)");
+    ("-v", Arg.Int
+      (fun n ->
+        if n < 0 then
+          begin
+            eprintf "Error: wrong verbosity level %d => must be positive\n...aborting\n%!" n ;
+            exit 1;
+          end
+        else
+          global_options.verbosity <- n),
+     "<n> : same as -verbose <n>");
     ("-min", Arg.Int
       (fun n ->
         if n <= 0 then
