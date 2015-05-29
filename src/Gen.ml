@@ -176,8 +176,8 @@ let make_n_leaf_refs n =
   in
   aux n []
 
-let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
-  let prefix = if with_prefix then idprefix ^ (string_of_int id) else (string_of_int id) in
+let rec gen_tree_rec counters stacks wgrm id current_rule =
+  let prefix = string_of_int id in
   let (_,next_rules,_,name_called) = get_next_rule current_rule wgrm false current_rule in
   let arity = List.length next_rules in
   let refs = StringMap.find current_rule stacks in
@@ -190,7 +190,7 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
       match find_non_zero counters with
       | Some rule_name ->
         let counters' = StringMap.add rule_name ((StringMap.find rule_name counters) - 1) counters in
-        gen_tree_rec counters' stacks' wgrm (id+1) rule_name with_prefix idprefix
+        gen_tree_rec counters' stacks' wgrm (id+1) rule_name
       | None -> (id+1)
     end
   else
@@ -208,10 +208,10 @@ let rec gen_tree_rec counters stacks wgrm id current_rule with_prefix idprefix =
           children_refs
       in
       current_ref := Node (name_called, prefix, children_refs);
-      gen_tree_rec counters' stacks'' wgrm (id+1) (List.hd next_rules) with_prefix idprefix
+      gen_tree_rec counters' stacks'' wgrm (id+1) (List.hd next_rules)
     end
 
-let gen_tree (gen_state:gen_state) with_prefix idprefix =
+let gen_tree (gen_state:gen_state) =
   let module Rand = (val (StringHashtbl.find randgen_tbl global_options.randgen)) in
   Rand.set_state gen_state.rnd_state;
   let first_ref = ref (Leaf ("","")) in
@@ -225,7 +225,7 @@ let gen_tree (gen_state:gen_state) with_prefix idprefix =
       else
         StringMap.add k [] map)
     StringMap.empty keys in
-  let size = gen_tree_rec counters stacks wgrm 0 first_rule with_prefix idprefix in
+  let size = gen_tree_rec counters stacks wgrm 0 first_rule in
   (!first_ref, size)
 
 let generator
@@ -238,8 +238,6 @@ let generator
     (epsilon1_factor:float)
     (epsilon2:float)
     (epsilon2_factor:float)
-    (with_prefix:bool)
-    (idprefix:string)
     (max_try:int)
     (ratio_rejected:float)
     (max_refine:int)
@@ -272,7 +270,7 @@ let generator
   | Some(final_size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    let tree, size = gen_tree final_state with_prefix idprefix in
+    let tree, size = gen_tree final_state  in
     Some(tree,size,final_state)				                	
   | None -> None
 

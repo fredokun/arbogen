@@ -20,10 +20,8 @@ type options_record = {
   mutable epsilon2_set: bool;
   mutable epsilon2_factor: float;
   mutable epsilon2_factor_set: bool;
-  mutable with_prefix: bool;
-  mutable with_prefix_set: bool;
-  mutable idprefix: string;
-  mutable idprefix_set: bool;
+  mutable with_id : bool;
+  mutable with_type : bool;
   mutable max_try: int;
   mutable max_try_set: bool;
   mutable ratio_rejected: float;
@@ -59,10 +57,8 @@ let global_options = {
   epsilon2_set = false;
   epsilon2_factor = 0.1;
   epsilon2_factor_set = false;
-  with_prefix = false;
-  with_prefix_set = false;
-  idprefix =  "";
-  idprefix_set = false;
+  with_id = false;
+  with_type = false;
   max_try = 100;
   max_try_set = false;
   ratio_rejected = 0.8;

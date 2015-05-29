@@ -41,10 +41,12 @@ let indent_string_of_tree (t:tree) =
 
 let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
   let label typ id =
-    (if show_id then id else "") ^
-      (if show_type
-       then (if show_id then ":" else "") ^ typ
-       else "")
+    if show_type then
+      if show_id then typ ^ ":" ^ id
+      else typ
+    else
+      if show_id then id
+      else ""
   in
   match tree with
   | Leaf(typ,id) -> output_string out (label typ id)
@@ -62,30 +64,45 @@ let file_of_tree (show_type:bool) (show_id:bool) (tree:tree) out =
   close_out out
 
 
-let xml_of_tree (t:tree) =
+let xml_of_tree (show_type:bool) (show_id:bool) (t:tree) =
   let rec aux = fun x ->
     match !x with
-    | Leaf(typ,id) -> "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
-    | Node(typ,id,ts) -> "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">" ^ (string_of_list aux "" "" "</node>" ts)
+    | Leaf(typ,id) -> "<leaf " ^ (if show_type then "type=\"" ^ typ ^ "\" " else "") ^ (if show_id then "id=\"" ^ id ^ "\"" else "") ^ "/>"
+    | Node(typ,id,ts) -> "<node " ^ (if show_type then "type=\"" ^ typ ^ "\" " else "") ^ (if show_id then "id=\"" ^ id ^ "\"" else "") ^ ">" ^ (string_of_list aux "" "" "</node>" ts)
   in "<?xml version=\"1.0\"?><tree>" ^ (aux (ref t)) ^ "</tree>"
 
-let indent_xml_of_tree (t:tree) =
+let indent_xml_of_tree (show_type:bool) (show_id:bool) (t:tree) =
   let rec tree level t = match t with
-    | Leaf(typ,id) -> (indent_string level) ^ "<leaf type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\"/>"
+    | Leaf(typ,id) -> (indent_string level) ^ "<leaf " ^ (if show_type then "type=\"" ^ typ ^ "\" " else "") ^ (if show_id then "id=\"" ^ id ^ "\"" else "") ^ "/>"
     | Node(typ,id,ts) ->
-      (indent_string level) ^ "<node type=\"" ^ typ ^ "\" id=\"" ^ id ^ "\">\n" ^ (forest (level+1) ts) ^ "\n" ^ (indent_string level) ^ "</node>"
+      (indent_string level) ^ "<node " ^ (if show_type then "type=\"" ^ typ ^ "\" " else "") ^ (if show_id then "id=\"" ^ id ^ "\"" else "") ^ ">" ^ (forest (level+1) ts) ^ "\n" ^ (indent_string level) ^ "</node>"
   and forest level f = match f with
     | [] -> ""
     | [t] -> tree level !t
     | t::f' -> (tree level !t) ^ "\n" ^ (forest level f')
   in "<?xml version=\"1.0\"?>\n<tree>\n" ^ (tree 1 t) ^ "\n</tree>\n"
 
-let dot_of_tree (show_type:bool) (t:tree) =
+let dot_of_tree (show_type:bool) (show_id:bool) (t:tree) =
+  let label typ id =
+    let aux typ id =
+    if show_type then
+      if show_id then typ ^ ":" ^ id
+      else typ
+    else
+      if show_id then id
+      else ""
+    in
+    let l = aux typ id in
+    if l = "" then
+      " [shape=point];\n"
+    else
+      " [label=\"" ^ l ^ "\"];\n"
+  in
   let rec nodes = fun x ->
     match !x with 
-    | Leaf(typ,id) -> "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
+    | Leaf(typ,id) -> "  " ^ id ^ (label typ id)
     | Node(typ,id,ts) ->
-      "  " ^ id ^ (if show_type then (" [label=\"" ^ typ ^ "\"];\n") else " [shape=point];\n")
+      "  " ^ id ^ (label typ id)
       ^ (string_of_list nodes "" "" "" ts)
   and edges level pred t = match !t with
     | Leaf(_,id) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n"
@@ -98,10 +115,10 @@ let dot_of_tree (show_type:bool) (t:tree) =
   | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
-let file_of_dot (show_type:bool) (tree:tree) out =
-  output_string out (dot_of_tree show_type tree);
+let file_of_dot (show_type:bool) (show_id:bool) (tree:tree) out =
+  output_string out (dot_of_tree show_type show_id tree);
   close_out out
 
-let file_of_xml (tree:tree) out =
-  output_string out (xml_of_tree tree);
+let file_of_xml (show_type:bool) (show_id:bool) (tree:tree) out =
+  output_string out (xml_of_tree show_type show_id tree);
   close_out out;

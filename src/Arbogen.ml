@@ -187,7 +187,7 @@ let () =
           global_options.max_try_set <- true
         end),
      "<n> : set the maximum of tries when generating trees");
-    ("-type", Arg.String
+    ("-otype", Arg.String
       (fun x ->
         match x with
         |"arb" -> global_options.output_type <- 0;
@@ -197,7 +197,7 @@ let () =
         |_ -> eprintf "Error: wrong option value must be strictly arb,dot,xml or all\n...aborting\n";
           exit 1;
       ),
-     "<n>: set the type [arb|dot|xml|all] of output generated at the end");
+     "<n>: set the type [arb|dot|xml|all] of the generated tree");
     ("-o",Arg.String
       (fun x->
         global_options.fileName <- x;
@@ -222,6 +222,16 @@ let () =
         global_options.with_state <- true;
       ),
      "<n>: set the name of state file");
+    ("-id", Arg.Unit
+      (fun x ->
+        global_options.with_id <- true;
+      ),
+     ": number the nodes");
+    ("-typ", Arg.Unit
+      (fun x ->
+        global_options.with_type <- true;
+      ),
+     ": show the type of nodes");
     ("-randgen", Arg.String
       (fun x ->
         match x with
@@ -270,8 +280,6 @@ let () =
           global_options.epsilon1_factor
           global_options.epsilon2
           global_options.epsilon2_factor
-          global_options.with_prefix
-          global_options.idprefix
           global_options.max_try
           global_options.ratio_rejected
           global_options.max_refine
@@ -298,10 +306,7 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Random number generator used  is %s\n%!" global_options.randgen;
 
-        let (tree,size) = Gen.gen_tree state
-          global_options.with_prefix 
-          global_options.idprefix
-        in
+        let (tree,size) = Gen.gen_tree state in
         Some(tree,size,state)
       end
   in
@@ -344,7 +349,7 @@ let () =
               open_out (global_options.fileName^".arb")
             end
         in
-        Tree.file_of_tree true global_options.with_prefix tree out;
+        Tree.file_of_tree global_options.with_type global_options.with_id tree out;
 	    |1 ->
         let out =
           if global_options.fileName = "" then
@@ -355,7 +360,7 @@ let () =
               open_out (global_options.fileName^".dot")
             end
         in
-        Tree.file_of_dot true tree out;
+        Tree.file_of_dot global_options.with_type global_options.with_id tree out;
 	    |2 ->
         let out =
           if global_options.fileName = "" then
@@ -366,14 +371,14 @@ let () =
               open_out (global_options.fileName^".xml")
             end
         in
-        Tree.file_of_xml tree out;
+        Tree.file_of_xml global_options.with_type global_options.with_id tree out;
 	    |3 -> 
         if global_options.fileName = "" then
           global_options.fileName <- "tree";
         printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
-        Tree.file_of_tree true global_options.with_prefix tree (open_out (global_options.fileName^".arb"));
-        Tree.file_of_dot true tree (open_out (global_options.fileName^".dot"));
-        Tree.file_of_xml tree (open_out (global_options.fileName^".xml"));
+        Tree.file_of_tree global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".arb"));
+        Tree.file_of_dot global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".dot"));
+        Tree.file_of_xml global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".xml"));
 	    |_ -> printf "Error \n";      (* unreachable case *)
         printf "==> file saved\n%!";
         exit 0
