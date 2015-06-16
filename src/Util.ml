@@ -25,6 +25,25 @@ let string_of_list str_of_elem op dl cl l =
     | e::l' -> op ^ (str_of_elem e) ^ dl ^ (aux l')
   in op ^ (aux l)
 
+let string_of_list_buf str_of_elem buf op dl cl l =
+  let rec aux = function
+    | [] -> Buffer.add_string buf cl
+    | [e] ->
+       begin
+         Buffer.add_string buf op;
+         str_of_elem e;
+         Buffer.add_string buf cl;
+       end         
+    | e::l' ->
+       begin
+         Buffer.add_string buf op;
+         str_of_elem e;
+         Buffer.add_string buf dl;
+         (aux l');
+       end
+  in Buffer.add_string buf op;
+     (aux l)
+
 let rec output_list out output_elem op dl cl l = match l with
   | [] -> output_string out cl
   | [e] ->
