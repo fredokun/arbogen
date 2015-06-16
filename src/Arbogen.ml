@@ -239,7 +239,12 @@ let () =
         | "randu" -> global_options.randgen <- "randu"
         | "randnull" -> global_options.randgen <- "randnull"
         | _  -> (eprintf "Error : random number generator %s unknown\n%!" x; exit 1)),
-     "[ocaml | randu] : set the random number generator")
+     "[ocaml | randu] : set the random number generator");
+    ("-indent", Arg.Unit
+      (fun x ->
+       global_options.indent <- true;
+      ),
+     ": indent the output")
   ]
     (fun arg ->
       if (String.compare global_options.grammar_file "") = 0
@@ -360,7 +365,7 @@ let () =
               open_out (global_options.fileName^".dot")
             end
         in
-        Tree.file_of_dot global_options.with_type global_options.with_id tree out;
+        Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree out;
 	    |2 ->
         let out =
           if global_options.fileName = "" then
@@ -371,14 +376,14 @@ let () =
               open_out (global_options.fileName^".xml")
             end
         in
-        Tree.file_of_xml global_options.with_type global_options.with_id tree out;
+        Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree out;
 	    |3 -> 
         if global_options.fileName = "" then
           global_options.fileName <- "tree";
         printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
         Tree.file_of_tree global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".arb"));
-        Tree.file_of_dot global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".dot"));
-        Tree.file_of_xml global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".xml"));
+        Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".dot"));
+        Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".xml"));
 	    |_ -> printf "Error \n";      (* unreachable case *)
         printf "==> file saved\n%!";
         exit 0

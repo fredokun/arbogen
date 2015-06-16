@@ -82,7 +82,7 @@ let indent_xml_of_tree (show_type:bool) (show_id:bool) (t:tree) =
     | t::f' -> (tree level !t) ^ "\n" ^ (forest level f')
   in "<?xml version=\"1.0\"?>\n<tree>\n" ^ (tree 1 t) ^ "\n</tree>\n"
 
-let dot_of_tree (show_type:bool) (show_id:bool) (t:tree) =
+let dot_of_tree (show_type:bool) (show_id:bool) (indent: bool) (t:tree) =
   let label typ id =
     let aux typ id =
     if show_type then
@@ -105,8 +105,8 @@ let dot_of_tree (show_type:bool) (show_id:bool) (t:tree) =
       "  " ^ id ^ (label typ id)
       ^ (string_of_list nodes "" "" "" ts)
   and edges level pred t = match !t with
-    | Leaf(_,id) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n"
-    | Node(_,id,ts) -> (indent_string level) ^ pred ^ " -> " ^ id ^ ";\n" ^ (string_of_list (fun t -> edges (level+1) id t) "" "" "" ts)
+    | Leaf(_,id) -> (if indent then (indent_string level) else "") ^ pred ^ " -> " ^ id ^ ";\n"
+    | Node(_,id,ts) -> (if indent then (indent_string level) else "") ^ pred ^ " -> " ^ id ^ ";\n" ^ (string_of_list (fun t -> edges (level+1) id t) "" "" "" ts)
   in
   "digraph {\n"
   ^ nodes (ref t)
@@ -115,10 +115,13 @@ let dot_of_tree (show_type:bool) (show_id:bool) (t:tree) =
   | Node(_,id,ts) -> (string_of_list (fun t -> edges 1 id t) "" "" "" ts))
   ^ "}\n"
 
-let file_of_dot (show_type:bool) (show_id:bool) (tree:tree) out =
-  output_string out (dot_of_tree show_type show_id tree);
+let file_of_dot (show_type:bool) (show_id:bool) (indent: bool) (tree:tree) out =
+  output_string out (dot_of_tree show_type show_id indent tree);
   close_out out
 
-let file_of_xml (show_type:bool) (show_id:bool) (tree:tree) out =
-  output_string out (xml_of_tree show_type show_id tree);
+let file_of_xml (show_type:bool) (show_id:bool) (indent: bool) (tree:tree) out =
+  if indent then
+    output_string out (indent_xml_of_tree show_type show_id tree)
+  else
+    output_string out (xml_of_tree show_type show_id tree);
   close_out out;

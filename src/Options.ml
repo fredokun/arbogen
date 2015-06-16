@@ -35,6 +35,7 @@ type options_record = {
   mutable with_state:bool;
   mutable state_file:string;
   mutable randgen:string;
+  mutable indent:bool;
 } ;;
 
 let global_options = {
@@ -72,6 +73,7 @@ let global_options = {
   with_state = false;
   state_file = "";
   randgen = "ocaml";
+  indent=false;
 } ;;
 
 let randgen_tbl = StringHashtbl.create 2
