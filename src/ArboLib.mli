@@ -10,14 +10,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Tree;;
-
-open CombSys ;;
-
-open OracleSimple;;
-
-open Util;;
-
-open Gen;;
-open Grammar;;
-
+open Tree
+open Gen
+open Grammar
