@@ -1,0 +1,5 @@
+version = "1.0 RC"
+description = "a fast uniform random generator of tree structures"
+requires = ""
+archive(byte) = "ArboLib.cma"
+archive(native) = "ArboLib.cmxa"

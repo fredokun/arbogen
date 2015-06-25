@@ -10,15 +10,21 @@ $(EXEC):
 	@mv Arbogen.byte bin/arbogen.byte
 
 lib:
-	ocamlbuild src/ArboLib.cma
-	ocamlbuild src/ArboLib.cmxa
-	ocamlbuild src/ArboLib.cmi
+	@$(MAKE) clean
+	ocamlbuild src/Arbolib.cmxa
+	ocamlbuild src/Arbolib.cma
+	ocamlbuild src/Arbolib.cmi
 	@mkdir -p lib
-	@mv _build/src/ArboLib.cma lib
-	@mv _build/src/ArboLib.cmxa lib
-	@mv _build/src/ArboLib.cmi lib
+	@cp _build/src/Arbolib.cma lib
+	@cp _build/src/Arbolib.cmx lib
+	@cp _build/src/Arbolib.cmo lib
+	@cp _build/src/Arbolib.cmxa lib
+	@cp _build/src/Arbolib.cmi lib
 
-.PHONY: clean lib
+install: lib
+	ocamlfind install arbolib META lib/*
+
+.PHONY: all install clean lib
 
 clean:
 	rm -rf _build bin lib
