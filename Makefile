@@ -16,6 +16,8 @@ lib:
 	ocamlbuild src/Arbolib.cmi
 	@mkdir -p lib
 	@cp _build/src/Arbolib.cma lib
+	@cp _build/src/Arbolib.o lib
+	@cp _build/src/Arbolib.a lib
 	@cp _build/src/Arbolib.cmx lib
 	@cp _build/src/Arbolib.cmo lib
 	@cp _build/src/Arbolib.cmxa lib
