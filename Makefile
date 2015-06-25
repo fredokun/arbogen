@@ -24,7 +24,10 @@ lib:
 install: lib
 	ocamlfind install arbolib META lib/*
 
-.PHONY: all install clean lib
+uninstall:
+	ocamlfind remove arbolib
+
+.PHONY: all install clean lib uninstall
 
 clean:
 	rm -rf _build bin lib
