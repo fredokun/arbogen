@@ -63,7 +63,7 @@ let completion (grm:grammar) =
 (* printing *)
 
 let string_of_elem = function
-  | Elem name -> name
+  | Elem name -> "Elem (" ^ name ^ ")"
   | Seq name -> "Seq(" ^ name ^ ")"
 
 let string_of_component comp =
