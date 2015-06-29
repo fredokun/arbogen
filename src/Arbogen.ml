@@ -289,6 +289,8 @@ let () =
           global_options.ratio_rejected
           global_options.max_refine
           global_options.zstart
+	  global_options.randgen
+	  global_options.verbosity
       end
     else
       begin
@@ -311,7 +313,7 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Random number generator used  is %s\n%!" global_options.randgen;
 
-        let (tree,size) = Gen.gen_tree state in
+        let (tree,size) = Gen.gen_tree state global_options.randgen in
         Some(tree,size,state)
       end
   in

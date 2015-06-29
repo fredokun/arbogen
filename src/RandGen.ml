@@ -1,3 +1,5 @@
+open Util
+
 module type Sig =
 sig
   val name : string
@@ -158,7 +160,6 @@ struct
   let float f = 
     let n = (int max_mod) in
     let r = f *. ((float_of_int n) /. max_mod_f) in
-    (* Printf.printf "%d %f\n" n r; *)
     r
 
   let get_state () = Obj.magic { st = Array.make 55 0; idx = !state }
@@ -167,3 +168,11 @@ struct
     let { st = _ ; idx = n} = Obj.magic s in
     state := n
 end
+
+let randgen_tbl = StringHashtbl.create 2
+
+let _ = StringHashtbl.add randgen_tbl "ocaml" (module OcamlRandom : Sig)
+
+let _ = StringHashtbl.add randgen_tbl "randu" (module Randu : Sig)
+
+let _ = StringHashtbl.add randgen_tbl "randnull" (module RandNull : Sig)
