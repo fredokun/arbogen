@@ -8,3 +8,4 @@
 <src/OracleSimple.cmx>:for-pack(Arbolib)
 <src/GenState.cmx>:for-pack(Arbolib)
 <src/Gen.cmx>:for-pack(Arbolib)
+<lib>:-traverse
