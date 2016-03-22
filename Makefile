@@ -17,7 +17,9 @@ lib:
 	@cp _build/src/Arbolib.cmxa lib
 	@cp _build/src/Arbolib.cmi lib
 	@cp _build/src/Arbolib.a lib
-
+	@cp _build/src/Arbolib.o lib
+	@cp _build/src/Arbolib.cmo lib
+	@cp _build/src/Arbolib.cmx lib
 
 install-lib: lib uninstall
 	ocamlfind install arbolib META lib/*

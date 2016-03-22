@@ -7,3 +7,8 @@ WeightedGrammar
 OracleSimple
 GenState
 Gen
+Options
+Ast
+Parser
+Lexer
+ParseUtil
