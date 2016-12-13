@@ -240,6 +240,11 @@ let () =
                       | "randnull" -> global_options.randgen <- "randnull"
                       | _  -> (eprintf "Error : random number generator %s unknown\n%!" x; exit 1)),
        "[ocaml | randu] : set the random number generator");
+      ("-oracle", Arg.Unit
+         (fun x ->
+            global_options.print_oracle <- true;
+         ),
+       ": output an oracle");
       ("-indent", Arg.Unit
                     (fun x ->
                      global_options.indent <- true;
@@ -251,10 +256,32 @@ let () =
              then global_options.grammar_file <- arg
              else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 1))
             usage;
+  
+  if global_options.print_oracle then
+    begin
+      let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+      ParseUtil.set_options options;
+      let g = Ast.grammar_of_ast_grammar ast_grammar in
+      printf "[GRAMMAR]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g);
+      let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
+      printf "[COMBSYS]: combinatorial system is:\n%s\n%!" (fst (CombSys.string_of_combsys sys));
+
+      let zmin, zmax, zstart, epsilon1, epsilon2 = 0., 1., global_options.zstart,
+                                                   global_options.epsilon1,
+                                                   global_options.epsilon2 in
+      printf "[ORACLE]: search singularity at z=%f\n%!" zstart;
+      let (zmin',zmax',y) = OracleSimple.searchSingularity sys zmin zmax
+          epsilon1 epsilon2 zstart in
+      printf "          ==> found singularity at z=%f\n\n%!" zmin';
+      let wgrm = WeightedGrammar.weighted_grm_of_grm g y zmin' in
+      printf "[ORACLE]: weighted grammar is :\n%s\n%!"
+        (WeightedGrammar.string_of_weighted_grammar wgrm);
+      exit 0
+    end;
 
   if (global_options.verbosity) > 0 then
     printf "%s\n%!" banner;
-
+      
   let result =
     if(not global_options.with_state) then
       begin
@@ -289,8 +316,8 @@ let () =
           global_options.ratio_rejected
           global_options.max_refine
           global_options.zstart
-	  global_options.randgen
-	  global_options.verbosity
+	        global_options.randgen
+	       global_options.verbosity
       end
     else
       begin
