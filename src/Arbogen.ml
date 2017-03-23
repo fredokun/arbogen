@@ -138,7 +138,7 @@ let () =
                        global_options.epsilon2 <- x;
                        global_options.epsilon2_set <- true
                      end),
-       "<x> : set the epsilon for Newton iteration (a strictly positive float number)");
+       "<x> : set the epsilon for simple iteration (a strictly positive float number)");
       ("-eps2_factor", Arg.Float
                          (fun x ->
                           if x < 0.0 then
@@ -150,7 +150,7 @@ let () =
                               global_options.epsilon2_factor <- x;
                               global_options.epsilon2_factor_set <- true
                             end),
-       "<x> : set the refinement factor for epsilon in Newton iteration (a strictly positive float number)");
+       "<x> : set the refinement factor for epsilon in simple iteration (a strictly positive float number)");
       ("-reject_ratio", Arg.Float
                           (fun x ->
                            if x <  0.0 then
@@ -174,7 +174,7 @@ let () =
                              global_options.max_refine <- x;
                              global_options.max_refine_set <- true
                            end),
-       "<n> : set the refinement's maximum number of the Newton's parameters (a strictly positive integer number)");
+       "<n> : set the refinement's maximum number of the simpel iteration's parameters (a strictly positive integer number)");
       ("-try", Arg.Int
                  (fun n ->
                   if n <= 0 then
