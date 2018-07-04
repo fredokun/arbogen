@@ -15,13 +15,22 @@ let add_option a b =
 
 %token <int> NUMI
 %token <float> NUMF
-%token <string> UIDENT LIDENT
+%token <string> IDENT
 
 %token SEQ
+%token EPSILON 
+%token Z
+%token UNION
+%token PROD
+%token CARD
+%token LPAR
+%token RPAR
+%token COMMA
+%token LEQ
+%token GEQ
+%token EQ
 
 %token SET
-
-%token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
 %token EOF
 
@@ -31,8 +40,8 @@ let add_option a b =
 %%
 
 start:
- | options rules EOF { $1,$2 }
- | rules EOF { [],$1 }
+ | options statement_list EOF { $1,$2 }
+ | statement_list EOF { [],$1 }
  | EOF { raise End_of_file }
 
 
@@ -42,63 +51,50 @@ options:
 
 
 option:
- | SET LIDENT NUMF { Param ($2, Vfloat $3) }
- | SET LIDENT NUMI { Param ($2, Vint $3) }
- | SET LIDENT LIDENT { Param ($2, Vstring $3) }
+ | SET IDENT NUMF { Param ($2, Vfloat $3) }
+ | SET IDENT NUMI { Param ($2, Vint $3) }
+ | SET IDENT IDENT { Param ($2, Vstring $3) }
 
+statement_list:
+  | statement COMMA statement_list {$1 :: $3}
+  | statement {[$1]}
 
-rules:
- | rule rules { $1::$2 }
- | rule { [$1] }
+statement:
+  | IDENT EQ expression {($1, $3)}
 
+simple_expression:
+  | EPSILON { ((Some 0), [])  }
+  | Z { ((Some 1), []) }
+  | IDENT { (None, [Some (Ast.Elem $1)])  }
+  | SEQ LPAR IDENT RPAR { (Some 0, [Some (Ast.Seq $3)]) }
+  /* | SEQUENCE LPAR expression COMMA CARD LEQ NUMBER RPAR { $$ = newExpression($3, SEQUENCE, LESS, $7); } */
+  /* | SEQUENCE LPAR expression COMMA NUMBER GEQ CARD RPAR { $$ = newExpression($3, SEQUENCE, LESS, $5); } */
+  /* | SEQUENCE LPAR expression COMMA CARD EQ NUMBER RPAR { $$ = newExpression($3, SEQUENCE, EQUAL, $7); } */
+  /* | SEQUENCE LPAR expression COMMA NUMBER EQ CARD RPAR { $$ = newExpression($3, SEQUENCE, EQUAL, $5); } */
+  /* | SEQUENCE LPAR expression COMMA CARD GEQ NUMBER RPAR { $$ = newExpression($3, SEQUENCE, GREATER, $7); } */
+  /* | SEQUENCE LPAR expression COMMA NUMBER LEQ CARD RPAR { $$ = newExpression($3, SEQUENCE, GREATER, $5); } */
 
-/* string * (int option * elem list) list */
-rule:
- | UIDENT EQUAL components { ($1, $3) }
+prod:
+  | PROD LPAR component RPAR { $3 }
 
-
-/* (int option * (elem option) list) list */
-components:
- | component PLUS components { $1::$3 }
- | component { [$1] }
-
-
-/* int option * ((elem option) list) */
 component:
- | sub_component TIMES component
+ | simple_expression COMMA component
      {
        let w = add_option (fst $1) (fst $3) in
        match (snd $1) with
-       | None -> (w, snd $3)
-       | e -> (w, e::(snd $3))
+       | [] -> (w, snd $3)
+       | e -> (w, e @ (snd $3))
      }
- | sub_component { (fst $1, [snd $1]) }
+ | simple_expression { $1 }
 
 
-/* int option * elem option */
-sub_component:
- | elem { (None, Some $1) }
- | seq { (Some 0, Some $1) }
- | weight { ($1, None) }
- | z { ($1, None) }
- | one { ($1, None) }
+simple_expression_list:
+  | simple_expression COMMA simple_expression_list { $1 :: $3 }
+  | prod COMMA simple_expression_list { $1 :: $3 }
+  | prod { [$1] }
+  | simple_expression { [$1] }
 
-
-seq:
- | SEQ LPAREN UIDENT RPAREN { Ast.Seq $3 }
-
-
-elem:
- | UIDENT { Ast.Elem $1 }
-
-
-weight:
- | LWEIGHT NUMI RWEIGHT { Some $2 }
-
-
-z:
- | Z { Some 1 }
-
-
-one:
- | ONE { Some 0 }
+expression:
+  | UNION LPAR simple_expression_list RPAR { $3 }
+  | simple_expression { [$1] }
+  | prod { [$1] }

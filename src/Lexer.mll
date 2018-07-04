@@ -3,42 +3,46 @@ open Parser
 open Hashtbl
 open Parsing
 
-let grammar_keyword_table = Hashtbl.create 2
-let parameter_keyword_table = Hashtbl.create 2
+let grammar_keyword_table = Hashtbl.create 8
+let operator_keyword_table = Hashtbl.create 8
+    
 
 let () =
   List.iter (fun (kwd, tok) -> Hashtbl.add grammar_keyword_table kwd tok)
     [
-      ("SEQ", SEQ)
+      ("Sequence", SEQ);
+      ("Union", UNION);
+      ("Prod", PROD);
+      ("Z", Z);
+      ("set", SET);
+      ("card", CARD)
     ]
 
 let () =
-  List.iter (fun (kwd, tok) -> Hashtbl.add parameter_keyword_table kwd tok)
+  List.iter (fun (kwd, tok) -> Hashtbl.add operator_keyword_table kwd tok)
     [
-      ("set", SET)
+      ("(", LPAR);
+      (")", RPAR);
+      (",", COMMA);
+      ("<=", LEQ);
+      ("=<", LEQ);
+      (">=", GEQ);
+      ("=>", GEQ);
+      ("=", EQ)
     ]
 
 }
 
-let uident = ['A'-'Z']['-' '_' 'a'-'z''0'-'9''A'-'Z']*
-let lident = ['a'-'z']['-' '_' 'a'-'z''0'-'9''A'-'Z']*
+let ident = ['a'-'z' 'A'-'Z']['-' '_' 'a'-'z''0'-'9''A'-'Z']*
 let num_int = ['0'-'9']*
 let num_float = ['0'-'9']*'.'['0'-'9']['0'-'9']*
-let lparen = '('
-let rparen = ')'
-let lweight = "<z^"
-let rweight = '>'
-let z = "<z>"
-let one = "<1>"
-
-let plus = '+'
-let times = '*'
-let equal = "::="
 
 let space = [' ' '\t']*
 let newline = ['\n' '\r']
 let comment = "//" [^ '\n' '\r']*
+let operators = ['(' ')' '=' ','] | "<=" | "=<" | ">=" | "=>"
 
+              
 rule token = parse
   | space {token lexbuf}
   | comment {token lexbuf}
@@ -46,17 +50,11 @@ rule token = parse
     Lexing.new_line lexbuf;
     token lexbuf
   }
-  | uident as s {
+  | ident as s {
     try
       Hashtbl.find grammar_keyword_table s
     with Not_found ->
-      UIDENT (s)
-  }
-  | lident as s {
-    try
-      Hashtbl.find parameter_keyword_table s
-    with Not_found ->
-      LIDENT (s)
+      IDENT (s)
   }
   | num_int as n {
     NUMI (int_of_string n)
@@ -64,15 +62,12 @@ rule token = parse
   | num_float as n {
     NUMF (float_of_string n)
   }
-  | z { Z }
-  | one { ONE }
-  | lweight { LWEIGHT }
-  | rweight { RWEIGHT }
-  | plus { PLUS }
-  | equal { EQUAL }
-  | times { TIMES }
-  | lparen { LPAREN }
-  | rparen { RPAREN }
+  | operators as s {
+      try
+        Hashtbl.find operator_keyword_table s
+      with Not_found ->
+        failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf)
+    }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
 {
