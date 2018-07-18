@@ -75,7 +75,8 @@ let () =
                     end
                   else begin
                       global_options.size_min <- n;
-                      global_options.size_min_set <- true
+                      global_options.size_min_set <- true;
+                      global_options.size_max <- (n + 10); (* Re-up default maximum *)
                     end),
        "<n> : set the minimum size for the generated tree to <n> (a strictly positive integer)");
       ("-max", Arg.Int
@@ -85,12 +86,12 @@ let () =
                       eprintf "Error: wrong maximum size %d => must be strictly positive\n...aborting\n%!" n ;
                       exit 1;
                     end
-                  else if n < global_options.size_min then
+                  else if n <= global_options.size_min then
                     begin
                       eprintf "Error: wrong maximum size %d => must be strictly bigger than minimum\n...aborting\n%!" n ;
                       exit 1;
                     end
-                  else  begin
+                  else begin
                       global_options.size_max <- n;
                       global_options.size_max_set <- true
                     end),
