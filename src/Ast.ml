@@ -40,28 +40,28 @@ let grm_comp_of_ast_comp (w,comp) =
   match w with
   | None ->
     begin
-	    match comp with
-	    | [] -> failwith "You should not be here"
-	    | [ elt ] ->
+      match comp with
+      | [] -> failwith "You should not be here"
+      | [ elt ] ->
         begin
           match elt with
-		      | Some (Seq _ as elt) -> Grammar.Cons (0, [grm_elem_of_ast_elem elt])
-		      | Some (Elem e) -> Grammar.Call e
-		      | _ -> failwith "You should not be here"
+	  | Some (Seq _ as elt) -> Grammar.Cons (0, [grm_elem_of_ast_elem elt])
+	  | Some (Elem e) -> Grammar.Call e
+	  | _ -> failwith "You should not be here"
         end
-	    | _ -> Grammar.Cons (0, (List.fold_left
+      | _ -> Grammar.Cons (0, (List.fold_left
                                  (fun cons_list elt ->
-                                   match elt with
-					                         | None -> cons_list
-					                         | Some e -> (grm_elem_of_ast_elem e)::cons_list)
+                                    match elt with
+				    | None -> cons_list
+				    | Some e -> (grm_elem_of_ast_elem e)::cons_list)
                                  []
                                  comp))
     end
   | Some n -> Grammar.Cons (n, (List.fold_left
                                   (fun cons_list elt ->
-                                    match elt with
-					                          | None -> cons_list
-					                          | Some e -> (grm_elem_of_ast_elem e)::cons_list)
+                                     match elt with
+				     | None -> cons_list
+				     | Some e -> (grm_elem_of_ast_elem e)::cons_list)
                                   []
                                   comp))
 
