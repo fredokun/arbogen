@@ -13,7 +13,6 @@
  *********************************************************)
 
 open CombSys
-
 open Util
 
 
@@ -23,13 +22,13 @@ let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
   let rec iterate (y:float array): float array =
     let y' = evaluation phi z y
     in
-    if (Array.fold_left (fun pred x -> pred || (x > 1.)) false y')
+    if (Array.fold_left (fun pred x -> pred || (x >= 1.)) false y')
     then (Array.make (Array.length y') (-1.0))
     else
       if (normInf_diff y y') <= epsilon
       then y'
       else
-	      iterate y'
+	iterate y'
   in
   iterate (Array.make (combsys_size phi) 0.0)
 
