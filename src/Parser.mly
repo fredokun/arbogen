@@ -4,12 +4,6 @@ open Lexing
 open Hashtbl
 open Ast
 
-let add_option a b =
-  match a,b with
-  | Some n, Some n' -> Some (n+n')
-  | a, None -> a
-  | None, b -> b
-
 let rec fold_int f acc n =
   if n = 0 then f 0 acc
   else fold_int f (f n acc) (n-1)
@@ -19,36 +13,31 @@ let seq_leq n elem =
   | 0 -> failwith "0 size sequence does not allowed"
   | n -> (fold_int
             (fun n acc ->
-              if n = 0
-              then
-                (Some 0, []) :: acc
+              if n = 0 then
+                (0, []) :: acc
               else
-                let prod_list =
-                  fold_int
-                    (fun n acc ->
-                      if n = 0 then acc
-                      else (Some (Ast.Elem elem)) :: acc)
-                    [] n
-                in (Some 0, prod_list) :: acc)
+                let prod_list = fold_int
+                                  (fun n acc ->
+                                    if n = 0 then acc
+                                    else (Ast.Elem elem) :: acc)
+                                  [] n
+                in (0, prod_list) :: acc)
             [] n)
 
 let seq_eq n elem =
   match n with
   | 0 -> failwith "0 size sequence does not allowed"
-  | n -> (Some 0, (fold_int
+  | n -> (0, (fold_int
                      (fun n acc ->
                        if n = 0 then acc
-                       else (Some (Ast.Elem elem)) :: acc)
+                       else (Ast.Elem elem) :: acc)
                      [] n))
 
 let seq_geq n elem =
-  (Some 0, (fold_int
-              (fun n acc ->
-                if n = 0 then acc
-                else (Some (Ast.Elem elem)) :: acc)
-              [(Some (Ast.Seq elem))] n))
-
-
+  (0, (fold_int (fun n acc ->
+                  if n = 0 then acc
+                  else (Ast.Elem elem) :: acc)
+                [(Ast.Seq elem)] n))
 
 %}
 
@@ -103,10 +92,10 @@ statement:
   | IDENT EQ expression {($1, $3)}
 
 simple_expression:
-  | EPSILON { ((Some 0), [])  }
-  | Z { ((Some 1), []) }
-  | IDENT { (None, [Some (Ast.Elem $1)])  }
-  | SEQ LPAR IDENT RPAR { (Some 0, [Some (Ast.Seq $3)]) }
+  | EPSILON { (0, [])  }
+  | Z { (1, []) }
+  | IDENT { (0, [(Ast.Elem $1)])  }
+  | SEQ LPAR IDENT RPAR { (0, [(Ast.Seq $3)]) }
   | SEQ LPAR IDENT COMMA CARD EQ NUMI RPAR { seq_eq $7 $3 }
   | SEQ LPAR IDENT COMMA NUMI EQ CARD RPAR { seq_eq $5 $3 }
   | SEQ LPAR IDENT COMMA CARD GEQ NUMI RPAR { seq_geq $7 $3 }
@@ -122,7 +111,7 @@ prod:
 component:
  | simple_expression COMMA component
      {
-       let w = add_option (fst $1) (fst $3) in
+       let w = (fst $1) + (fst $3) in
        match (snd $1) with
        | [] -> (w, snd $3)
        | e -> (w, e @ (snd $3))

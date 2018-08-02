@@ -140,11 +140,11 @@ let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
 
 
 
-let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity =
+let rec simulator nb_refine nb_try g epsilon1 epsilon2 divt zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity =
   let (zmin',zmax',y) =
     (if verbosity >= 2
      then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
-    searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
+    searchSingularity sys zmin zmax epsilon1 epsilon2 divt zstart in
   (if verbosity >= 2
    then printf "          ==> found singularity at z=%f\n\n%!" zmin');
   let wgrm = weighted_grm_of_grm g y zmin' in
@@ -160,7 +160,7 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     if nb_refine > 0 then
       begin
         if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-	        simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
+	        simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) divt zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
         else
 	        failwith "try with other parameters Trees too big"
       end
@@ -238,6 +238,7 @@ let generator
     (epsilon1_factor:float)
     (epsilon2:float)
     (epsilon2_factor:float)
+    (divt:float)
     (max_try:int)
     (ratio_rejected:float)
     (max_refine:int)
@@ -267,7 +268,7 @@ let generator
   if verbosity >= 2 then
     printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys));
 
-  let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
+  let res = simulator max_refine max_try g epsilon1 epsilon2 divt 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
   match res with
   | Some(final_size,state,wgrm) ->
     let (first_rule,_) = List.hd g in

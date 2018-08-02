@@ -4,8 +4,7 @@
 
 set min 100000
 set max 120000
-set try 500
+set try 5000
 
-BinNode =  Union(Leaf, Prod(BinNode, BinNode, Z)),
-Leaf = Z
+BinNode =  Union(Leaf, Prod(BinNode, BinNode, Z))
 

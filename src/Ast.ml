@@ -16,7 +16,7 @@
 (* Grammar *)
 type elem = Seq of string | Elem of string
 
-type component = int option * elem option list
+type component = int * elem list
 
 type rule = string * component list
 
@@ -36,34 +36,29 @@ let grm_elem_of_ast_elem = function
   | Seq s -> Grammar.Seq s
   | Elem s -> Grammar.Elem s
 
-let grm_comp_of_ast_comp (w,comp) =
-  match w with
-  | None ->
+let grm_comp_of_ast_comp (n,comp) =
+  if n = 0 then
     begin
       match comp with
-      | [] -> failwith "You should not be here"
+      | [] -> Grammar.Cons (0, [])
       | [ elt ] ->
         begin
           match elt with
-	  | Some (Seq _ as elt) -> Grammar.Cons (0, [grm_elem_of_ast_elem elt])
-	  | Some (Elem e) -> Grammar.Call e
-	  | _ -> failwith "You should not be here"
+          | Seq _ as elt -> Grammar.Cons (0, [grm_elem_of_ast_elem elt])
+          | Elem e -> Grammar.Call e
         end
-      | _ -> Grammar.Cons (0, (List.fold_left
-                                 (fun cons_list elt ->
-                                    match elt with
-				    | None -> cons_list
-				    | Some e -> (grm_elem_of_ast_elem e)::cons_list)
-                                 []
-                                 comp))
+      | _ -> Grammar.Cons
+               (0, (List.fold_left
+                      (fun cons_list elt -> (grm_elem_of_ast_elem elt) :: cons_list)
+                      []
+                      comp))
     end
-  | Some n -> Grammar.Cons (n, (List.fold_left
-                                  (fun cons_list elt ->
-                                     match elt with
-				     | None -> cons_list
-				     | Some e -> (grm_elem_of_ast_elem e)::cons_list)
-                                  []
-                                  comp))
+  else
+    Grammar.Cons
+      (n, (List.fold_left
+             (fun cons_list elt -> (grm_elem_of_ast_elem elt) :: cons_list)
+             []
+             comp))
 
 let grm_rule_of_ast_rule (name,comps) =
   (name, List.map grm_comp_of_ast_comp comps)
@@ -71,4 +66,4 @@ let grm_rule_of_ast_rule (name,comps) =
 let grammar_of_ast_grammar ast_grammar =
   Grammar.completion (List.map grm_rule_of_ast_rule ast_grammar)
 
-  
+

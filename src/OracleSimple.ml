@@ -18,17 +18,17 @@ open Util
 
 let normInf_diff = array_fold_left_2 (fun norm y y' -> let z = abs_float (y -. y') in if z>norm then z else norm) 0.0
 
-let iterationSimple (phi:combsys) (z:float) (epsilon:float):float array  =
+let iterationSimple (phi:combsys) (z:float) (epsilon:float) (divt:float):float array =
   let rec iterate (y:float array): float array =
     let y' = evaluation phi z y
     in
-    if (Array.fold_left (fun pred x -> pred || (x >= 1.)) false y')
+    if (Array.fold_left (fun pred x -> pred || (x >= divt)) false y')
     then (Array.make (Array.length y') (-1.0))
     else
-      if (normInf_diff y y') <= epsilon
-      then y'
-      else
-	iterate y'
+    if (normInf_diff y y') <= epsilon
+    then y'
+    else
+      iterate y'
   in
   iterate (Array.make (combsys_size phi) 0.0)
 
@@ -50,14 +50,15 @@ let rec searchSingularity
     (zmax:float)
     (epsilon1:float)
     (epsilon2:float)
+    (divt:float)
     (zstart:float)
-    : float *float* float array =
+  : float *float* float array =
   if zmax -. zmin < epsilon1 then
-    (zmin,zmax,iterationSimple phi zmin epsilon2)
+    (zmin,zmax,iterationSimple phi zmin epsilon2 divt)
   else
     let z = zstart in
-    let y = iterationSimple phi z epsilon2 in
+    let y = iterationSimple phi z epsilon2 divt in
     if diverge y epsilon2 = true then
-      searchSingularity phi zmin zstart epsilon1 epsilon2 ((zmin+.zstart)/.2.)
+      searchSingularity phi zmin zstart epsilon1 epsilon2 divt ((zmin+.zstart)/.2.)
     else
-      searchSingularity phi zstart zmax epsilon1 epsilon2 ((zmax+.zstart)/.2.)
+      searchSingularity phi zstart zmax epsilon1 epsilon2 divt ((zmax+.zstart)/.2.)
