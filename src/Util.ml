@@ -14,9 +14,11 @@
 
 (* List utilities *)
 
+let rec fold_int f acc n =
+  if n < 0 then acc else fold_int f (f acc n) (n-1)
+
 let fold_map mop fop finit a =
   List.fold_left (fun r e -> fop (mop e) r) finit a
-
 
 let string_of_list str_of_elem op dl cl l =
   let rec aux = function
