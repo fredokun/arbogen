@@ -13,6 +13,7 @@ open Ast
 %token SEQ
 %token EPSILON 
 %token Z
+%token ATOM
 %token UNION
 %token PROD
 %token CARD
@@ -67,6 +68,7 @@ expression_list:
 expression:
   | EPSILON { Ast.Epsilon }
   | Z { Ast.Z }
+  | ATOM { Ast.Z }
   | IDENT { Ast.Id $1 }
   | UNION LPAR expression_list RPAR { Ast.Union $3 }
   | PROD LPAR expression_list RPAR { Ast.Prod $3 }

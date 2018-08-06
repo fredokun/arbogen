@@ -15,7 +15,8 @@ let () =
       ("Prod", PROD);
       ("Z", Z);
       ("set", SET);
-      ("card", CARD)
+      ("card", CARD);
+      ("Atom", ATOM)
     ]
 
 let () =

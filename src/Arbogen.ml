@@ -152,7 +152,7 @@ let () =
             global_options.epsilon2_factor_set <- true
           end),
      "<x> : set the refinement factor for epsilon in simple iteration (a strictly positive float number)");
-        ("-divergence_threshold", Arg.Float
+    ("-divt", Arg.Float
        (fun x ->
           if x < 0.0 then
             begin
@@ -163,7 +163,7 @@ let () =
             global_options.divt <- x;
             global_options.divt_set <- true
           end),
-     "<x> : set the refinement factor for epsilon in simple iteration (a strictly positive float number)");
+     "<x> : set the treshold for series evaluation such that higher value mean series divergence");
     ("-reject_ratio", Arg.Float
        (fun x ->
           if x <  0.0 then
@@ -367,7 +367,7 @@ let () =
     begin
 
       if global_options.verbosity > 0 then
-        printf "==> Tree generated with %d nodes\n%!" size;
+        printf "==> Tree generated with weight %d\n%!" size;
 
       let out_state =
         if global_options.fileName = "" then
