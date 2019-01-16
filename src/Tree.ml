@@ -18,26 +18,9 @@ type tree =
 | Leaf of string * string     (* node type, node id *)
 | Node of string * string * (tree ref list)   (* node type, node id, children *)
 
-let rec string_of_tree = fun x ->
-  match !x with
-  | Leaf(typ,id) -> "Leaf(" ^ typ ^ "," ^ id ^ ")"
-  | Node(typ,id,ts) -> "Node(" ^ typ ^ "," ^ id ^ ")" ^ (string_of_list string_of_tree "[" "," "]" ts)
-
 let rec indent_string = function
   | 0 -> ""
   | n -> "  " ^  indent_string (n-1)
-
-let indent_string_of_tree (t:tree) =
-  let rec tree level t = match t with
-    | Leaf(typ,id) -> (indent_string level) ^ "Leaf[" ^ typ ^ "," ^ id ^ "]"
-    | Node(typ,id,ts) ->
-      (indent_string level) ^ "Node[" ^ typ ^ "," ^ id ^ "][\n" ^ (forest (level+1) ts) ^ "]"
-  and forest level f = match f with
-    | [] -> ""
-    | [t] -> tree level !t
-    | t::f' -> (tree level !t) ^ "\n" ^ (forest level f')
-  in tree 0 t
-
 
 let rec tree_out (show_type:bool) (show_id:bool) (tree:tree) out =
   let label typ id =
