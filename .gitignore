@@ -1,9 +1,10 @@
-*.cmi
-*.cmo
 *~
 #*
 *#
 *.arb
 *.dot
 *.jpg
-.depend
+
+/_build
+/lib
+/bin
