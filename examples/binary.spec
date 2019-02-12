@@ -1,5 +1,5 @@
 
-// grammar file for binary trees (counting leaves)
+// grammar file for binary trees (counting leaves and internal nodes)
 
 BinNode ::=  Leaf * <z> + BinNode * BinNode * <z>
 
@@ -9,13 +9,13 @@ BinNode ::= Leaf +  BinNode * BinNode * <z>
 
 */
 
-/* variant : binary trees (counting nodes)
+/* variant : binary trees (counting leaves)
 
-BinNode ::= Leaf * <z> + BinNode * BinNode * <z>
+BinNode ::= Leaf * <z> + BinNode * BinNode
 
 */
 
-/* variant : binary trees (counting differently leaves and nodes)
+/* variant : binary trees (counting leaves and internal nodes but nodes count twice)
 
 BinNode ::= Leaf * <z> + BinNode * BinNode * <z> * <z>
 
@@ -37,7 +37,7 @@ xml. format
     <leaf name="Leaf"/>
     <leaf name="Leaf"/>
   </node>
-</node>  
+</node>
 </tree>
 
 dot file  (with or without labels) :
