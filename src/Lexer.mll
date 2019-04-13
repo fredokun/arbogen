@@ -73,7 +73,12 @@ rule token = parse
   | times { TIMES }
   | lparen { LPAREN }
   | rparen { RPAREN }
+  | "/*"     { comment lexbuf }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
-{
-}
+
+and comment = parse
+  | "*/"     { token lexbuf }
+  | newline  { Lexing.new_line lexbuf; comment lexbuf }
+  | eof      { failwith "unterminated comment" }
+  | _        { comment lexbuf }
