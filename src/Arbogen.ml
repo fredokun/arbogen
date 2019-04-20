@@ -14,6 +14,7 @@
 
 open Printf
 
+open Arbolib
 open Options
 open GenState
 
@@ -224,12 +225,12 @@ let () =
                    ),
        "<n>: set the name of state file");
       ("-id", Arg.Unit
-                (fun x ->
+         (fun () ->
                  global_options.with_id <- true;
                 ),
        ": number the nodes");
       ("-typ", Arg.Unit
-                 (fun x ->
+         (fun () ->
                   global_options.with_type <- true;
                  ),
        ": show the type of nodes");
@@ -242,12 +243,12 @@ let () =
                       | _  -> (eprintf "Error : random number generator %s unknown\n%!" x; exit 1)),
        "[ocaml | randu] : set the random number generator");
       ("-oracle", Arg.Unit
-         (fun x ->
+         (fun () ->
             global_options.print_oracle <- true;
          ),
        ": output an oracle");
       ("-indent", Arg.Unit
-                    (fun x ->
+         (fun () ->
                      global_options.indent <- true;
                     ),
        ": indent the output")
@@ -257,7 +258,7 @@ let () =
              then global_options.grammar_file <- arg
              else (eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 1))
             usage;
-  
+
   if global_options.print_oracle then
     begin
       let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
@@ -271,7 +272,7 @@ let () =
                                                    global_options.epsilon1,
                                                    global_options.epsilon2 in
       printf "[ORACLE]: search singularity at z=%f\n%!" zstart;
-      let (zmin',zmax',y) = OracleSimple.searchSingularity sys zmin zmax
+      let (zmin', _, y) = OracleSimple.searchSingularity sys zmin zmax
           epsilon1 epsilon2 zstart in
       printf "          ==> found singularity at z=%f\n\n%!" zmin';
       let wgrm = WeightedGrammar.weighted_grm_of_grm g y zmin' in
@@ -282,7 +283,7 @@ let () =
 
   if (global_options.verbosity) > 0 then
     printf "%s\n%!" banner;
-      
+
   let result =
     if(not global_options.with_state) then
       begin
@@ -367,7 +368,7 @@ let () =
              if global_options.verbosity >= 2 then
                printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
              open_out (global_options.fileName^".state")
-           end            
+           end
        in
 
        output_value out_state state;
@@ -407,7 +408,7 @@ let () =
              end
          in
          Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree out;
-       |3 -> 
+       |3 ->
          if global_options.fileName = "" then
            global_options.fileName <- "tree";
          printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;

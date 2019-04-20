@@ -4,6 +4,8 @@
 *.arb
 *.dot
 *.jpg
+*.install
+.merlin
 
 /_build
 /lib

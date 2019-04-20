@@ -1,7 +1,4 @@
 %{
-open Parsing
-open Lexing
-open Hashtbl
 open Ast
 
 let add_option a b =

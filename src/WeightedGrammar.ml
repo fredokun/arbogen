@@ -111,7 +111,7 @@ let string_of_weighted_rule (rname,weight,comps) =
   | _ -> strcomps comps
      in rname ^ ", " ^ (string_of_float weight)  ^ " ::= " ^ rstr ;;
 
-let rec string_of_weighted_grammar wgrm =
+let string_of_weighted_grammar wgrm =
   StringMap.fold
     (fun name (weight, components) s ->
       (string_of_weighted_rule (name,weight,components)) ^ "\n" ^ s)

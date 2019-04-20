@@ -1,34 +1,16 @@
+.PHONY: build clean install uninstall
 
-all: arbogen lib
+build:
+	dune build @install
+	[ -e bin ] || ln -sf _build/install/default/bin bin
+	[ -e lib ] || ln -sf _build/install/default/lib/arbogen lib
 
-arbogen:
-	ocamlbuild src/Arbogen.native
-	ocamlbuild src/Arbogen.byte
-	@mkdir -p bin
-	@mv Arbogen.native bin/arbogen.native
-	@mv Arbogen.byte bin/arbogen.byte
+install: build
+	dune install
 
-lib:
-	ocamlbuild src/Arbolib.cmxa
-	ocamlbuild src/Arbolib.cma
-	ocamlbuild src/Arbolib.cmi
-	@mkdir -p lib
-	@cp _build/src/Arbolib.cma lib
-	@cp _build/src/Arbolib.cmxa lib
-	@cp _build/src/Arbolib.cmi lib
-	@cp _build/src/Arbolib.a lib
-	@cp _build/src/Arbolib.o lib
-	@cp _build/src/Arbolib.cmo lib
-	@cp _build/src/Arbolib.cmx lib
-
-install-lib: lib uninstall
-	ocamlfind install arbolib META lib/*
-
-uninstall-lib:
-	ocamlfind remove arbolib
-
-.PHONY: all install-lib clean lib uninstall
+uninstall: build
+	dune uninstall
 
 clean:
-	rm -rf _build bin lib
-
+	dune clean
+	rm -f bin lib

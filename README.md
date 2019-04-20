@@ -2,7 +2,7 @@
 
    A      ...:'....:'':...':......
    R    :''   ._   .  `.  \   ,   '':
-   B    ':  .   \" .|    \  `>/   _.-': 
+   B    ':  .   \" .|    \  `>/   _.-':
    O   .:'  .`'.   `-.  '. /'  ,..  .:
    G  :'        `.    `\| \./   ' :
    E  :. ,,-'''''  \"-.  |   | ....:
@@ -11,11 +11,11 @@
 *fast* uniform random    |  =|
        tree generator    |   |
                          |-  |
-''''''''''''''''''''''''''''''''''''''' 
+'''''''''''''''''''''''''''''''''''''''
 (C) F. Peschanski et al. under the GPL
 
 </pre>
- 
+
 Arbogen is a fast uniform random generator of tree structures.
 The tool reads a grammar file describing a tree structure
 (e.g. binary trees, 2-3-4 trees, etc.) and a size interval
@@ -43,6 +43,21 @@ Arbogen can be used in the very many situations when tree-shaped
 datastructures must be manipulated, e.g. in random testing.
 
 ----
+
 This software was inspired by the research work of Alexis Darasse.
 It is distributed under the GNU Public license v.2 (cf. LICENSE.txt).
 
+----
+
+## Build & install arbogen
+
+You need [`dune`](https://dune.build/) and
+[`menhir`](http://gallium.inria.fr/~fpottier/menhir/) to build arbogen.
+
+Running `make` builds two targets:
+
+- a standalone executable: `bin/arbogen.exe`
+- the internals of arbogen exposed as a library available under `lib/`
+
+You can install (or uninstall) arbogen on your system using
+`make install` (or `make uninstall`)

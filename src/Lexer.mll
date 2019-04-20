@@ -1,7 +1,5 @@
 {
 open Parser
-open Hashtbl
-open Parsing
 
 let grammar_keyword_table = Hashtbl.create 2
 let parameter_keyword_table = Hashtbl.create 2

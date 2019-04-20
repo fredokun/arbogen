@@ -40,18 +40,18 @@ struct
     state := r;
     r mod n
 
-  let float f = 
+  let float f =
     let n = (int max_mod) in
     state := n;
     f *. ((float_of_int n) /. max_mod_f)
 
   let get_state () = Obj.magic { st = Array.make 55 0; idx = !state }
 
-  let set_state s = 
+  let set_state s =
     let { st = _ ; idx = n} = Obj.magic s in
     state := n
 end
-  
+
 module RandNull : Sig =
 struct
   let name = "randnull"
@@ -152,19 +152,19 @@ struct
 
   let self_init () =  Random.self_init (); state := Random.int 100
 
-  let int n =
+  let int _ =
     let i = !state in
     state := (!state + 1) mod max_mod;
     l.(i)
 
-  let float f = 
+  let float f =
     let n = (int max_mod) in
     let r = f *. ((float_of_int n) /. max_mod_f) in
     r
 
   let get_state () = Obj.magic { st = Array.make 55 0; idx = !state }
 
-  let set_state s = 
+  let set_state s =
     let { st = _ ; idx = n} = Obj.magic s in
     state := n
 end

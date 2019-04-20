@@ -1,0 +1,30 @@
+opam-version: "2.0"
+
+name: "arbolib"
+version: "1.0 RC"
+
+synopsis: "A fast uniform random generator of tree structure"
+
+maintainer: "Martin Pépin <kerl@wkerl.me>"
+authors: [
+  "Frédéric Peschanski"
+  "Xuming Zhan"
+  "Antoine Genitrini"
+  "Matthieu Dien"
+  "Alexis Darrasse"
+  "Marwan Ghanem"
+  "Martin Pépin"
+]
+license: "GPL3"
+
+homepage: "https://github.com/fredokun/arbogen"
+bug-reports: "https://github.com/fredokun/arbogen/issues"
+dev-repo: "git://github.com/fredokun/arbogen.git"
+
+depends: [
+  "dune"                 {build & >= "1.4.0"}
+  "menhir"               {>= "20170509"}
+  "ocaml"                {>= "4.04"}
+]
+
+build: ["dune" "build" "-p" name "-j" jobs]

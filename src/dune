@@ -1,0 +1,16 @@
+(menhir
+  (modules Parser))
+
+(ocamllex
+  (modules Lexer))
+
+(library
+  (name arbolib)
+  (public_name arbogen)
+  (modules :standard \ Arbogen))
+
+(executable
+  (name arbogen)
+  (public_name arbogen)
+  (libraries arbolib)
+  (modules Arbogen))

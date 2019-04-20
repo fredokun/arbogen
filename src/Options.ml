@@ -1,5 +1,3 @@
-open Util
-
 type options_record = {
   mutable interactive_mode : bool;
   mutable grammar_file: string;
@@ -79,4 +77,3 @@ let global_options = {
 } ;;
 
 exception Option_Error of string ;;
-

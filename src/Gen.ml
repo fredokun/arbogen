@@ -26,7 +26,7 @@ open RandGen
 let rec find_component (rdm_float:float) componentList =
   match componentList with
   | [comp] -> comp
-  | comp::list_comp -> let (composant,freq) = comp in
+  | comp::list_comp -> let (_,freq) = comp in
 		                   if rdm_float <= freq then
                          comp
 		                   else
@@ -58,7 +58,7 @@ let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (
 	        elem_list),
        isCall,name_called)
     end
-      
+
 let rec init_counter (g:grammar) map =
   match g with
   | [] -> map
@@ -85,7 +85,7 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
     size
   else
     begin
-      let (total_weight,next_rules,isCall,_) = get_next_rule current_rule wgrm false "" randgen in
+      let (total_weight,next_rules,_,_) = get_next_rule current_rule wgrm false "" randgen in
       if (List.length next_rules) > 0 then
 	      begin
 	        let new_counters = (count_rules counters (List.tl next_rules)) in
@@ -269,10 +269,9 @@ let generator
 
   let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
   match res with
-  | Some(final_size,state,wgrm) ->
+  | Some(_,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
     let tree, size = gen_tree final_state randgen in
-    Some(tree,size,final_state)				                	
+    Some(tree,size,final_state)
   | None -> None
-
