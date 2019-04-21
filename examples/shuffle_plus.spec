@@ -7,4 +7,4 @@ set max 200
 
 A ::= Ashuffle + Aplus
 Ashuffle ::= SEQ(A) * <z>
-Aplus ::= Ashuffle * Ashuffle * SEQ(A) * <z>
+Aplus ::= Ashuffle * Ashuffle * SEQ(Ashuffle)
