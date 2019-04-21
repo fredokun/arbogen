@@ -14,87 +14,106 @@
 
 open Util
 
-(* Grammar encoding *)
+(* {2 Grammar encoding} *)
 
-(* Elements of grammar *)
-type elem = Seq of string | Elem of string
-type reference = string
-
-type component =  Call of reference | Cons of int * elem list
-
-type rule = string * component list
-
+(** A grammar is a list of rules *)
 type grammar = rule list
 
+(** A rule is a non-terminal name and a list of production rules *)
+and rule = string * component list
 
-(* grammar completion *)
+(** Either a non-terminal or the product of an atom and a list of elements *)
+and component =
+  | Call of string
+  | Cons of int * elem list
 
-let name_of_elem (elt:elem) =
-  match elt with
-  |Seq(name) -> name
-  |Elem(name) -> name ;;
+(** Either a non-terminal or a sequence (Kleene star) *)
+and elem =
+  | Elem of string
+  | Seq of string
 
-let names_of_component comp =
-  let names = StringSet.empty in
-  match comp with
-  | Call ref -> StringSet.add ref names
-  | Cons (_, l) -> List.fold_left (fun names elt -> StringSet.add (name_of_elem elt) names) names l
+let epsilon = Cons (0, [])
+
+(** [make_epsilon_rule name] build a rule of the form [name ::= ε] *)
+let make_epsilon_rule name =
+  name, [Cons (0, [])]
 
 
-let names_of_rule (_,comps) =
-  List.fold_left (fun names comp -> StringSet.union (names_of_component comp) names) (StringSet.empty) comps
+(** {2 Grammar completion} *)
 
-let names_of_grammar (grm:grammar) =
-  List.fold_left (fun gnames rule -> StringSet.union (names_of_rule rule) gnames) (StringSet.empty) grm
+let name_of_elem = function
+  | Seq name -> name
+  | Elem name -> name
 
-let rule_names_of_grammar (grm:grammar) =
-  List.fold_left (fun rnames (rname,_) -> StringSet.add rname rnames) (StringSet.empty) grm
+let names_of_component = function
+  | Call name -> StringSet.singleton name
+  | Cons (_, elems) ->
+    List.fold_left
+      (fun names elem -> StringSet.add (name_of_elem elem) names)
+      StringSet.empty
+      elems
 
-let leafs_of_grammar (grm:grammar) =
-  let leafs = StringSet.diff (names_of_grammar grm) (rule_names_of_grammar grm)
+let names_of_rule (_, comps) =
+  List.fold_left
+    (fun names comp -> StringSet.union (names_of_component comp) names)
+    StringSet.empty
+    comps
+
+let names_of_grammar grammar =
+  List.fold_left
+    (fun gnames rule -> StringSet.union (names_of_rule rule) gnames)
+    StringSet.empty
+    grammar
+
+let rule_names_of_grammar grammar =
+  List.fold_left
+    (fun rnames (rname, _) -> StringSet.add rname rnames)
+    StringSet.empty
+    grammar
+
+let leaves_of_grammar grammar =
+  StringSet.diff (names_of_grammar grammar) (rule_names_of_grammar grammar)
+
+(** [completion g] adds rule of the form [name ::= ε] for each unbound symbol
+    in the grammar *)
+let completion grammar =
+  let leaves =
+    StringSet.fold
+      (fun leaf_name rules -> make_epsilon_rule leaf_name :: rules)
+      (leaves_of_grammar grammar)
+      []
   in
-  StringSet.fold (fun leaf l -> leaf::l) leafs []
+  grammar @ leaves
 
-let completion (grm:grammar) =
-  let leafs = leafs_of_grammar grm
-  in
-  grm @ (List.fold_left (fun lrules leaf -> (leaf,[Cons (0,[])])::lrules) [] leafs)
+(** {2 Pretty printing} *)
 
-(* printing *)
+let pp_elem fmt = function
+  | Elem name -> Format.fprintf fmt "Elem(%s)" name
+  | Seq name -> Format.fprintf fmt "Seq(%s)" name
 
-let string_of_elem = function
-  | Elem name -> "Elem (" ^ name ^ ")"
-  | Seq name -> "Seq(" ^ name ^ ")"
+let pp_product pp_term fmt terms =
+  let pp_sep fmt () = Format.fprintf fmt " * " in
+  match terms with
+  | [] -> Format.fprintf fmt "1"
+  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
 
-let string_of_component comp =
-  let strz w =
-    if w=0 then ""
-    else "<z^" ^ (string_of_int w) ^ ">"
-  in
-  let rec strcons cons_list=
-    match cons_list with
-    | [] -> "1"
-    | [ref] -> string_of_elem ref
-    | ref::refs -> (string_of_elem ref) ^ " * " ^ (strcons refs)
-  in
-  match comp with
-  | Call e -> "Call(" ^ e ^ ")"
-  | Cons (weight, cons_list) ->
-    if weight != 0 then
-	    "Cons(" ^ (strcons cons_list) ^ " * " ^ (strz weight) ^ ")"
+let pp_component fmt = function
+  | Call ref -> Format.fprintf fmt "Call(%s)" ref
+  | Cons (weight, elems) ->
+    if weight <> 0 then
+      Format.fprintf fmt "Cons(<z^%d> * %a)" weight (pp_product pp_elem) elems
     else
-	    "Cons(" ^ (strcons cons_list) ^  ")"
+      Format.fprintf fmt "Cons(%a)" (pp_product pp_elem) elems
 
-let string_of_rule (rname,comps) =
-  let rec strcomps = function
-    | [] -> ""
-    | [comp] -> (string_of_component comp) ^ " ;"
-    | comp::comps -> (string_of_component comp) ^ " + " ^ (strcomps comps)
-  in let rstr = match comps with
-  | [] -> "<empty>"
-  | _ -> strcomps comps
-     in rname ^ " ::= " ^ rstr ;;
+let pp_union pp_term fmt terms =
+  let pp_sep fmt () = Format.fprintf fmt " + " in
+  match terms with
+  | [] -> Format.fprintf fmt "0"
+  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
 
-let rec string_of_grammar = function
-  | [] -> ""
-  | rul::rules -> (string_of_rule rul) ^ "\n" ^ (string_of_grammar rules)
+let pp_rule fmt (name, components) =
+  Format.fprintf fmt "%s ::= %a" name (pp_union pp_component) components
+
+let pp fmt grammar =
+  let pp_sep fmt () = Format.fprintf fmt "\n" in
+  Format.pp_print_list ~pp_sep pp_rule fmt grammar

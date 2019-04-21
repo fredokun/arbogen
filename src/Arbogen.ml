@@ -264,7 +264,7 @@ let () =
       let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
       ParseUtil.set_options options;
       let g = Ast.grammar_of_ast_grammar ast_grammar in
-      printf "[GRAMMAR]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g);
+      Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp g;
       let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
       printf "[COMBSYS]: combinatorial system is:\n%s\n%!" (fst (CombSys.string_of_combsys sys));
 

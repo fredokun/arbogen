@@ -257,7 +257,7 @@ let generator
   in
   Rand.init seed2;
   if verbosity >= 2 then
-    printf "[GEN]: grammar parsed is :\n%s\n%!" (Grammar.string_of_grammar g);
+    Format.printf "[GEN]: grammar parsed is :\n%a@." Grammar.pp g;
 
   if verbosity >= 2 then
     printf "[SEED] starting seed = %d\n\n" seed2;

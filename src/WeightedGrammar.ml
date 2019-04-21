@@ -82,6 +82,9 @@ let weighted_grm_of_grm
   let wgrm = StringMap.empty in
   wgrm_of_grm grm wgrm rules_indexes values z
 
+let string_of_elem element =
+  Format.asprintf "%a" Grammar.pp_elem element
+
 let string_of_weighted_component comp =
   let strz w =
     if w=0 then ""
