@@ -56,7 +56,7 @@ You need [`dune`](https://dune.build/) and
 
 Running `make` builds two targets:
 
-- a standalone executable: `bin/arbogen.exe`
+- a standalone executable: `bin/arbogen`
 - the internals of arbogen exposed as a library available under `lib/`
 
 You can install (or uninstall) arbogen on your system using
