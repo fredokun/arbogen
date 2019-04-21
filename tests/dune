@@ -1,0 +1,4 @@
+(tests
+  (names test_parsing)
+  (deps (glob_files *.spec))
+  (libraries arbogen alcotest))
