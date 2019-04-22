@@ -1,101 +1,70 @@
 %{
-open Ast
-
-let add_option a b =
-  match a,b with
-  | Some n, Some n' -> Some (n+n')
-  | a, None -> a
-  | None, b -> b
-
+  let opt_cons x xs = match x with
+    | None -> xs
+    | Some x -> x :: xs
 %}
 
-
-%token <int> NUMI
-%token <float> NUMF
 %token <string> UIDENT LIDENT
-
-%token SEQ
-
-%token SET
-
-%token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
-
 %token EOF
 
+(* options tokens *)
+%token SET
+%token <int> NUMI
+%token <float> NUMF
+
+(* grammar tokens *)
+%token SEQ
+%token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
+
 %start start
-%type <Ast.ast> start
+%type <Options.parameter list * Grammar.grammar> start
 
 %%
 
+(* Grammar entry point *)
+
 start:
- | options rules EOF { $1,$2 }
- | rules EOF { [],$1 }
- | EOF { raise End_of_file }
+  options = list(option)
+  rules = nonempty_list(rule)
+  EOF
+  { options, rules }
 
 
-options:
- | option options { $1 :: $2 }
- | option { [$1] }
-
+(* Options ************************************************)
 
 option:
- | SET LIDENT NUMF { Param ($2, Vfloat $3) }
- | SET LIDENT NUMI { Param ($2, Vint $3) }
- | SET LIDENT LIDENT { Param ($2, Vstring $3) }
+  SET id = LIDENT value = value { Options.Param (id, value) }
+
+value:
+  | f = NUMF    { Options.Vfloat f }
+  | n = NUMI    { Options.Vint n }
+  | s = LIDENT  { Options.Vstring s }
 
 
-rules:
- | rule rules { $1::$2 }
- | rule { [$1] }
-
+(* Production rules ***************************************)
 
 /* string * (int option * elem list) list */
 rule:
- | UIDENT EQUAL components { ($1, $3) }
+  name = UIDENT
+  EQUAL
+  components = separated_nonempty_list(PLUS, component)
+  { name, components }
 
-
-/* (int option * (elem option) list) list */
-components:
- | component PLUS components { $1::$3 }
- | component { [$1] }
-
-
-/* int option * ((elem option) list) */
+/* int * (elem list) */
 component:
- | sub_component TIMES component
-     {
-       let w = add_option (fst $1) (fst $3) in
-       match (snd $1) with
-       | None -> (w, snd $3)
-       | e -> (w, e::(snd $3))
-     }
- | sub_component { (fst $1, [snd $1]) }
+  | sc = sub_component TIMES c = component
+    {
+      let w, opt_elem = sc in
+      let w', comp = c in
+      w + w', opt_cons opt_elem comp
+    }
+ | comp = sub_component { fst comp, opt_cons (snd comp) [] }
 
 
-/* int option * elem option */
+/* int * elem list */
 sub_component:
- | elem { (None, Some $1) }
- | seq { (Some 0, Some $1) }
- | weight { ($1, None) }
- | z { ($1, None) }
- | one { ($1, None) }
-
-
-seq:
- | SEQ LPAREN UIDENT RPAREN { Ast.Seq $3 }
-
-
-elem:
- | UIDENT { Ast.Elem $1 }
-
-
-weight:
- | LWEIGHT NUMI RWEIGHT { Some $2 }
-
-
-z:
- | Z { Some 1 }
-
-
-one:
- | ONE { Some 0 }
+  | uid = UIDENT                     { 0, Some (Grammar.Elem uid) }
+  | SEQ LPAREN uid = UIDENT RPAREN   { 0, Some (Grammar.Seq uid) }
+  | LWEIGHT w = NUMI RWEIGHT         { w, None }
+  | Z                                { 1, None }
+  | ONE                              { 0, None }

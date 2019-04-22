@@ -261,9 +261,9 @@ let () =
 
   if global_options.print_oracle then
     begin
-      let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+      let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
       ParseUtil.set_options options;
-      let g = Ast.grammar_of_ast_grammar ast_grammar in
+      let g = Grammar.completion grammar in
       Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp g;
       let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
       printf "[COMBSYS]: combinatorial system is:\n%s\n%!" (fst (CombSys.string_of_combsys sys));
@@ -290,9 +290,9 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Loading grammar file: %s\n%!" global_options.grammar_file;
 
-        let (options, ast_grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+        let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
         ParseUtil.set_options options;
-        let grammar = Ast.grammar_of_ast_grammar ast_grammar in
+        let grammar = Grammar.completion grammar in
 
         if (global_options.verbosity) > 0 then
           printf "==> Grammar file loaded\n%!";

@@ -1,3 +1,14 @@
+(** {2 Command line parameters} *)
+
+type value =
+  | Vint of int
+  | Vfloat of float
+  | Vstring of string
+
+type parameter = Param of string * value
+
+(** {2 Global options} *)
+
 type options_record = {
   mutable interactive_mode : bool;
   mutable grammar_file: string;
@@ -74,6 +85,6 @@ let global_options = {
   randgen = "ocaml";
   indent=false;
   print_oracle=false;
-} ;;
+}
 
-exception Option_Error of string ;;
+exception Option_Error of string

@@ -1,16 +1,16 @@
 (********************************************************
-* Arbogen-lib : fast uniform random generation of trees *
-*********************************************************
-* Module: Gen                                           *
-* -------                                               *
-* The Boltzmann random generator                        *
-* -------                                               *
-* (C) 2011, Xuming Zhan, Frederic Peschanski            *
-*           Antonine Genitrini, Matthieu Dien           *
-*           Marwan Ghanem                               *
-*           under the                                   *
-*           GNU GPL v.3 licence (cf. LICENSE file)      *
-*********************************************************)
+ * Arbogen-lib : fast uniform random generation of trees *
+ *********************************************************
+ * Module: Gen                                           *
+ * -------                                               *
+ * The Boltzmann random generator                        *
+ * -------                                               *
+ * (C) 2011, Xuming Zhan, Frederic Peschanski            *
+ *           Antonine Genitrini, Matthieu Dien           *
+ *           Marwan Ghanem                               *
+ *           under the                                   *
+ *           GNU GPL v.3 licence (cf. LICENSE file)      *
+ *********************************************************)
 
 open Printf
 
@@ -27,37 +27,33 @@ let rec find_component (rdm_float:float) componentList =
   match componentList with
   | [comp] -> comp
   | comp::list_comp -> let (_,freq) = comp in
-		                   if rdm_float <= freq then
-                         comp
-		                   else
-                         find_component (rdm_float-.freq) list_comp
+    if rdm_float <= freq then
+      comp
+    else
+      find_component (rdm_float-.freq) list_comp
   | _ -> failwith "find_component failed !!!"
 
-let rec get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) (randgen:string) =
+let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) (randgen:string) =
   let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
-  match comp with
-  | (Grammar.Call elem), _ -> get_next_rule elem wgrm true elem randgen
-  | (Grammar.Cons (w, elem_list)), _ ->
-    begin
-      (w,
-       (List.fold_left
-	        (fun next_rules elem ->
-            match elem with
-            | (Grammar.Elem name) -> name :: next_rules
-            | (Grammar.Seq name) ->
-              begin
-                let (w,_) = StringMap.find name wgrm in
-                let n' = int_of_float( snd (modf((log(Rand.float 1.))/. (log(1.-.w))))) in
-                next_rules @ (concat_n [name] n')
-              end
-	        )
-	        []
-	        elem_list),
-       isCall,name_called)
-    end
+  let (w, elem_list), _ = comp in
+  (w,
+   (List.fold_left
+      (fun next_rules elem ->
+         match elem with
+         | (Grammar.Elem name) -> name :: next_rules
+         | (Grammar.Seq name) ->
+           begin
+             let (w,_) = StringMap.find name wgrm in
+             let n' = int_of_float( snd (modf((log(Rand.float 1.))/. (log(1.-.w))))) in
+             next_rules @ (concat_n [name] n')
+           end
+      )
+      []
+      elem_list),
+   isCall,name_called)
 
 let rec init_counter (g:grammar) map =
   match g with
@@ -67,8 +63,8 @@ let rec init_counter (g:grammar) map =
 let rec count_rules counters elements =
   match elements with
   |elem::elems -> let nb = StringMap.find elem counters in
-                  let new_map = StringMap.add elem (nb+1) counters in
-                  count_rules new_map elems;
+    let new_map = StringMap.add elem (nb+1) counters in
+    count_rules new_map elems;
   | _ -> counters
 
 let  find_non_zero counters =
@@ -87,19 +83,19 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
     begin
       let (total_weight,next_rules,_,_) = get_next_rule current_rule wgrm false "" randgen in
       if (List.length next_rules) > 0 then
-	      begin
-	        let new_counters = (count_rules counters (List.tl next_rules)) in
+        begin
+          let new_counters = (count_rules counters (List.tl next_rules)) in
           sim (size+total_weight) new_counters wgrm sizemax  (List.hd next_rules) randgen
-	      end
+        end
       else
-	      begin
-	        let non_zero = find_non_zero counters in
-	        match non_zero with
-	        | Some s ->let nb = StringMap.find s counters in
-                     let new_nb = nb - 1 in
-                     sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s randgen
-	        | None -> (size+total_weight)
-	      end
+        begin
+          let non_zero = find_non_zero counters in
+          match non_zero with
+          | Some s ->let nb = StringMap.find s counters in
+            let new_nb = nb - 1 in
+            sim (size+total_weight) (StringMap.add s new_nb counters) wgrm sizemax s randgen
+          | None -> (size+total_weight)
+        end
     end
 
 
@@ -124,15 +120,15 @@ let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
         end
       else if res > sizemax then
         begin
-	        (if verbosity >= 3
+          (if verbosity >= 3
            then printf "      ==> weight is too big\n%!") ;
           sim_try wgrm grm (nb_try - 1)  nb_smaller (nb_bigger+1) sizemin sizemax randgen verbosity
         end
       else
         begin
-	        (if verbosity >= 3
+          (if verbosity >= 3
            then printf "     ==> simulated weight matches expected weight, select\n%!");
-	        (Some(res),nb_smaller,nb_bigger,Some(rdm_state))
+          (Some(res),nb_smaller,nb_bigger,Some(rdm_state))
         end
     end
   else  (* max number of tries *)
@@ -154,15 +150,15 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
   match size with
   | Some size ->
     (match state with
-    |Some state -> Some(size,state,wgrm)
-    |None -> assert false) (* unreachable case *)
+     |Some state -> Some(size,state,wgrm)
+     |None -> assert false) (* unreachable case *)
   | None  ->
     if nb_refine > 0 then
       begin
         if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-	        simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
+          simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
         else
-	        failwith "try with other parameters Trees too big"
+          failwith "try with other parameters Trees too big"
       end
     else
       None
@@ -200,9 +196,9 @@ let rec gen_tree_rec counters stacks wgrm id current_rule randgen =
       let stacks'' =
         List.fold_left2
           (fun stacks rule_name node_ref ->
-            StringMap.add rule_name
-              (node_ref :: (StringMap.find rule_name stacks))
-              stacks)
+             StringMap.add rule_name
+               (node_ref :: (StringMap.find rule_name stacks))
+               stacks)
           stacks'
           next_rules
           children_refs
@@ -220,11 +216,11 @@ let gen_tree (gen_state:gen_state) (randgen:string) =
   let keys = StringMap.fold (fun k _ l -> k :: l) wgrm  [] in
   let counters = List.fold_left (fun map k -> StringMap.add k 0 map) StringMap.empty keys in
   let stacks =  List.fold_left
-    (fun map k -> if k = first_rule then
-        StringMap.add k [first_ref] map
-      else
-        StringMap.add k [] map)
-    StringMap.empty keys in
+      (fun map k -> if k = first_rule then
+          StringMap.add k [first_ref] map
+        else
+          StringMap.add k [] map)
+      StringMap.empty keys in
   let size = gen_tree_rec counters stacks wgrm 0 first_rule randgen in
   (!first_ref, size)
 
@@ -244,13 +240,13 @@ let generator
     (zstart:float)
     (randgen:string)
     (verbosity:int)
-    =
+  =
   let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
   let seed2 =
     if self_seed then
       begin
-	      Rand.self_init ();
-	      Rand.int 274537
+        Rand.self_init ();
+        Rand.int 274537
       end
     else
       seed

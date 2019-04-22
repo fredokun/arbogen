@@ -13,7 +13,6 @@
  *********************************************************)
 
 open Options
-open Ast
 
 let parse_from_channel chan =
   let lexbuf = Lexing.from_channel chan in
@@ -28,7 +27,7 @@ let parse_from_file filename =
 let rec set_options options =
   match options with
   | [] -> ()
-  | (Ast.Param (name, value)) :: q ->
+  | (Param (name, value)) :: q ->
     begin
 	    match name with
 	    | "min" ->
@@ -174,4 +173,3 @@ let rec set_options options =
 	    | _ -> failwith "Unknown parameter"
     end;
     set_options q
-

@@ -22,21 +22,19 @@ type grammar = rule list
 (** A rule is a non-terminal name and a list of production rules *)
 and rule = string * component list
 
-(** Either a non-terminal or the product of an atom and a list of elements *)
-and component =
-  | Call of string
-  | Cons of int * elem list
+(** The product of an atom and a list of elements *)
+and component = int * elem list
 
 (** Either a non-terminal or a sequence (Kleene star) *)
 and elem =
   | Elem of string
   | Seq of string
 
-let epsilon = Cons (0, [])
+let epsilon = (0, [])
 
 (** [make_epsilon_rule name] build a rule of the form [name ::= ε] *)
 let make_epsilon_rule name =
-  name, [Cons (0, [])]
+  name, [(0, [])]
 
 
 (** {2 Grammar completion} *)
@@ -45,13 +43,11 @@ let name_of_elem = function
   | Seq name -> name
   | Elem name -> name
 
-let names_of_component = function
-  | Call name -> StringSet.singleton name
-  | Cons (_, elems) ->
-    List.fold_left
-      (fun names elem -> StringSet.add (name_of_elem elem) names)
-      StringSet.empty
-      elems
+let names_of_component (_, elems) =
+  List.fold_left
+    (fun names elem -> StringSet.add (name_of_elem elem) names)
+    StringSet.empty
+    elems
 
 let names_of_rule (_, comps) =
   List.fold_left
@@ -97,13 +93,10 @@ let pp_product pp_term fmt terms =
   | [] -> Format.fprintf fmt "1"
   | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
 
-let pp_component fmt = function
-  | Call ref -> Format.fprintf fmt "Call(%s)" ref
-  | Cons (weight, elems) ->
-    if weight <> 0 then
-      Format.fprintf fmt "Cons(<z^%d> * %a)" weight (pp_product pp_elem) elems
-    else
-      Format.fprintf fmt "Cons(%a)" (pp_product pp_elem) elems
+let pp_component fmt (weight, elems) =
+  if weight <> 0 then
+    Format.fprintf fmt "<z^%d> * " weight;
+  pp_product pp_elem fmt elems
 
 let pp_union pp_term fmt terms =
   let pp_sep fmt () = Format.fprintf fmt " + " in

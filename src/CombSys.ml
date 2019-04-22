@@ -49,7 +49,7 @@ let eval_combprod (z:float) (y:float array) (cp:combprod):float =
 let eval_eq (z:float) (y:float array) (eq:combeq):float =
 	let eval_combprod_s = eval_combprod z y in
 	fold_map eval_combprod_s (+.) 0.0 eq
-	  
+
 (** evaluation of a system at a given coordinate z *)
 let evaluation (phi:combsys) (z:float) (y:float array):float array =
 	let u = Array.make (Array.length y) 0.0 in
@@ -73,10 +73,8 @@ let rec make_refs map refs =
   | Grammar.Seq(a)::refs' -> (Seq (StringMap.find a map))::(make_refs map refs')
   | ref::refs' -> (Refe (StringMap.find (name_of_elem ref) map))::(make_refs map refs')
 
-let comprod_of_component map comp =  (* (refs, weight) *)
-  match comp with
-  | Grammar.Cons (weight, refs) ->  (make_refs map refs) @ (make_z weight)
-  | Grammar.Call r -> [Refe (StringMap.find r map)]
+let comprod_of_component map (weight, refs) =
+  (make_refs map refs) @ (make_z weight)
 
 let combeq_of_rule map (_,comps) =
   List.fold_left (fun eqs comp -> (comprod_of_component map comp)::eqs) [] comps
@@ -119,4 +117,3 @@ let rec string_of_combeq = function
 
 let string_of_combsys sys =
 	Array.fold_left (fun (str,i) e -> ((string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n" ^ str,i+1)) ("",0) sys
-
