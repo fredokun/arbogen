@@ -32,10 +32,10 @@ let () =
                 G  :'        `.    `\\| \\./   ' :
                 E  :. ,,-'''''  \"-.   |   | ....:
                 N   '.      ..'''  `\\ :   |
-                ''''''''       \\'   |
-                *fast* uniform random    |  =|
-                tree generator    |   |
-                |-  |
+                      ''''''''       \\'   |
+             *fast* uniform random    |  =|
+                    tree generator    |   |
+                                      |-  |
                 '''''''''''''''''''''''''''''''''''''''
                 (C) F. Peschanski et al. under the GPL\n" in
 
