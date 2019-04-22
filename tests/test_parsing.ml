@@ -40,10 +40,10 @@ let seq () =
 
 let seq2 () =
   let expected = Grammar.[
-      "NTree", [Cons (1, [Elem "Seq"])];
+      "Node", [Cons (1, [Elem "Seq"])];
       "Seq", [
         Cons (0, []);
-        Cons (0, [Elem "NTree"; Elem "Seq"])
+        Cons (0, [Elem "Node"; Elem "Seq"])
       ];
     ] in
   Alcotest.check grammar "seq2" expected (parse "seq2")
