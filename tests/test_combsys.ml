@@ -1,8 +1,11 @@
-open Arbolib.CombSys
+open Arbolib
+open CombSys
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 let checkfa tolerance = Alcotest.(check (array (float tolerance)))
 let foi = float_of_int
+
+let combsys = Alcotest.testable CombSys.pp CombSys.eq
 
 
 (** {2 tests for system evaluation} *)
@@ -93,8 +96,130 @@ let evaluation_tests = [
 
 (** {2 tests for the conversion from grammars to combinatorial systems} *)
 
+let convert_binary () =
+  let grammar = Grammar.[
+      "BinNode", [
+        (1, [Elem "Leaf"]);
+        (1, [Elem "BinNode"; Elem "BinNode"])
+      ];
+      "Leaf", [epsilon]
+    ] in
+  let expected = [|
+    [[Z; Refe 1]; [Z; Refe 0; Refe 0]];
+    [[One]]
+  |] in
+  Alcotest.check combsys "convert binary spec" expected (combsys_of_grammar grammar)
+
+let convert_nary () =
+  let grammar = Grammar.[
+      "NTree", [(1, [Elem "Seq"])];
+      "Seq", [
+        (0, [Elem "Leaf"]);
+        (0, [Elem "NTree"; Elem "Seq"])
+      ];
+      "Leaf", [epsilon]
+    ] in
+  let expected = [|
+    [[Z; Refe 1]];
+    [[Refe 2]; [Refe 0; Refe 1]];
+    [[]]
+  |] in
+  Alcotest.check combsys "convert nary spec" expected (combsys_of_grammar grammar)
+
+let convert_seq () =
+  let grammar = Grammar.[
+      "Node", [(1, [Seq "Node"])]
+    ] in
+  let expected = [|
+    [[Z; Seq 0]]
+  |] in
+  Alcotest.check combsys "convert seq spec" expected (combsys_of_grammar grammar)
+
+let convert_seq2 () =
+  let grammar = Grammar.[
+      "Node", [(1, [Elem "Seq"])];
+      "Seq", [
+        (0, []);
+        (0, [Elem "Node"; Elem "Seq"])
+      ];
+    ] in
+  let expected = [|
+    [[Z; Refe 1]];
+    [[]; [Refe 0; Refe 1]]
+  |] in
+  Alcotest.check combsys "convert seq2 spec" expected (combsys_of_grammar grammar)
+
+let convert_shuffle_plus () =
+  let grammar = Grammar.[
+      "A", [
+        (0, [Elem "Ashuffle"]);
+        (0, [Elem "Aplus"])
+      ];
+      "Ashuffle", [(1, [Seq "A"])];
+      "Aplus", [(0, [Elem "Ashuffle"; Elem "Ashuffle"; Seq "Ashuffle"])];
+    ] in
+  let expected = [|
+    [[Refe 1]; [Refe 2]];
+    [[Z; Seq 0]];
+    [[Refe 1; Refe 1; Seq 1]]
+  |] in
+  Alcotest.check combsys "convert shuffle_plus spec" expected (combsys_of_grammar grammar)
+
+let convert_sp () =
+  let grammar = Grammar.[
+      "T", [
+        (1, []);
+        (1, [Elem "T"]);
+        (1, [Elem "T"; Elem "T"; Elem "T"])]
+    ] in
+  let expected = [|
+    [[Z]; [Z; Refe 0]; [Z; Refe 0; Refe 0; Refe 0]]
+  |] in
+  Alcotest.check combsys "convert sp spec" expected (combsys_of_grammar grammar)
+
+let convert_unarybinary () =
+  let grammar = Grammar.[
+      "UBTree", [
+        (1, []);
+        (1, [Elem "UBTree"]);
+        (1, [Elem "UBTree"; Elem "UBTree"])]
+    ] in
+  let expected = [|
+    [[Z]; [Z; Refe 0]; [Z; Refe 0; Refe 0]]
+  |] in
+  Alcotest.check combsys "convert unarybinary spec" expected (combsys_of_grammar grammar)
+
+let convert_unarybinary2 () =
+  let grammar = Grammar.[
+      "UBTree", [
+        (0, [Elem "UBLeaf"]);
+        (0, [Elem "Unary"]);
+        (0, [Elem "Binary"])
+      ];
+      "Unary", [(1, [Elem "UBTree"])];
+      "Binary", [(1, [Elem "UBTree"; Elem "UBTree"])];
+      "UBLeaf", [(1, [])]
+    ] in
+  let expected = [|
+    [[Refe 1]; [Refe 2]; [Refe 3]];
+    [[Z; Refe 0]];
+    [[Z; Refe 0; Refe 0]];
+    [[Z]]
+  |] in
+  Alcotest.check combsys "convert unarybinary spec" expected (combsys_of_grammar grammar)
+
 let conversion_tests = [
+  "Convert binary", `Quick, convert_binary;
+  "Convert nary", `Quick, convert_nary;
+  "Convert seq", `Quick, convert_seq;
+  "Convert seq2", `Quick, convert_seq2;
+  "Convert shuffle_plus spec", `Quick, convert_shuffle_plus;
+  "Convert sp", `Quick, convert_sp;
+  "Convert unarybinary", `Quick, convert_unarybinary;
+  "Convert unarybinary2", `Quick, convert_unarybinary2;
 ]
+
+(** {2 All the test for the CombSys module} *)
 
 let () =
   Alcotest.run "combsys" [
