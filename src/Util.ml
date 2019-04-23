@@ -84,6 +84,13 @@ let array_fold_left_2 (f:'a -> 'b -> 'c -> 'a) (init:'a) (b:'b array) (c:'c arra
   in
   aux 0 (Array.length b) init
 
+let array_for_all2 p u v =
+  if Array.length u <> Array.length v then invalid_arg "array_for_all2";
+  try
+    Array.iter2 (fun x y -> if not (p x y) then raise Exit) u v;
+    true
+  with Exit -> false
+
 (* string set *)
 
 module StringSet = Set.Make (String) ;;

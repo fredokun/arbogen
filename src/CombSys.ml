@@ -36,8 +36,19 @@ and combnode =
 
 let combsys_size = Array.length
 
-let eq sys1 sys2 = (sys1 = sys2)
+let normalize_prod p =
+  p
+  |> List.filter ((<>) One) (* XXX. this is correct but I don't like this *)
+  |> List.sort compare
 
+let normalize_eq eq =
+  eq
+  |> List.map normalize_prod
+  |> List.sort compare
+
+let eq sys1 sys2 =
+  combsys_size sys1 = combsys_size sys2
+  && Util.array_for_all2 (fun e1 e2 -> normalize_eq e1 = normalize_eq e2) sys1 sys2
 
 (** {2 Evaluation of combinatorial systems} *)
 
