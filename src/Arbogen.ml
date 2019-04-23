@@ -266,7 +266,7 @@ let () =
       let g = Grammar.completion grammar in
       Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp g;
       let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
-      printf "[COMBSYS]: combinatorial system is:\n%s\n%!" (fst (CombSys.string_of_combsys sys));
+      Format.printf "[COMBSYS]: combinatorial system is:\n%a@." CombSys.pp sys;
 
       let zmin, zmax, zstart, epsilon1, epsilon2 = 0., 1., global_options.zstart,
                                                    global_options.epsilon1,

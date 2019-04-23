@@ -34,8 +34,12 @@ and combnode =
   | Refe of int  (** a reference to another equation *)
   | Seq of int   (** a sequence construction *)
 
-
 let combsys_size = Array.length
+
+let eq sys1 sys2 = (sys1 = sys2)
+
+
+(** {2 Evaluation of combinatorial systems} *)
 
 (** evaluation of a node at a given coordinate z *)
 let eval_combnode (z: float) (y: float array) = function
@@ -92,23 +96,21 @@ let combsys_of_grammar grm =
   aux grm (refmap_of_grammar grm) (Array.make (List.length grm) [])
 
 
-(* printing *)
+(** {2 Pretty-printing} *)
 
-let string_of_combnode = function
-  | Z -> "z"
-  | One -> "1"
-  | Seq i ->  "Seq[" ^ (string_of_int i) ^ "]"
-  | Refe i -> "Ref[" ^ (string_of_int i) ^ "]"
+let pp_combnode fmt = function
+  | Z -> Format.fprintf fmt "z"
+  | One -> Format.fprintf fmt "1"
+  | Seq i -> Format.fprintf fmt "Seq[%d]" i
+  | Refe i -> Format.fprintf fmt "Ref[%d]" i
 
-let rec string_of_combprod = function
-  | [] -> ""
-  | [cn] -> string_of_combnode cn
-  | cn::ps -> (string_of_combnode cn) ^ "*" ^ (string_of_combprod ps)
+let pp_combprod fmt prod =
+  let pp_sep fmt () = Format.fprintf fmt " * " in
+  Format.pp_print_list ~pp_sep pp_combnode fmt prod
 
-let rec string_of_combeq = function
-  | [] -> "vide ici"
-  | [cp] -> string_of_combprod cp
-  | cp::eqs -> (string_of_combprod cp) ^ "+" ^ (string_of_combeq eqs)
+let pp_combeq fmt eq =
+  let pp_sep fmt () = Format.fprintf fmt " + " in
+  Format.pp_print_list ~pp_sep pp_combprod fmt eq
 
-let string_of_combsys sys =
-	Array.fold_left (fun (str,i) e -> ((string_of_int i) ^ " ==> " ^ (string_of_combeq e) ^ "\n" ^ str,i+1)) ("",0) sys
+let pp fmt sys =
+  Array.iteri (fun i eq -> Format.fprintf fmt "%d ==> %a\n" i pp_combeq eq) sys

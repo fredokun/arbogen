@@ -261,7 +261,7 @@ let generator
   let sys = combsys_of_grammar (completion g) in
 
   if verbosity >= 2 then
-    printf "[GEN]: combinatorial system is:\n%s\n%!" (fst (string_of_combsys sys));
+    Format.printf "[GEN]: combinatorial system is:\n%a@." CombSys.pp sys;
 
   let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
   match res with
