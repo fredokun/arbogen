@@ -12,7 +12,6 @@ let combsys = Alcotest.testable CombSys.pp CombSys.eq
 
 let eval_combnode () =
   checkf 0. "eval(z)" 0.42 (eval_combnode 0.42 [|0.|] Z);
-  checkf 0. "eval(One)" 1. (eval_combnode 0.13 [|0.|] One);
   checkf 0. "eval(Ref)" 0.23 (eval_combnode 0.6 [|0.23|] (Refe 0));
   checkf 1e-12 "eval(Seq)" 5. (eval_combnode 0.3 [|0.8|] (Seq 0))
 
@@ -44,7 +43,7 @@ let eval_products () =
   let context = [|20.; 3.; 4.|] in
   checkf 1e-12 "eval(B*C*z)" 6. (eval_combprod z context prod);
 
-  let prod = [Refe 1; Z; Seq 3; One] in
+  let prod = [Refe 1; Z; Seq 3] in
   let z = 0.4 in
   let context = [|20.; 1.234; 4.; 0.8|] in
   checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (eval_combprod z context prod)
@@ -62,15 +61,15 @@ let eval_sums () =
   let context = [|0.33; 10.; 20.; 0.2|] in
   checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (eval_eq z context sum);
 
-  let sum = [[Refe 0; Refe 0]; [One]; [Z]] in
+  let sum = [[Refe 0; Refe 0]; []; [Z]] in
   let z = 0.87 in
   let context = [|0.7|] in
   checkf 1e-12 "eval(A^2 + 1 + z)" (0.7 ** 2. +. 1. +. z) (eval_eq z context sum)
 
 let eval_plane_trees () =
   let sys = [|
-    [[Z; Refe 1]];              (* T = Z * S      *)
-    [[One]; [Refe 1; Refe 0]]   (* S = 1 + T * S  *)
+    [[Z; Refe 1]];           (* T = Z * S      *)
+    [[]; [Refe 1; Refe 0]]   (* S = 1 + T * S  *)
   |] in
   (* at a random point / context *)
   let z = 0.28 in
@@ -106,7 +105,7 @@ let convert_binary () =
     ] in
   let expected = [|
     [[Z; Refe 1]; [Z; Refe 0; Refe 0]];
-    [[One]]
+    [[]]
   |] in
   Alcotest.check combsys "convert binary spec" expected (combsys_of_grammar grammar)
 

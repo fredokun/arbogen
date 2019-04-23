@@ -30,16 +30,12 @@ and combprod = combnode list
 (** a node is either *)
 and combnode =
   | Z            (** an instance of the variable Z *)
-  | One          (** a unit 1 for the product *)
   | Refe of int  (** a reference to another equation *)
   | Seq of int   (** a sequence construction *)
 
 let combsys_size = Array.length
 
-let normalize_prod p =
-  p
-  |> List.filter ((<>) One) (* XXX. this is correct but I don't like this *)
-  |> List.sort compare
+let normalize_prod p = List.sort compare p
 
 let normalize_eq eq =
   eq
@@ -55,7 +51,6 @@ let eq sys1 sys2 =
 (** evaluation of a node at a given coordinate z *)
 let eval_combnode (z: float) (y: float array) = function
   | Z -> z
-  | One -> 1.0
   | Refe i -> y.(i)
   | Seq i -> 1. /. (1. -. y.(i))
 
@@ -74,7 +69,7 @@ let evaluation (phi: combsys) (z: float) (y: float array) : float array =
   Array.init (combsys_size phi) (fun i -> eval_eq z y phi.(i))
 
 let rec make_z = function
-  | 0 -> [One]
+  | 0 -> []
   | n -> Z::(make_z ((-) n 1))
 
 let rec make_refs map refs =
@@ -111,13 +106,14 @@ let combsys_of_grammar grm =
 
 let pp_combnode fmt = function
   | Z -> Format.fprintf fmt "z"
-  | One -> Format.fprintf fmt "1"
   | Seq i -> Format.fprintf fmt "Seq[%d]" i
   | Refe i -> Format.fprintf fmt "Ref[%d]" i
 
 let pp_combprod fmt prod =
   let pp_sep fmt () = Format.fprintf fmt " * " in
-  Format.pp_print_list ~pp_sep pp_combnode fmt prod
+  match prod with
+  | [] -> Format.fprintf fmt "1"
+  | _ -> Format.pp_print_list ~pp_sep pp_combnode fmt prod
 
 let pp_combeq fmt eq =
   let pp_sep fmt () = Format.fprintf fmt " + " in
