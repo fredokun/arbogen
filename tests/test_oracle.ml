@@ -4,6 +4,10 @@ open OracleSimple
 let checkf tolerance = Alcotest.(check (float tolerance))
 let checkfa tolerance = Alcotest.(check (array (float tolerance)))
 
+let iteration sys z epsilon2 =
+  match iterationSimple sys z epsilon2 with
+  | Diverge -> Alcotest.fail "diverge"
+  | Val v -> v
 
 (** {2 Tests for generating function evaluation} *)
 
@@ -15,7 +19,7 @@ let eval_binary () =
   let oracle z = (1. -. sqrt (1. -. 4. *. z *. z)) /. (2. *. z) in
   let test z =
     let name = Format.sprintf "binary(%F)" z in
-    checkf 5e-9 name (oracle z) (iterationSimple sys z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration sys z 1e-9).(0)
   in
   test 0.1;
   test 0.3;
@@ -34,7 +38,7 @@ let eval_nary () =
   in
   let test z =
     let name = Format.sprintf "nary(%F)" z in
-    checkfa 5e-9 name (oracle z) (iterationSimple sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
   in
   test 0.1;
   test 0.2
@@ -45,7 +49,7 @@ let eval_seq () =
   let oracle z = (1. -. sqrt (1. -. 4. *. z)) /. 2. in
   let test z =
     let name = Format.sprintf "seq2(%F)" z in
-    checkf 5e-9 name (oracle z) (iterationSimple sys z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration sys z 1e-9).(0)
   in
   test 0.1;
   test 0.2
@@ -62,7 +66,7 @@ let eval_seq2 () =
   in
   let test z =
     let name = Format.sprintf "seq2(%F)" z in
-    checkfa 5e-9 name (oracle z) (iterationSimple sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
   in
   test 0.1;
   test 0.2
@@ -84,7 +88,7 @@ let eval_shuffle_plus () =
   in
   let test z =
     let name = Format.sprintf "shuffle_plus(%F)" z in
-    checkfa 5e-9 name (oracle z) (iterationSimple sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
   in
   test 0.05;
   test 0.1;
