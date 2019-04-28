@@ -1,4 +1,4 @@
 (tests
-  (names test_parsing test_combsys test_oracle)
+  (names test_parsing test_combsys test_oracle test_gen)
   (deps (glob_files *.spec))
   (libraries arbogen alcotest))
