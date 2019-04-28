@@ -55,26 +55,46 @@ let valid_binary () =
       "BinNode", [(1, [Elem "Leaf"]); (1, [Elem "BinNode"; Elem "BinNode"])];
       "Leaf", [epsilon]
     ] in
-  let rec size = function
-    | Tree.Node ("BinNode", _, [l]) -> size_leaf !l
-    | Tree.Node ("BinNode", _, [l; r]) -> add_opts [Some 1; size !l; size !r]
-    | _ -> None
-  and size_leaf = function
-    | Tree.Leaf ("Leaf", _) -> Some 1
-    | _ -> None
+  let size tree =
+    let rec aux typ t = match typ, t with
+      | `Bin, Tree.Node ("BinNode", _, [l]) -> 1 + aux `Leaf !l
+      | `Bin, Tree.Node ("BinNode", _, [l; r]) -> 1 + aux `Bin !l + aux `Bin !r
+      | `Leaf, Tree.Leaf ("Leaf", _) -> 0
+      | _ -> fail "not a binary tree: %a" pp_tree tree
+    in
+    aux `Bin tree
   in
   let size_min = 20 in
   let size_max = 30 in
   let tree, gen_size = generate grammar ~size_min ~size_max in
-  let real_size = match size tree with
-    | None -> fail "not a binary tree: %a" pp_tree tree
-    | Some real_size -> real_size
+  check_size size_min size_max gen_size (size tree)
+
+let valid_nary () =
+  let grammar = Grammar.[
+      "NTree", [(1, [Elem "Seq"])];
+      "Seq", [(0, [Elem "Leaf"]); (0, [Elem "NTree"; Elem "Seq"])];
+      "Leaf", [epsilon]
+    ] in
+  let size tree =
+    let rec aux typ t = match typ, t with
+      | `Node, Tree.Node ("NTree", _, [s]) -> 1 + aux `Seq !s
+      | `Seq, Tree.Node ("Seq", _, [s]) -> aux `Leaf !s
+      | `Seq, Tree.Node ("Seq", _, [x; xs]) -> aux `Node !x + aux `Seq !xs
+      | `Leaf, Tree.Leaf ("Leaf", _) -> 0
+      | _ -> fail "not an nary tree: %a" pp_tree tree
+    in
+    aux `Node tree
   in
-  check_size size_min size_max gen_size real_size
+  let size_min = 20 in
+  let size_max = 30 in
+  let tree, gen_size = generate grammar ~size_min ~size_max in
+  check_size size_min size_max gen_size (size tree)
+
 
 let () =
   Alcotest.run "gen" [
     "correctness", [
-      "binary trees", `Quick, valid_binary
+      "binary trees", `Quick, valid_binary;
+      "nary trees", `Quick, valid_nary;
     ]
   ]
