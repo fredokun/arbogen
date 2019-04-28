@@ -265,9 +265,9 @@ let generator
 
   let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
   match res with
-  | Some(_,state,wgrm) ->
+  | Some(size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    let tree, size = gen_tree final_state randgen in
+    let tree, _ = gen_tree final_state randgen in
     Some(tree,size,final_state)
   | None -> None
