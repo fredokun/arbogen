@@ -18,6 +18,14 @@ type value =
   | Val of float array
   | Diverge
 
+type config = {
+  epsilon1: float;
+  epsilon2: float;
+  zstart: float;
+  zmin: float;
+  zmax: float
+}
+
 (** The distance for the uniform norm *)
 let distance =
   Util.array_fold_left_2 (fun norm y y' -> max norm (abs_float (y -. y'))) 0.0
@@ -40,19 +48,12 @@ let iterationSimple (phi: combsys) (z: float) (epsilon2: float) : value =
   in
   iterate (Array.make (combsys_size phi) 0.0)
 
-let searchSingularity
-    (phi: combsys)
-    (zmin: float)
-    (zmax: float)
-    (epsilon1: float)
-    (epsilon2: float)
-    (zstart: float)
-  : float * float * float array =
+let searchSingularity {epsilon1; epsilon2; zmin; zmax; zstart} combsys =
   let rec search zmin zmax zstart =
     if zmax -. zmin < epsilon1 then
-      (zmin, zmax, iterationSimple phi zmin epsilon2)
+      (zmin, zmax, iterationSimple combsys zmin epsilon2)
     else
-      match iterationSimple phi zstart epsilon2 with
+      match iterationSimple combsys zstart epsilon2 with
       | Val _ -> search zstart zmax ((zmax +. zstart) /. 2.)
       | Diverge -> search zmin zstart ((zmin +. zstart) /. 2.)
   in

@@ -134,21 +134,13 @@ let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
   else  (* max number of tries *)
     (None,nb_smaller,nb_bigger,None)
 
-let compute_weighted_grammar
-    ~grammar
-    ~zstart
-    ?zmin:(zmin=0.)
-    ?zmax:(zmax=1.)
-    ~epsilon1
-    ~epsilon2
-    ~verbosity
-  =
+let compute_weighted_grammar grammar config verbosity =
   (* sanity check: I think the grammar should be complete at this point *)
   assert (completion grammar = grammar);
   let sys = combsys_of_grammar grammar in
 
-  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." zstart ;
-  let (zmin, zmax, values) = searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
+  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." config.zstart ;
+  let (zmin, zmax, values) = searchSingularity config sys in
   if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
 
   let wgrm = weighted_grm_of_grm grammar values zmin in
@@ -156,8 +148,8 @@ let compute_weighted_grammar
     Format.printf "[SIM]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
   (zmin, zmax, wgrm)
 
-let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity =
-  let (zmin, zmax, wgrm) = compute_weighted_grammar ~grammar:g ~zstart ~zmin ~zmax ~epsilon1 ~epsilon2 ~verbosity in
+let rec simulator nb_refine nb_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity =
+  let (zmin, zmax, wgrm) = compute_weighted_grammar g oracle_config verbosity in
   let (size,nb_smaller,nb_bigger,state) = sim_try wgrm g nb_try 0 0 sizemin sizemax randgen verbosity in
   match size with
   | Some size ->
@@ -168,7 +160,10 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     if nb_refine > 0 then
       begin
         if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-          simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
+          let epsilon1 = oracle_config.epsilon1 *. epsilon1_factor in
+          let epsilon2 = oracle_config.epsilon2 *. epsilon1_factor in
+          let new_config = {epsilon1; epsilon2; zmin; zmax; zstart = zmin} in
+          simulator (nb_refine - 1) nb_try g new_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity
         else
           failwith "try with other parameters Trees too big"
       end
@@ -236,14 +231,15 @@ let gen_tree (gen_state:gen_state) =
   let size = gen_tree_rec counters stacks wgrm 0 first_rule (module Rand) in
   (!first_ref, size)
 
-let init_rng ~randgen ~seed =
+let init_rng ~randgen ~seed ~verbosity =
   let module Rand = (val StringHashtbl.find randgen_tbl randgen) in
   let seed = match seed with
     | Some seed -> seed
     | None -> Rand.self_init (); Rand.int 274537
   in
+  if verbosity >= 2 then Format.printf "[SEED] starting seed = %d@." seed;
   Rand.init seed;
-  seed, (module Rand: RandGen.Sig)
+  (module Rand: RandGen.Sig)
 
 let generator
     (g:grammar)
@@ -261,19 +257,12 @@ let generator
     (randgen:string)
     (verbosity:int)
   =
-  let seed, randgen = init_rng ~randgen ~seed in
+  let randgen = init_rng ~randgen ~seed ~verbosity in
   let module Rand = (val randgen) in
-  if verbosity >= 2 then printf "[SEED] starting seed = %d\n\n" seed;
 
-  if verbosity >= 2 then
-    Format.printf "[GEN]: grammar parsed is :\n%a@." Grammar.pp g;
+  let oracle_config = OracleSimple.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
 
-  let sys = combsys_of_grammar (completion g) in
-
-  if verbosity >= 2 then
-    Format.printf "[GEN]: combinatorial system is:\n%a@." CombSys.pp sys;
-
-  let res = simulator max_refine max_try g epsilon1 epsilon2 0. 1. zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity in
+  let res = simulator max_refine max_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity in
   match res with
   | Some(size,state,wgrm) ->
     let (first_rule,_) = List.hd g in

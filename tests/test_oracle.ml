@@ -113,7 +113,8 @@ let evaluation_tests = [
 let eps = 1e-9
 
 let search sys =
-  let zmin, _, _ = searchSingularity sys 0. 1. eps eps 0. in
+  let config = {epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
+  let zmin, _, _ = searchSingularity config sys in
   zmin
 
 let binary_singularity () =
