@@ -74,39 +74,17 @@ let weighted_grm_of_grm
   let wgrm = StringMap.empty in
   wgrm_of_grm grm wgrm rules_indexes values z
 
-let string_of_elem element =
-  Format.asprintf "%a" Grammar.pp_elem element
+let pp_component fmt (component, weight) =
+  Format.fprintf fmt "%F, %a" weight Grammar.pp_component component
 
-let string_of_weighted_component comp =
-  let strz w =
-    if w=0 then ""
-    else "<z^" ^ (string_of_int w) ^ ">"
-  in
-  let rec strcons cons_list=
-    match cons_list with
-    | [] -> "1"
-    | [ref] -> string_of_elem ref
-    | ref::refs -> (string_of_elem ref) ^ " * " ^ (strcons refs)
-  in
-  let (weight, cons_list), w = comp in
-  if weight != 0 then
-    (string_of_float w) ^ ", Cons(" ^ (strcons cons_list) ^ " * " ^ (strz weight) ^ ")"
-  else
-    (string_of_float w) ^ ", Cons(" ^ (strcons cons_list) ^  ")"
+let pp_components fmt = function
+  | [] -> Format.fprintf fmt "<empty>"
+  | components ->
+    let pp_sep fmt () = Format.fprintf fmt " + " in
+    Format.pp_print_list ~pp_sep pp_component fmt components
 
-let string_of_weighted_rule (rname,weight,comps) =
-  let rec strcomps = function
-    | [] -> ""
-    | [comp] -> (string_of_weighted_component comp) ^ " ;"
-    | comp::comps -> (string_of_weighted_component comp) ^ " + " ^ (strcomps comps)
-  in let rstr = match comps with
-      | [] -> "<empty>"
-      | _ -> strcomps comps
-  in rname ^ ", " ^ (string_of_float weight)  ^ " ::= " ^ rstr ;;
-
-let string_of_weighted_grammar wgrm =
-  StringMap.fold
-    (fun name (weight, components) s ->
-       (string_of_weighted_rule (name,weight,components)) ^ "\n" ^ s)
+let pp fmt wgrm =
+  StringMap.iter
+    (fun name (weight, components) ->
+       Format.fprintf fmt "%s, %F ::= %a" name weight pp_components components)
     wgrm
-    ""

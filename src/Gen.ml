@@ -134,18 +134,30 @@ let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
   else  (* max number of tries *)
     (None,nb_smaller,nb_bigger,None)
 
+let compute_weighted_grammar
+    ~grammar
+    ~zstart
+    ?zmin:(zmin=0.)
+    ?zmax:(zmax=1.)
+    ~epsilon1
+    ~epsilon2
+    ~verbosity
+  =
+  (* sanity check: I think the grammar should be complete at this point *)
+  assert (completion grammar = grammar);
+  let sys = combsys_of_grammar grammar in
 
+  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." zstart ;
+  let (zmin, zmax, values) = searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
+  if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
+
+  let wgrm = weighted_grm_of_grm grammar values zmin in
+  if verbosity >= 2 then
+    Format.printf "[SIM]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
+  (zmin, zmax, wgrm)
 
 let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity =
-  let (zmin',zmax',y) =
-    (if verbosity >= 2
-     then printf "[ORACLE]: search singularity at z=%f\n%!" zstart) ;
-    searchSingularity sys zmin zmax epsilon1 epsilon2 zstart in
-  (if verbosity >= 2
-   then printf "          ==> found singularity at z=%f\n\n%!" zmin');
-  let wgrm = weighted_grm_of_grm g y zmin' in
-  (if verbosity >= 2
-   then printf "[SIM]: weighted grammar is :\n%s\n%!" (WeightedGrammar.string_of_weighted_grammar wgrm));
+  let (zmin, zmax, wgrm) = compute_weighted_grammar ~grammar:g ~zstart ~zmin ~zmax ~epsilon1 ~epsilon2 ~verbosity in
   let (size,nb_smaller,nb_bigger,state) = sim_try wgrm g nb_try 0 0 sizemin sizemax randgen verbosity in
   match size with
   | Some size ->
@@ -156,7 +168,7 @@ let rec simulator nb_refine nb_try g epsilon1 epsilon2 zmin zmax zstart epsilon1
     if nb_refine > 0 then
       begin
         if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-          simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin' zmax'  zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
+          simulator (nb_refine - 1)  nb_try g (epsilon1 *. epsilon1_factor) (epsilon2 *. epsilon2_factor) zmin zmax zstart epsilon1_factor epsilon2_factor sys sizemin sizemax ratio_rejected randgen verbosity
         else
           failwith "try with other parameters Trees too big"
       end
@@ -255,7 +267,6 @@ let generator
 
   if verbosity >= 2 then
     Format.printf "[GEN]: grammar parsed is :\n%a@." Grammar.pp g;
-
 
   let sys = combsys_of_grammar (completion g) in
 
