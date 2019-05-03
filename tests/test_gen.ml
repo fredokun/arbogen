@@ -60,9 +60,9 @@ let valid_binary () =
 let valid_nary () =
   let size_min, size_max = 20, 30 in
   let grammar = Grammar.[
-    "T", [(1, [Elem "S"])];
-    "S", [(0, []); (0, [Elem "T"; Elem "S"])];
-  ] in
+      "T", [(1, [Elem "S"])];
+      "S", [(0, []); (0, [Elem "T"; Elem "S"])];
+    ] in
   let rec size = function
     | Tree.Node ("T", _, [s]) -> 1 + size !s
     | Tree.Leaf ("S", _) -> 0
@@ -85,10 +85,51 @@ let valid_nary_bis () =
   try check_size size_min size_max gen_size (size tree)
   with Invalid -> fail "not an nary tree (bis): %a" pp_tree tree
 
+let valid_motzkin () =
+  let size_min, size_max = 40, 50 in
+  let grammar = Grammar.["M", [(0, []); (1, [Elem "M"]); (1, [Elem "M"; Elem "M"])]] in
+  let rec size = function
+    | Tree.Leaf ("M", _) -> 0
+    | Tree.Node ("M", _, [t]) -> 1 + size !t
+    | Tree.Node ("M", _, [l; r]) -> 1 + size !l + size !r
+    | _ -> raise Invalid
+  in
+  let tree, gen_size = generate grammar ~size_min ~size_max in
+  try check_size size_min size_max gen_size (size tree)
+  with Invalid -> fail "not a Motzkin tree: %a" pp_tree tree
+
+let valid_shuffle_plus () =
+  let size_min, size_max = 10, 100 in
+  let grammar = Grammar.[
+      "A", [(0, [Elem "Aplus"]); (0, [Elem "Ashuffle"])];
+      "Aplus", [(0, [Elem "Ashuffle"; Elem "Ashuffle"; Seq "Ashuffle"])];
+      "Ashuffle", [(1, [Seq "A"])]
+    ] in
+  let get_type = function
+    | Tree.Node ("Aplus", _, _) -> `plus
+    | Tree.Node ("Ashuffle", _, _) | Tree.Leaf ("Ashuffle", _) -> `shuffle
+    | _ -> raise Invalid
+  in
+  let sum size_fun = List.fold_left (fun acc t -> acc + size_fun !t) 0 in
+  let rec size typ tree = match typ, tree with
+    | `A, Tree.Node ("A", _, [t]) -> size (get_type !t) !t
+    | `plus, Tree.Node ("Aplus", _, children) ->
+      if List.compare_length_with children 2 < 0 then raise Invalid;
+      sum (size `shuffle) children
+    | `shuffle, Tree.Leaf ("Ashuffle", _) -> 1
+    | `shuffle, Tree.Node ("Ashuffle", _, children) -> 1 + sum (size `A) children
+    | _ -> raise Invalid
+  in
+  let tree, gen_size = generate ~seed:1234512345 grammar ~size_min ~size_max in
+  try check_size size_min size_max gen_size (size `A tree)
+  with Invalid -> fail "not a shuffle+ tree: %a" pp_tree tree
+
 let correctness = [
   "binary trees", `Quick, valid_binary;
   "nary trees", `Quick, valid_nary;
   "nary trees (bis)", `Quick, valid_nary_bis;
+  "Motzkin trees", `Quick, valid_motzkin;
+  "shuffle+ trees", `Quick, valid_shuffle_plus;
 ]
 
 
