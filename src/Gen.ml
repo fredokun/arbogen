@@ -207,8 +207,8 @@ let rec gen_tree_rec counters stacks wgrm id current_rule randgen =
       gen_tree_rec counters' stacks'' wgrm (id+1) (List.hd next_rules) randgen
     end
 
-let gen_tree (gen_state:gen_state) (randgen:string) =
-  let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
+let gen_tree (gen_state:gen_state) =
+  let module Rand = (val (StringHashtbl.find randgen_tbl gen_state.randgen)) in
   Rand.set_state gen_state.rnd_state;
   let first_ref = ref (Leaf ("","")) in
   let wgrm = gen_state.weighted_grammar in
@@ -221,7 +221,7 @@ let gen_tree (gen_state:gen_state) (randgen:string) =
         else
           StringMap.add k [] map)
       StringMap.empty keys in
-  let size = gen_tree_rec counters stacks wgrm 0 first_rule randgen in
+  let size = gen_tree_rec counters stacks wgrm 0 first_rule gen_state.randgen in
   (!first_ref, size)
 
 let generator
@@ -268,6 +268,6 @@ let generator
   | Some(size,state,wgrm) ->
     let (first_rule,_) = List.hd g in
     let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm; first_rule = first_rule} in
-    let tree, _ = gen_tree final_state randgen in
+    let tree, _ = gen_tree final_state in
     Some(tree,size,final_state)
   | None -> None
