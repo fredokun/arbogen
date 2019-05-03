@@ -97,13 +97,7 @@ let () =
                       global_options.size_max_set <- true
                     end),
        "<n> : set the maximum size for the generated tree to <n> (a strictly positive integer)");
-      ("-seed", Arg.Int
-                  (fun n ->
-                   begin
-                     global_options.self_seed <- false ;
-                     global_options.random_seed <- n;
-                     global_options.random_seed_set <- true
-                   end),
+      ("-seed", Arg.Int (fun n -> ParseUtil.set_option "seed" (Vint n)),
        "<n> : set the random generator seed to <n>");
       ("-eps1", Arg.Float
                   (fun x ->
@@ -303,11 +297,9 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Random number generator used  is %s\n%!" global_options.randgen;
 
-
         Gen.generator
           grammar
-          global_options.self_seed
-          global_options.random_seed
+          ~seed:global_options.random_seed
           global_options.size_min
           global_options.size_max
           global_options.epsilon1

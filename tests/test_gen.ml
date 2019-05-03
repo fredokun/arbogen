@@ -21,8 +21,7 @@ let check_size size_min size_max expected actual =
 let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
   match Gen.generator
           grammar
-          false (* self seed *)
-          seed
+          ~seed:(Some seed)
           size_min
           size_max
           1e-9 (* epsilon 1 *)

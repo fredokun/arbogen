@@ -24,10 +24,13 @@ let parse_from_file filename =
   let chan = open_in filename in
   parse_from_channel chan
 
-let rec set_options options =
-  match options with
-  | [] -> ()
-  | (Param (name, value)) :: q ->
+let fail format = Format.kasprintf failwith format
+
+let as_int opt_name = function
+  | Vint n -> n
+  | _ -> fail "type error: %s expects an integer" opt_name
+
+let set_option name value =
     begin
 	    match name with
 	    | "min" ->
@@ -54,17 +57,10 @@ let rec set_options options =
         end
 
 	    | "seed" ->
-        begin
-          if not global_options.self_seed_set then
-            begin
-              global_options.self_seed_set <- true;
-              global_options.self_seed <- false;
-              global_options.random_seed_set <- true;
-              global_options.random_seed <-
-		            (match value with
-		            | Vint n -> n
-		            | _ -> failwith "type error")
-            end
+       begin
+         match global_options.random_seed with
+         | None -> global_options.random_seed <- Some (as_int "seed" value)
+         | Some _ -> () (* ignore *)
         end
 
 	    | "eps1" ->
@@ -170,6 +166,7 @@ let rec set_options options =
 		      | Vstring s -> s
 		      | _ -> failwith "type error")
         end
-	    | _ -> failwith "Unknown parameter"
-    end;
-    set_options q
+      | _ -> failwith "Unknown parameter"
+    end
+
+let set_options = List.iter (function Param (name, value) -> set_option name value)

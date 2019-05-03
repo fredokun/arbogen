@@ -13,10 +13,7 @@ type options_record = {
   mutable interactive_mode : bool;
   mutable grammar_file: string;
   mutable verbosity: int;
-  mutable self_seed : bool;
-  mutable self_seed_set : bool;
-  mutable random_seed: int;
-  mutable random_seed_set: bool;
+  mutable random_seed: int option;
   mutable size_min: int;
   mutable size_min_set: bool;
   mutable size_max: int;
@@ -52,10 +49,7 @@ let global_options = {
   interactive_mode = false;
   grammar_file = "";
   verbosity = 1;
-  self_seed = true;
-  self_seed_set = false;
-  random_seed = 123124;
-  random_seed_set = false;
+  random_seed = None;
   size_min = 10;
   size_min_set = false;
   size_max = 20;

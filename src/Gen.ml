@@ -33,8 +33,8 @@ let rec find_component (rdm_float:float) componentList =
       find_component (rdm_float-.freq) list_comp
   | _ -> failwith "find_component failed !!!"
 
-let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) (randgen:string) =
-  let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
+let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) (randgen: (module RandGen.Sig)) =
+  let module Rand = (val randgen) in
   let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
   let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
@@ -76,7 +76,7 @@ let  find_non_zero counters =
 
 
 
-let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) (randgen:string) =
+let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax:int) (current_rule:string) (randgen: (module RandGen.Sig)) =
   if (size>sizemax)  then
     size
   else
@@ -102,10 +102,10 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
 
 
 let rec sim_try (wgrm:WeightedGrammar.weighted_grammar)
-    (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int)  (randgen:string) (verbosity:int) =
+    (grm:grammar) (nb_try:int) (nb_smaller:int) (nb_bigger:int) (sizemin:int) (sizemax:int) (randgen: (module RandGen.Sig)) (verbosity:int) =
   if nb_try > 0 then
     begin
-      let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
+      let module Rand = (val randgen) in
       let counters = init_counter grm StringMap.empty in
       let (first_rule,_) = List.hd grm in
       let rdm_state = Rand.get_state () in
@@ -221,13 +221,21 @@ let gen_tree (gen_state:gen_state) =
         else
           StringMap.add k [] map)
       StringMap.empty keys in
-  let size = gen_tree_rec counters stacks wgrm 0 first_rule gen_state.randgen in
+  let size = gen_tree_rec counters stacks wgrm 0 first_rule (module Rand) in
   (!first_ref, size)
+
+let init_rng ~randgen ~seed =
+  let module Rand = (val StringHashtbl.find randgen_tbl randgen) in
+  let seed = match seed with
+    | Some seed -> seed
+    | None -> Rand.self_init (); Rand.int 274537
+  in
+  Rand.init seed;
+  seed, (module Rand: RandGen.Sig)
 
 let generator
     (g:grammar)
-    (self_seed:bool)
-    (seed:int)
+    ~seed:(seed: int option)
     (sizemin:int)
     (sizemax:int)
     (epsilon1:float)
@@ -241,22 +249,13 @@ let generator
     (randgen:string)
     (verbosity:int)
   =
-  let module Rand = (val (StringHashtbl.find randgen_tbl randgen)) in
-  let seed2 =
-    if self_seed then
-      begin
-        Rand.self_init ();
-        Rand.int 274537
-      end
-    else
-      seed
-  in
-  Rand.init seed2;
+  let seed, randgen = init_rng ~randgen ~seed in
+  let module Rand = (val randgen) in
+  if verbosity >= 2 then printf "[SEED] starting seed = %d\n\n" seed;
+
   if verbosity >= 2 then
     Format.printf "[GEN]: grammar parsed is :\n%a@." Grammar.pp g;
 
-  if verbosity >= 2 then
-    printf "[SEED] starting seed = %d\n\n" seed2;
 
   let sys = combsys_of_grammar (completion g) in
 
