@@ -1,4 +1,6 @@
-.PHONY: build longtest test clean install uninstall
+.PHONY: all build longtest test clean install uninstall
+
+all: build test
 
 build:
 	dune build @install
