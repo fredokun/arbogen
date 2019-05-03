@@ -33,7 +33,7 @@ let rec find_component (rdm_float:float) componentList =
 
 let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name_called:string) (randgen: (module RandGen.Sig)) =
   let module Rand = (val randgen) in
-  let (total_weight,component_list) = (StringMap.find name_rule wgrm) in
+  let (total_weight,component_list) = (StringMap.find name_rule wgrm.rules) in
   let rdm_float = (Rand.float 1.) *. total_weight in
   let comp = (find_component rdm_float component_list) in
   let (w, elem_list), _ = comp in
@@ -44,7 +44,7 @@ let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name
          | (Grammar.Elem name) -> name :: next_rules
          | (Grammar.Seq name) ->
            begin
-             let (w,_) = StringMap.find name wgrm in
+             let (w,_) = StringMap.find name wgrm.rules in
              let n' = int_of_float( snd (modf((log(Rand.float 1.))/. (log(1.-.w))))) in
              next_rules @ (concat_n [name] n')
            end
@@ -53,7 +53,7 @@ let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name
       elem_list),
    isCall,name_called)
 
-let init_counters wgrm = StringMap.map (fun _ -> 0) wgrm
+let init_counters wgrm = StringMap.map (fun _ -> 0) wgrm.rules
 
 let rec count_rules counters elements =
   match elements with
@@ -95,7 +95,6 @@ let rec sim (size:int) counters (wgrm:WeightedGrammar.weighted_grammar) (sizemax
 
 let sim_try
     (wgrm: WeightedGrammar.weighted_grammar)
-    (grm: grammar)
     (nb_try: int)
     (sizemin: int)
     (sizemax: int)
@@ -103,13 +102,12 @@ let sim_try
     (verbosity: int) =
   let module Rand = (val randgen) in
   let counters0 = init_counters wgrm in
-  let (first_rule,_) = List.hd grm in
 
   let rec try_ nb_smaller nb_bigger = function
     | 0 -> None, nb_smaller, nb_bigger
     | nb_try ->
       let random_state = Rand.get_state () in
-      let size = sim 0 counters0 wgrm sizemax first_rule randgen in
+      let size = sim 0 counters0 wgrm sizemax wgrm.first_rule randgen in
       if verbosity >= 3 then Format.printf "[SIM]: Simulated size of tree = %d@." size;
 
       if size < sizemin then begin
@@ -143,7 +141,7 @@ let compute_weighted_grammar grammar config verbosity =
 
 let rec simulator nb_refine nb_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity =
   let (zmin, zmax, wgrm) = compute_weighted_grammar g oracle_config verbosity in
-  let res, nb_smaller,nb_bigger = sim_try wgrm g nb_try sizemin sizemax randgen verbosity in
+  let res, nb_smaller,nb_bigger = sim_try wgrm nb_try sizemin sizemax randgen verbosity in
   match res with
   | Some (size, state) -> Some (size, state, wgrm)
   | None when nb_refine > 0 ->
@@ -206,7 +204,7 @@ let gen_tree (gen_state:gen_state) =
   let first_ref = ref (Leaf ("","")) in
   let wgrm = gen_state.weighted_grammar in
   let first_rule = gen_state.first_rule in
-  let keys = StringMap.fold (fun k _ l -> k :: l) wgrm  [] in
+  let keys = StringMap.fold (fun k _ l -> k :: l) wgrm.rules [] in
   let counters = List.fold_left (fun map k -> StringMap.add k 0 map) StringMap.empty keys in
   let stacks =  List.fold_left
       (fun map k -> if k = first_rule then

@@ -15,7 +15,10 @@
 open Util
 open Grammar
 
-type weighted_grammar = ( float * (Grammar.component * float) list ) StringMap.t
+type weighted_grammar = {
+  rules: (float * (Grammar.component * float) list) StringMap.t;
+  first_rule: string
+}
 
 let rule_names_to_index grm =
   let rec rn_to_ind grm index_map index =
@@ -48,31 +51,16 @@ let cpnt_to_wcpnt z rules_indexes values component =
              l)
   in (component, w)
 
-let weighted_grm_of_grm
-    (grm:Grammar.grammar)
-    (values:float array)
-    (z:float)
-  : weighted_grammar =
-  let rec wgrm_of_grm
-      (grm:Grammar.grammar)
-      (wgrm:weighted_grammar)
-      (rules_indexes:int StringMap.t)
-      (values:float array)
-      (z:float)
-    : weighted_grammar =
-    match grm with
-    | [] -> wgrm
-    | (rule_name, components) :: grm' ->
-      begin
-        let components_weight = List.map (cpnt_to_wcpnt z rules_indexes values) components in
-        let rule_weight = List.fold_left (fun r (_,w) -> r+.w) 0. components_weight in
-        let wgrm' = StringMap.add rule_name (rule_weight, components_weight) wgrm in
-        wgrm_of_grm grm' wgrm' rules_indexes values z
-      end
+let weighted_grm_of_grm grammar values z =
+  let rules_indexes = rule_names_to_index grammar in
+  let add_rule wrules (name, components) =
+    let components_weight = List.map (cpnt_to_wcpnt z rules_indexes values) components in
+    let rule_weight = List.fold_left (fun r (_, w) -> r +. w) 0. components_weight in
+    StringMap.add name (rule_weight, components_weight) wrules
   in
-  let rules_indexes = rule_names_to_index grm in
-  let wgrm = StringMap.empty in
-  wgrm_of_grm grm wgrm rules_indexes values z
+  let rules = List.fold_left add_rule StringMap.empty grammar in
+  let (first_rule, _) = List.hd grammar in
+  {rules; first_rule}
 
 let pp_component fmt (component, weight) =
   Format.fprintf fmt "%F, %a" weight Grammar.pp_component component
@@ -83,8 +71,14 @@ let pp_components fmt = function
     let pp_sep fmt () = Format.fprintf fmt " + " in
     Format.pp_print_list ~pp_sep pp_component fmt components
 
-let pp fmt wgrm =
+let print_rule fmt name weight components =
+  Format.fprintf fmt "%s, %F ::= %a@\n" name weight pp_components components
+
+let pp fmt {rules; first_rule} =
+  let (weight, components) = StringMap.find first_rule rules in
+  print_rule fmt first_rule weight components;
+  let rules = StringMap.remove first_rule rules in
   StringMap.iter
     (fun name (weight, components) ->
        Format.fprintf fmt "%s, %F ::= %a" name weight pp_components components)
-    wgrm
+    rules
