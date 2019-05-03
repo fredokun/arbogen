@@ -1,4 +1,4 @@
-.PHONY: build test clean install uninstall
+.PHONY: build longtest test clean install uninstall
 
 build:
 	dune build @install
@@ -6,6 +6,9 @@ build:
 	[ -e lib ] || ln -sf _build/install/default/lib/arbogen lib
 
 test:
+	ALCOTEST_QUICK_TESTS=1 dune runtest --no-buffer
+
+longtest:
 	dune runtest --no-buffer
 
 install: build

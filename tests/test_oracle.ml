@@ -156,11 +156,11 @@ let shuffle_plus_singularity () =
 (* TODO: unarybinary2 *)
 
 let singularity_tests = [
-  "Search singularity for binary.spec", `Slow, binary_singularity;
-  "Search singularity for nary.spec", `Slow, nary_singularity;
-  "Search singularity for seq.spec", `Slow, seq_singularity;
-  "Search singularity for seq2.spec", `Slow, seq2_singularity;
-  "Search singularity for shuffle_plus.spec", `Slow, shuffle_plus_singularity;
+  "Search singularity for binary.spec", `Quick, binary_singularity;
+  "Search singularity for nary.spec", `Quick, nary_singularity;
+  "Search singularity for seq.spec", `Quick, seq_singularity;
+  "Search singularity for seq2.spec", `Quick, seq2_singularity;
+  "Search singularity for shuffle_plus.spec", `Quick, shuffle_plus_singularity;
 ]
 
 
