@@ -30,143 +30,88 @@ let as_int opt_name = function
   | Vint n -> n
   | _ -> fail "type error: %s expects an integer" opt_name
 
-let set_option name value =
-    begin
-	    match name with
-	    | "min" ->
-        begin
-          if not global_options.size_min_set then
-            begin
-              global_options.size_min_set <- true;
-              global_options.size_min <-
-		            (match value with
-		            | Vint n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-	    | "max" ->
-        begin
-          if not global_options.size_max_set then
-            begin
-              global_options.size_max_set <- true;
-              global_options.size_max <-
-		            (match value with
-		            | Vint n -> n
-		            | _ -> failwith "type error")
-            end
-        end
+let as_float opt_name = function
+  | Vfloat f -> f
+  | _ -> fail "type error: %s expects a float" opt_name
 
-	    | "seed" ->
-       begin
-         match global_options.random_seed with
-         | None -> global_options.random_seed <- Some (as_int "seed" value)
-         | Some _ -> () (* ignore *)
-        end
+let as_string opt_name = function
+  | Vstring s -> s
+  | _ -> fail "type error: %s expects a string" opt_name
 
-	    | "eps1" ->
-        begin
-          if not global_options.epsilon1_set then
-            begin
-              global_options.epsilon1_set <- true;
-              global_options.epsilon1 <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "eps1_factor" ->
-        begin
-          if not global_options.epsilon1_factor_set then
-            begin
-              global_options.epsilon1_factor_set <- true;
-              global_options.epsilon1_factor <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "eps2" ->
-        begin
-          if not global_options.epsilon2_set then
-
-            begin
-              global_options.epsilon2_set <- true;
-              global_options.epsilon2 <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "eps2_factor" ->
-	      begin
-          if not global_options.epsilon2_factor_set then
-            begin
-              global_options.epsilon2_factor_set <- true;
-              global_options.epsilon2_factor <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "reject_ratio" ->
-        begin
-          if not global_options.ratio_rejected_set then
-            begin
-              global_options.ratio_rejected_set <- true;
-              global_options.ratio_rejected <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "max_refine" ->
-        begin
-          if not global_options.max_refine_set then
-            begin
-              global_options.max_refine_set <- true;
-              global_options.max_refine <-
-		            (match value with
-		            | Vint n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "try" ->
-        begin
-          if not global_options.max_try_set then
-            begin
-              global_options.max_try_set <- true;
-              global_options.max_try <-
-		            (match value with
-		            | Vint n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-
-	    | "zstart" ->
-        begin
-          if not global_options.zstart_set then
-            begin
-              global_options.zstart_set <- true;
-              global_options.zstart <-
-		            (match value with
-		            | Vfloat n -> n
-		            | _ -> failwith "type error")
-            end
-        end
-	    | "randgen" ->
-        begin
-          global_options.randgen <-
-		      (match value with
-		      | Vstring s -> s
-		      | _ -> failwith "type error")
-        end
-      | _ -> failwith "Unknown parameter"
+let set_option ?(preserve=false) name value =
+  match name with
+  | "min" ->
+    if not global_options.size_min_set || not preserve then begin
+      global_options.size_min_set <- true;
+      global_options.size_min <- as_int name value
     end
 
-let set_options = List.iter (function Param (name, value) -> set_option name value)
+  | "max" ->
+    if not global_options.size_max_set || not preserve then
+      begin
+        global_options.size_max_set <- true;
+        global_options.size_max <- as_int name value
+      end
+
+  | "seed" ->
+    begin match global_options.random_seed with
+      | Some _ when preserve -> ()
+      | _ -> global_options.random_seed <- Some (as_int "seed" value)
+    end
+
+  | "eps1" ->
+    if not global_options.epsilon1_set || not preserve then begin
+      global_options.epsilon1_set <- true;
+      global_options.epsilon1 <- as_float name value
+    end
+
+  | "eps1_factor" ->
+    if not global_options.epsilon1_factor_set || not preserve then begin
+      global_options.epsilon1_factor_set <- true;
+      global_options.epsilon1_factor <- as_float name value
+    end
+
+  | "eps2" ->
+    if not global_options.epsilon2_set || not preserve then begin
+      global_options.epsilon2_set <- true;
+      global_options.epsilon2 <- as_float name value
+    end
+
+  | "eps2_factor" ->
+    if not global_options.epsilon2_factor_set || not preserve then begin
+      global_options.epsilon2_factor_set <- true;
+      global_options.epsilon2_factor <- as_float name value
+    end
+
+  | "reject_ratio" ->
+    if not global_options.ratio_rejected_set || not preserve then begin
+      global_options.ratio_rejected_set <- true;
+      global_options.ratio_rejected <- as_float name value
+    end
+
+  | "max_refine" ->
+    if not global_options.max_refine_set || not preserve then begin
+      global_options.max_refine_set <- true;
+      global_options.max_refine <- as_int name value
+    end
+
+  | "try" ->
+    if not global_options.max_try_set || not preserve then begin
+      global_options.max_try_set <- true;
+      global_options.max_try <- as_int name value
+    end
+
+  | "zstart" ->
+    if not global_options.zstart_set || not preserve then begin
+      global_options.zstart_set <- true;
+      global_options.zstart <- as_float name value
+    end
+
+  | "randgen" -> global_options.randgen <- as_string name value
+
+  | _ -> fail "Unknown parameter: %s" name
+
+let set_options ?(preserve=false) parameters =
+  List.iter
+    (function Param (name, value) -> set_option ~preserve name value)
+    parameters

@@ -97,7 +97,7 @@ let () =
                       global_options.size_max_set <- true
                     end),
        "<n> : set the maximum size for the generated tree to <n> (a strictly positive integer)");
-      ("-seed", Arg.Int (fun n -> ParseUtil.set_option "seed" (Vint n)),
+      ("-seed", Arg.Int (fun n -> ParseUtil.set_option ~preserve:false "seed" (Vint n)),
        "<n> : set the random generator seed to <n>");
       ("-eps1", Arg.Float
                   (fun x ->
@@ -256,7 +256,7 @@ let () =
   if global_options.print_oracle then
     begin
       let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
-      ParseUtil.set_options options;
+      ParseUtil.set_options ~preserve:true options;
       let g = Grammar.completion grammar in
       Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp g;
       let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
@@ -284,7 +284,7 @@ let () =
           printf "Loading grammar file: %s\n%!" global_options.grammar_file;
 
         let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
-        ParseUtil.set_options options;
+        ParseUtil.set_options ~preserve:true options;
         let grammar = Grammar.completion grammar in
 
         if (global_options.verbosity) > 0 then
