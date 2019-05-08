@@ -1,0 +1,3 @@
+(executable
+  (libraries arbolib benchmark)
+  (name bench))

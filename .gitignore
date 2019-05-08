@@ -6,6 +6,8 @@
 *.jpg
 *.install
 .merlin
+/*.txt
+/gmon.out
 
 /_build
 /lib
