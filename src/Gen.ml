@@ -45,7 +45,7 @@ let get_next_rule (name_rule:string) (wgrm:weighted_grammar) (isCall:bool) (name
          | (Grammar.Seq name) ->
            begin
              let (w,_) = StringMap.find name wgrm.rules in
-             let n' = int_of_float( snd (modf((log(Rand.float 1.))/. (log(1.-.w))))) in
+             let n' = int_of_float (snd (modf ((log (Rand.float 1.)) /. (log w)))) in
              next_rules @ (concat_n [name] n')
            end
       )
