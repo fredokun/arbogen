@@ -163,6 +163,7 @@ let unif_binary () =
   in
   Array.iteri (fun size tbl -> Hashtbl.iter (check size) tbl) store
 
+
 let uniformity = [
   "binary trees", `Slow, unif_binary;
 ]

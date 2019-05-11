@@ -74,8 +74,7 @@ module WG = struct
     {rules; names}
 end
 
-(* XXX. use the RandGen module rather than Random *)
-let select_component rule =
+let select_component (module R: RandGen.Sig) rule =
   let open WG in
   let rec aux r = function
     | [] -> invalid_arg "select_component"
@@ -87,39 +86,69 @@ let select_component rule =
   in
   match rule.choices with
   | [{elems; atoms; _}] -> elems, atoms
-  | _ -> aux (Random.float rule.weight) rule.choices
+  | _ -> aux (R.float rule.weight) rule.choices
 
-let sim size_max rules =
+let gen_seq_len (module R: RandGen.Sig) rule x =
+  let w = rule.WG.weight in
+  let rec gen r wi =
+    let r = r -. wi in
+    if r < 0. then []
+    else x :: gen r (wi *. w)
+  in
+  gen (R.float 1.) (1. -. w)
+
+let sim (module R: RandGen.Sig) size_max rules =
   let rec gen_size s = function
+    (* Generation complete *)
     | [] -> s
+
+    (* Generate a tree of type [i]: draw a derivation among the possible
+       derivations of [i] and add its components to the call stack *)
     | WG.Elem i :: next ->
-      let elems, atoms = select_component rules.(i) in
+      let elems, atoms = select_component (module R) rules.(i) in
       let s = s + atoms in
       if s > size_max then s
       else gen_size s (List.rev_append elems next)
-    (* TODO: Seq *)
-    | WG.Seq _ :: _ -> assert false
+
+    (* Generate a sequence of type [i]: draw the length of the list according
+       to the geometric law and add the according number of [Elem i] to the
+       call stack *)
+    | WG.Seq i :: next ->
+      let elems = gen_seq_len (module R) rules.(i) (WG.Elem i) in
+      gen_size s (List.rev_append elems next)
   in
   gen_size 0 [Elem 0]
 
 type instr = Gen of WG.elem | Build of {rule: int; nb: int}
 
-let generate wg =
-  let open WG in
+let gen (module R: RandGen.Sig) wg =
+  let WG.{names; rules} = wg in
   let rec gen_tree vals = function
+    (* Generation complete *)
     | [] -> vals
+
+    (* Build a node: pop [nb] trees form the generated stack and pack them as
+       a single tree *)
     | Build {rule; nb} :: next ->
       let vals, children = rev_append_n vals [] nb in
-      let tree = Tree2.Node (wg.names.(rule), children) in
+      let tree = Tree2.Node (names.(rule), children) in
       gen_tree (tree :: vals) next
-    | Gen (Elem i) :: next ->
-      let elems, _ = select_component wg.rules.(i) in
+
+    (* Generate a tree of type [i]: select a derivation among the possible
+       derivations of [i] and add its components to the call stack *)
+    | Gen (WG.Elem i) :: next ->
+      let elems, _ = select_component (module R) rules.(i) in
       let elems, nb = map_length (fun e -> Gen e) elems in
       let next = List.rev_append elems (Build {rule = i; nb} :: next) in
       gen_tree vals next
-    (* TODO: Seq *)
-    | Gen (Seq _) :: _ -> assert false
+
+    (* Generate a sequence of type [i]: draw the length of the list according
+       to the geometric law and add the according number of [Gen Elem i] to
+       the call stack *)
+    | Gen (WG.Seq i) :: next ->
+      let elems = gen_seq_len (module R) rules.(i) (Gen (WG.Elem i)) in
+      gen_tree vals (List.rev_append elems next)
   in
-  match gen_tree [] [Gen (Elem 0)] with
+  match gen_tree [] [Gen (WG.Elem 0)] with
   | [tree] -> tree
   | _ -> failwith "internal error"
