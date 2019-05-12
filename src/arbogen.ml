@@ -121,6 +121,35 @@ let speclist =
     ": indent the output")
   ]
 
+let print_tree tree =
+  (* XXX. ugly workaround *)
+  let tree = Tree.annotate tree in
+
+  let arb_printer = Tree.file_of_tree global_options.with_type global_options.with_id in
+  let dot_printer = Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent in
+  let xml_printer = Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent in
+
+  let print printer filename typ =
+    if filename = "" then printer tree stdout
+    else begin
+      Format.printf "Saving file to '%s%s'@." filename typ;
+      let out = open_out (filename ^ typ) in
+      printer tree out;
+      close_out out
+    end
+  in
+
+  match global_options.output_type with
+  | 0 -> print arb_printer global_options.fileName ".arb"
+  | 1 -> print dot_printer global_options.fileName ".dot"
+  | 2 -> print xml_printer global_options.fileName ".xml"
+  | 3 ->
+    let filename = if global_options.fileName = "" then "tree" else global_options.fileName in
+    print arb_printer filename ".arb";
+    print dot_printer filename ".dot";
+    print xml_printer filename ".xml"
+  |_ -> failwith "unreachable case"
+
 let () =
   Arg.parse speclist
     (fun arg ->
@@ -130,140 +159,78 @@ let () =
     usage;
   ParseUtil.extra_checks ();
 
-  if global_options.print_oracle then
-    begin
-      let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
-      ParseUtil.set_options ~preserve:true options;
-      Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
-      let zmin, zmax, zstart, epsilon1, epsilon2 = 0., 1., global_options.zstart,
-                                                   global_options.epsilon1,
-                                                   global_options.epsilon2 in
-      Format.printf "[ORACLE]: search singularity at z=%F@." zstart;
-      let oracle = OracleSimple.(make {epsilon1; epsilon2; zmin; zmax; zstart}) grammar in
-      Format.printf "          ==> found singularity at z=%F@." oracle.z;
-      let wgrm = WeightedGrammar.of_grammar oracle grammar in
-      Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
-      exit 0
-    end;
-
   if (global_options.verbosity) > 0 then Format.printf "%s@." banner;
 
+  if global_options.print_oracle then begin
+    let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+    ParseUtil.set_options ~preserve:true options;
+    Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
+    let oracle_config = OracleSimple.{
+        epsilon1 = global_options.epsilon1;
+        epsilon2 = global_options.epsilon2;
+        zmin = 0.;
+        zmax = 1.;
+        zstart = global_options.zstart;
+      } in
+    let oracle = OracleSimple.make oracle_config grammar in
+    Format.printf "[ORACLE]: found singularity at z=%F@." oracle.z;
+    let wgrm = WeightedGrammar.of_grammar oracle grammar in
+    Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
+    exit 0
+  end;
+
   let result =
-    if(not global_options.with_state) then
-      begin
-        if (global_options.verbosity) > 0 then
-          Format.printf "Loading grammar file: %s@." global_options.grammar_file;
+    if not global_options.with_state then begin
+      let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+      ParseUtil.set_options ~preserve:true options;
+      if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
+      Gen.generator
+        grammar
+        ~seed:global_options.random_seed
+        global_options.size_min
+        global_options.size_max
+        global_options.epsilon1
+        global_options.epsilon1_factor
+        global_options.epsilon2
+        global_options.epsilon2_factor
+        global_options.max_try
+        global_options.ratio_rejected
+        global_options.max_refine
+        global_options.zstart
+        global_options.randgen
+        global_options.verbosity
+    end else begin
+      if (global_options.verbosity) > 0 then
+        Format.printf "Loading state file: %s@." global_options.state_file;
 
-        let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
-        ParseUtil.set_options ~preserve:true options;
+      let in_channel = open_in global_options.state_file in
+      let state: gen_state = input_value in_channel in
+      close_in in_channel;
 
-        if (global_options.verbosity) > 0 then
-          Format.printf "==> Grammar file loaded@.";
+      global_options.randgen <- state.randgen;
 
-        if (global_options.verbosity) > 0 then
-          Format.printf "Generating tree@.";
-
-        if (global_options.verbosity) > 0 then
-          Format.printf "Random number generator used  is %s@." global_options.randgen;
-
-        Gen.generator
-          grammar
-          ~seed:global_options.random_seed
-          global_options.size_min
-          global_options.size_max
-          global_options.epsilon1
-          global_options.epsilon1_factor
-          global_options.epsilon2
-          global_options.epsilon2_factor
-          global_options.max_try
-          global_options.ratio_rejected
-          global_options.max_refine
-          global_options.zstart
-          global_options.randgen
-          global_options.verbosity
-      end
-    else
-      begin
-
-        if (global_options.verbosity) > 0 then
-          Format.printf "Loading state file: %s@." global_options.state_file;
-
-        let in_channel = open_in global_options.state_file in
-        let state:gen_state = input_value in_channel in
-        close_in in_channel;
-
-        global_options.randgen <- state.randgen;
-
-        if (global_options.verbosity) > 0 then
-          Format.printf "==> State file loaded@.";
-
-        if (global_options.verbosity) > 0 then
-          Format.printf "Generating tree@.";
-
-        if (global_options.verbosity) > 0 then
-          Format.printf "Random number generator used  is %s@." global_options.randgen;
-
-        let module Rand = (val RandGen.get state.randgen) in
-        Rand.set_state state.rnd_state;
-        let tree, size = Gen.gen (module Rand) state.weighted_grammar in
-        Some (tree, size, state)
-      end
+      let module Rand = (val RandGen.get state.randgen) in
+      Rand.set_state state.rnd_state;
+      let tree, size = Gen.gen (module Rand) state.weighted_grammar in
+      Some (tree, size, state)
+    end
   in
   match result with
   | None ->
-    Format.eprintf "Error: no tree generated ==> try to use different parameters@." ;
+    Format.eprintf "No tree generated ==> try to use different parameters@.";
     exit 1
-  | Some (tree,size,state) ->
-    begin
+  | Some (tree, size, state) ->
+    if global_options.verbosity > 0 then
+      Format.printf "==> Tree generated with %d nodes@." size;
 
-      if global_options.verbosity > 0 then
-        Format.printf "==> Tree generated with %d nodes@." size;
+    let out_state =
+      if global_options.fileName = "" then "state"
+      else global_options.fileName ^ ".state"
+    in
+    if global_options.verbosity >= 2 then
+      Format.printf "==> Saving state to file '%s'@." out_state;
 
-      let out_state =
-        if global_options.fileName = "" then
-          begin
-            if global_options.verbosity >= 2 then
-              Format.printf "==> Saving state to file 'state'@." ;
-            open_out "state"
-          end
-        else
-          begin
-            if global_options.verbosity >= 2 then
-              Format.printf "==> Saving state to file '%s.state'@." global_options.fileName;
-            open_out (global_options.fileName^".state")
-          end
-      in
-
-      output_value out_state state;
-      close_out out_state;
-
-      (* XXX. ugly workaround *)
-      let tree = Tree.annotate tree in
-
-      let print printer filename typ =
-        if filename = "" then
-          printer tree stdout
-        else begin
-          Format.printf "Saving file to '%s%s'@." filename typ;
-          let out = open_out (filename ^ typ) in
-          printer tree out;
-          close_out out
-        end
-      in
-      let arb_printer = Tree.file_of_tree global_options.with_type global_options.with_id in
-      let dot_printer = Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent in
-      let xml_printer = Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent in
-
-      begin match global_options.output_type with
-        | 0 -> print arb_printer global_options.fileName ".arb"
-        | 1 -> print dot_printer global_options.fileName ".dot"
-        | 2 -> print xml_printer global_options.fileName ".xml"
-        | 3 ->
-          let filename = if global_options.fileName = "" then "tree" else global_options.fileName in
-          print arb_printer filename ".arb";
-          print dot_printer filename ".dot";
-          print xml_printer filename ".xml"
-        |_ -> failwith "unreachable case" end;
-
-      Format.printf "==> file saved@."
-    end
+    let out_state = open_out out_state in
+    output_value out_state state;
+    close_out out_state;
+    print_tree tree
