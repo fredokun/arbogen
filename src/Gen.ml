@@ -17,6 +17,10 @@ open OracleSimple
 open Grammar
 open GenState
 
+
+(** {2 Core algorithms of the Boltzmann generation} *)
+
+(** Select a rule component at random based on their weights *)
 let select_component (module R: RandGen.Sig) rule =
   let open WeightedGrammar in
   let rec aux r = function
@@ -31,8 +35,8 @@ let select_component (module R: RandGen.Sig) rule =
   | [{elems; atoms; _}] -> elems, atoms
   | _ -> aux (R.float rule.weight) rule.choices
 
-let gen_seq_len (module R: RandGen.Sig) rule x =
-  let w = rule.WeightedGrammar.weight in
+(** Simulate a geometric law of parameter [w] *)
+let gen_seq_len (module R: RandGen.Sig) w x =
   let rec gen r wi =
     let r = r -. wi in
     if r < 0. then []
@@ -40,6 +44,7 @@ let gen_seq_len (module R: RandGen.Sig) rule x =
   in
   gen (R.float 1.) (1. -. w)
 
+(** Simulate the generation of a tree: only compute the size *)
 let sim (module R: RandGen.Sig) size_max rules =
   let rec gen_size s = function
     (* Generation complete *)
@@ -57,59 +62,10 @@ let sim (module R: RandGen.Sig) size_max rules =
        to the geometric law and add the according number of [Elem i] to the
        call stack *)
     | WeightedGrammar.Seq i :: next ->
-      let elems = gen_seq_len (module R) rules.(i) (WeightedGrammar.Elem i) in
+      let elems = gen_seq_len (module R) rules.(i).weight (WeightedGrammar.Elem i) in
       gen_size s (List.rev_append elems next)
   in
   gen_size 0 [Elem 0]
-
-let sim_try wgrm (nb_try: int) (sizemin: int) (sizemax: int) (module R: RandGen.Sig) (verbosity: int) =
-  let rec try_ nb_smaller nb_bigger = function
-    | 0 -> None, nb_smaller, nb_bigger
-    | nb_try ->
-      let random_state = R.get_state () in
-      let size = sim (module R) sizemax wgrm.WeightedGrammar.rules in
-      if verbosity >= 3 then Format.printf "[SIM]: Simulated size of tree = %d@." size;
-      if size < sizemin then begin
-        if verbosity >= 3 then Format.printf "     ==> weight is too small@.";
-        try_ (nb_smaller + 1) nb_bigger (nb_try - 1)
-      end else if size > sizemax then begin
-        if verbosity >= 3 then Format.printf "      ==> weight is too big@.";
-        try_ nb_smaller (nb_bigger + 1) (nb_try - 1)
-      end else begin
-        if verbosity >= 3 then Format.printf "     ==> simulated size is ok@.";
-        Some (size, random_state), nb_smaller, nb_bigger
-      end
-  in
-  try_ 0 0 nb_try
-
-let compute_weighted_grammar grammar config verbosity =
-  (* sanity check: I think the grammar should be complete at this point *)
-  assert (completion grammar = grammar);
-  let sys = combsys_of_grammar grammar in
-
-  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." config.zstart ;
-  let (zmin, zmax, values) = searchSingularity config sys in
-  if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
-
-  let wgrm = WeightedGrammar.of_grammar zmin values grammar in
-  if verbosity >= 2 then
-    Format.printf "[SIM]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
-  (zmin, zmax, wgrm)
-
-let rec simulator nb_refine nb_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity =
-  let (zmin, zmax, wgrm) = compute_weighted_grammar g oracle_config verbosity in
-  let res, nb_smaller,nb_bigger = sim_try wgrm nb_try sizemin sizemax randgen verbosity in
-  match res with
-  | Some (size, state) -> Some (size, state, wgrm)
-  | None when nb_refine > 0 ->
-    if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-      let epsilon1 = oracle_config.epsilon1 *. epsilon1_factor in
-      let epsilon2 = oracle_config.epsilon2 *. epsilon1_factor in
-      let new_config = {epsilon1; epsilon2; zmin; zmax; zstart = zmin} in
-      simulator (nb_refine - 1) nb_try g new_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity
-    else
-      failwith "try with other parameters Trees too big"
-  | None -> None
 
 type instr =
   | Gen of WeightedGrammar.elem
@@ -120,6 +76,7 @@ let rec build vals children = match vals with
   | Some tree :: vals -> build vals (tree :: children)
   | [] -> invalid_arg "build"
 
+(** Generate a tree *)
 let gen (module R: RandGen.Sig) wg =
   let open WeightedGrammar in
   let {names; rules} = wg in
@@ -146,12 +103,68 @@ let gen (module R: RandGen.Sig) wg =
        to the geometric law and add the according number of [Gen Elem i] to
        the call stack *)
     | Gen (Seq i) :: next ->
-      let elems = gen_seq_len (module R) rules.(i) (Gen (Elem i)) in
+      let elems = gen_seq_len (module R) rules.(i).weight (Gen (Elem i)) in
       gen_tree size vals (List.rev_append elems next)
   in
   match gen_tree 0 [] [Gen (Elem 0)] with
   | [Some tree], size -> tree, size
   | _ -> failwith "internal error"
+
+
+(** {2 Search for a tree in a specific size window} *)
+
+(** Compute the oracle and the weighted grammar for a grammar *)
+let compute_weighted_grammar grammar config verbosity =
+  (* sanity check: I think the grammar should be complete at this point *)
+  assert (completion grammar = grammar);
+  let sys = combsys_of_grammar grammar in
+
+  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." config.zstart ;
+  let (zmin, zmax, values) = searchSingularity config sys in
+  if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
+
+  let wgrm = WeightedGrammar.of_grammar zmin values grammar in
+  if verbosity >= 2 then
+    Format.printf "[SIM]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
+  (zmin, zmax, wgrm)
+
+(** Search for a size in a specific size window *)
+let sim_try wgrm (nb_try: int) (sizemin: int) (sizemax: int) (module R: RandGen.Sig) (verbosity: int) =
+  let rec try_ nb_smaller nb_bigger = function
+    | 0 -> None, nb_smaller, nb_bigger
+    | nb_try ->
+      let random_state = R.get_state () in
+      let size = sim (module R) sizemax wgrm.WeightedGrammar.rules in
+      if verbosity >= 3 then Format.printf "[SIM]: Simulated size of tree = %d@." size;
+      if size < sizemin then begin
+        if verbosity >= 3 then Format.printf "     ==> weight is too small@.";
+        try_ (nb_smaller + 1) nb_bigger (nb_try - 1)
+      end else if size > sizemax then begin
+        if verbosity >= 3 then Format.printf "      ==> weight is too big@.";
+        try_ nb_smaller (nb_bigger + 1) (nb_try - 1)
+      end else begin
+        if verbosity >= 3 then Format.printf "     ==> simulated size is ok@.";
+        Some (size, random_state), nb_smaller, nb_bigger
+      end
+  in
+  try_ 0 0 nb_try
+
+(** Search for a size in a specific size window and refine the singularity
+    search in case of failure *)
+let rec simulator nb_refine nb_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity =
+  let (zmin, zmax, wgrm) = compute_weighted_grammar g oracle_config verbosity in
+  let res, nb_smaller,nb_bigger = sim_try wgrm nb_try sizemin sizemax randgen verbosity in
+  match res with
+  | Some (size, state) -> Some (size, state, wgrm)
+  | None when nb_refine > 0 ->
+    if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
+      let epsilon1 = oracle_config.epsilon1 *. epsilon1_factor in
+      let epsilon2 = oracle_config.epsilon2 *. epsilon2_factor in
+      let new_config = {epsilon1; epsilon2; zmin; zmax; zstart = zmin} in
+      simulator (nb_refine - 1) nb_try g new_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity
+    else
+      failwith "try with other parameters Trees too big"
+  | None -> None
 
 let init_rng ~randgen ~seed ~verbosity =
   let module Rand = (val RandGen.get randgen) in
