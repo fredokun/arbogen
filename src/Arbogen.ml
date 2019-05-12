@@ -12,8 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Printf
-
 open Arbolib
 open Options
 open GenState
@@ -43,7 +41,7 @@ let speclist =
     end else global_options.verbosity <- n
   in
 
-  [("-version", Arg.Unit (fun () -> printf "%s\n%!" version_str; exit 0),
+  [("-version", Arg.Unit (fun () -> Format.printf "%s@." version_str; exit 0),
     "print version information");
 
    ("-interactive", Arg.Unit (fun () -> global_options.interactive_mode <- true),
@@ -128,7 +126,7 @@ let () =
     (fun arg ->
        if global_options.grammar_file = ""
        then global_options.grammar_file <- arg
-       else (Format.eprintf "Error: grammar file already set, argument '%s' rejected\n%!" arg ; exit 1))
+       else (Format.eprintf "Error: grammar file already set, argument '%s' rejected@." arg ; exit 1))
     usage;
   ParseUtil.extra_checks ();
 
@@ -153,27 +151,26 @@ let () =
       exit 0
     end;
 
-  if (global_options.verbosity) > 0 then
-    printf "%s\n%!" banner;
+  if (global_options.verbosity) > 0 then Format.printf "%s@." banner;
 
   let result =
     if(not global_options.with_state) then
       begin
         if (global_options.verbosity) > 0 then
-          printf "Loading grammar file: %s\n%!" global_options.grammar_file;
+          Format.printf "Loading grammar file: %s@." global_options.grammar_file;
 
         let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
         ParseUtil.set_options ~preserve:true options;
         let grammar = Grammar.completion grammar in
 
         if (global_options.verbosity) > 0 then
-          printf "==> Grammar file loaded\n%!";
+          Format.printf "==> Grammar file loaded@.";
 
         if (global_options.verbosity) > 0 then
-          printf "Generating tree\n%!";
+          Format.printf "Generating tree@.";
 
         if (global_options.verbosity) > 0 then
-          printf "Random number generator used  is %s\n%!" global_options.randgen;
+          Format.printf "Random number generator used  is %s@." global_options.randgen;
 
         Gen.generator
           grammar
@@ -195,7 +192,7 @@ let () =
       begin
 
         if (global_options.verbosity) > 0 then
-          printf "Loading state file: %s\n%!" global_options.state_file;
+          Format.printf "Loading state file: %s@." global_options.state_file;
 
         let in_channel = open_in global_options.state_file in
         let state:gen_state = input_value in_channel in
@@ -204,13 +201,13 @@ let () =
         global_options.randgen <- state.randgen;
 
         if (global_options.verbosity) > 0 then
-          printf "==> State file loaded\n%!";
+          Format.printf "==> State file loaded@.";
 
         if (global_options.verbosity) > 0 then
-          printf "Generating tree\n%!";
+          Format.printf "Generating tree@.";
 
         if (global_options.verbosity) > 0 then
-          printf "Random number generator used  is %s\n%!" global_options.randgen;
+          Format.printf "Random number generator used  is %s@." global_options.randgen;
 
         let module Rand = (val RandGen.get state.randgen) in
         Rand.set_state state.rnd_state;
@@ -220,25 +217,25 @@ let () =
   in
   match result with
   | None ->
-    eprintf "Error: no tree generated ==> try to use different parameters\n%!" ;
+    Format.eprintf "Error: no tree generated ==> try to use different parameters@." ;
     exit 1
   | Some (tree,size,state) ->
     begin
 
       if global_options.verbosity > 0 then
-        printf "==> Tree generated with %d nodes\n%!" size;
+        Format.printf "==> Tree generated with %d nodes@." size;
 
       let out_state =
         if global_options.fileName = "" then
           begin
             if global_options.verbosity >= 2 then
-              printf "==> Saving state to file 'state'\n%!" ;
+              Format.printf "==> Saving state to file 'state'@." ;
             open_out "state"
           end
         else
           begin
             if global_options.verbosity >= 2 then
-              printf "==> Saving state to file '%s.state'\n%!" global_options.fileName;
+              Format.printf "==> Saving state to file '%s.state'@." global_options.fileName;
             open_out (global_options.fileName^".state")
           end
       in
@@ -249,49 +246,49 @@ let () =
       (* XXX. ugly workaround *)
       let tree = Tree.annotate tree in
 
-      match global_options.output_type with
-      |0 ->
-        let out =
+      begin match global_options.output_type with
+        |0 ->
+          let out =
+            if global_options.fileName = "" then
+              stdout
+            else
+              begin
+                Format.printf "Saving file to '%s.arb'@." global_options.fileName;
+                open_out (global_options.fileName^".arb")
+              end
+          in
+          Tree.file_of_tree global_options.with_type global_options.with_id tree out;
+        |1 ->
+          let out =
+            if global_options.fileName = "" then
+              stdout
+            else
+              begin
+                Format.printf "Saving file to '%s.dot'@." global_options.fileName;
+                open_out (global_options.fileName^".dot")
+              end
+          in
+          Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree out;
+        |2 ->
+          let out =
+            if global_options.fileName = "" then
+              stdout
+            else
+              begin
+                Format.printf "Saving file to '%s.xml'@." global_options.fileName;
+                open_out (global_options.fileName^".xml")
+              end
+          in
+          Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree out;
+        |3 ->
           if global_options.fileName = "" then
-            stdout
-          else
-            begin
-              printf "Saving file to '%s.arb'\n%!" global_options.fileName;
-              open_out (global_options.fileName^".arb")
-            end
-        in
-        Tree.file_of_tree global_options.with_type global_options.with_id tree out;
-      |1 ->
-        let out =
-          if global_options.fileName = "" then
-            stdout
-          else
-            begin
-              printf "Saving file to '%s.dot'\n%!" global_options.fileName;
-              open_out (global_options.fileName^".dot")
-            end
-        in
-        Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree out;
-      |2 ->
-        let out =
-          if global_options.fileName = "" then
-            stdout
-          else
-            begin
-              printf "Saving file to '%s.xml'\n%!" global_options.fileName;
-              open_out (global_options.fileName^".xml")
-            end
-        in
-        Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree out;
-      |3 ->
-        if global_options.fileName = "" then
-          global_options.fileName <- "tree";
-        printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'\n%!" global_options.fileName global_options.fileName global_options.fileName;
-        Tree.file_of_tree global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".arb"));
-        Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".dot"));
-        Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".xml"));
-      |_ -> printf "Error \n";      (* unreachable case *)
+            global_options.fileName <- "tree";
+          Format.printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'@." global_options.fileName global_options.fileName global_options.fileName;
+          Tree.file_of_tree global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".arb"));
+          Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".dot"));
+          Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".xml"));
+        |_ -> failwith "unreachable case" end;
 
-        printf "==> file saved\n%!";
-        exit 0
+      Format.printf "==> file saved@.";
+      exit 0
     end
