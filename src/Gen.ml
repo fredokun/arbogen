@@ -129,30 +129,20 @@ let search_seed (module R: RandGen.Sig) rules ~size_min ~size_max ~max_try =
   in
   search 0 0 max_try
 
-(** Compute the oracle and the weighted grammar for a grammar *)
-let compute_weighted_grammar grammar config verbosity =
-  if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." config.zstart ;
-  let (zmin, zmax, values) = searchSingularity config grammar in
-  if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
-
-  let wgrm = WeightedGrammar.of_grammar zmin values grammar in
-  if verbosity >= 2 then
-    Format.printf "[SIM]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
-  (zmin, zmax, wgrm)
-
 (** Search for a size in a specific size window and refine the singularity
     search in case of failure *)
-let rec simulator nb_refine max_try g oracle_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity =
-  let (zmin, zmax, wgrm) = compute_weighted_grammar g oracle_config verbosity in
+let rec simulator nb_refine max_try grammar oracle_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity =
+  let oracle = OracleSimple.make oracle_config grammar in
+  let wgrm = WeightedGrammar.of_grammar oracle grammar in
   let result, nb_smaller, nb_bigger = search_seed randgen wgrm.rules ~size_min ~size_max ~max_try in
   match result with
   | Some (size, state) -> Some (size, state, wgrm)
   | None when nb_refine > 0 ->
     if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-      let epsilon1 = oracle_config.epsilon1 *. epsilon1_factor in
-      let epsilon2 = oracle_config.epsilon2 *. epsilon2_factor in
-      let new_config = {epsilon1; epsilon2; zmin; zmax; zstart = zmin} in
-      simulator (nb_refine - 1) max_try g new_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity
+      let new_config = {oracle_config with
+                        epsilon1 = oracle_config.epsilon1 *. epsilon1_factor;
+                        epsilon2 = oracle_config.epsilon2 *. epsilon2_factor} in
+      simulator (nb_refine - 1) max_try grammar new_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity
     else
       failwith "try with other parameters Trees too big"
   | None -> None

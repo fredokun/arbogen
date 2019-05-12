@@ -139,10 +139,9 @@ let () =
                                                    global_options.epsilon1,
                                                    global_options.epsilon2 in
       Format.printf "[ORACLE]: search singularity at z=%F@." zstart;
-      let oracle_config = OracleSimple.{epsilon1; epsilon2; zmin; zmax; zstart} in
-      let (zmin', _, y) = OracleSimple.searchSingularity oracle_config grammar in
-      Format.printf "          ==> found singularity at z=%F@." zmin';
-      let wgrm = WeightedGrammar.of_grammar zmin' y grammar in
+      let oracle = OracleSimple.(make {epsilon1; epsilon2; zmin; zmax; zstart}) grammar in
+      Format.printf "          ==> found singularity at z=%F@." oracle.z;
+      let wgrm = WeightedGrammar.of_grammar oracle grammar in
       Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
       exit 0
     end;

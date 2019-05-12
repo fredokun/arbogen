@@ -1,18 +1,98 @@
 open Arbolib
 open Grammar
 open OracleSimple
+open Oracle
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 let checkfa tolerance = Alcotest.(check (array (float tolerance)))
+let foi = float_of_int
 
 let iteration grammar z epsilon2 =
-  match iterationSimple grammar z epsilon2 with
+  match iteration_simple grammar z epsilon2 with
   | Diverge -> Alcotest.fail "diverge"
   | Val v -> v
 
 let mk_grammar rules =
   let names = Array.init (Array.length rules) string_of_int in
   {names; rules}
+
+
+(** {2 tests for simple evaluations} *)
+
+let eval_elem () =
+  let oracle = {z = 0.; values = [|0.23|]} in
+  checkf 0. "eval(Elem)" 0.23 (eval_elem oracle (Elem 0));
+  let oracle = {z = 0.; values = [|0.8|]} in
+  checkf 1e-12 "eval(Seq)" 5. (eval_elem oracle (Seq 0))
+
+let eval_empty_product () =
+  checkf 0. "eval(empty_prod)" 1. (eval_component {z=0.23; values=[||]} (0, []))
+
+let eval_powers_of_z () =
+  let test n z =
+    let name = Format.sprintf "eval(z^%d)" n in
+    checkf 1e-12 name (z ** foi n) (eval_component {z; values=[||]} (n, []))
+  in
+  test 5 0.8;
+  test 10 0.95;
+  test 3 0.01;
+  test 1 0.4
+
+let eval_products () =
+  let prod = (1, [Elem 0; Elem 0]) in
+  let oracle = {z = 0.25; values = [|2.|]} in
+  checkf 1e-12 "eval(z*A*A)" 1. (eval_component oracle prod);
+
+  let prod = (1, [Elem 1; Elem 2]) in
+  let oracle = {z = 0.5; values = [|20.; 3.; 4.|]} in
+  checkf 1e-12 "eval(B*C*z)" 6. (eval_component oracle prod);
+
+  let prod = (1, [Elem 1; Seq 3]) in
+  let oracle = {z = 0.4; values = [|20.; 1.234; 4.; 0.8|]} in
+  checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (eval_component oracle prod)
+
+let eval_empty_sum () =
+  let oracle = {z = 1.; values = [|1.; 2.; 3.|]} in
+  checkf 0. "eval(empty_sum)" 0. (eval_rule oracle [])
+
+let eval_sums () =
+  let sum = [(1, []); (1, []); (1, [])] in
+  let oracle = {z = 0.34567; values = [||]} in
+  checkf 1e-12 "eval(z + z + z)" (3. *. oracle.z) (eval_rule oracle sum);
+
+  let sum = [(0, [Elem 0]); (0, [Seq 3]); (1, [])] in
+  let oracle = {z = 0.11; values = [|0.33; 10.; 20.; 0.2|]} in
+  checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (eval_rule oracle sum);
+
+  let sum = [(0, [Elem 0; Elem 0]); (0, []); (1, [])] in
+  let oracle = {z = 0.87; values = [|0.7|]} in
+  checkf 1e-12 "eval(A^2 + 1 + z)" (0.7 ** 2. +. 1. +. oracle.z) (eval_rule oracle sum)
+
+let eval_plane_trees () =
+  let grammar = mk_grammar [|
+    [(1, [Elem 1])];                 (* T = Z * S      *)
+    [(0, []); (0, [Elem 1; Elem 0])] (* S = 1 + T * S  *)
+  |] in
+  (* at a random point / context *)
+  let z = 0.28 in
+  let oracle = {z; values = [|2.3; 8.1|]} in
+  let expected = [|z *. 8.1; 1. +. 2.3 *. 8.1|] in
+  checkfa 1e-12 "eval(plane tree)" expected (eval oracle grammar);
+  (* at the singularity *)
+  let oracle = {z = 0.25; values = [|0.5; 2.|]} in
+  let expected = oracle.values in
+  checkfa 1e-12 "eval(plane tree)@singularity" expected (eval oracle grammar)
+
+let simple_evaluation_tests = [
+  "Evaluate atomic elements", `Quick, eval_elem;
+  "Evaluate the empty product", `Quick, eval_empty_product;
+  "Evaluate z^n", `Quick, eval_powers_of_z;
+  "Evaluate various products", `Quick, eval_products;
+  "Evaluate the empty sum", `Quick, eval_empty_sum;
+  "Evaluate various sums", `Quick, eval_sums;
+  "Evaluate the system for plane trees", `Quick, eval_plane_trees;
+]
+
 
 (** {2 Tests for generating function evaluation} *)
 
@@ -117,8 +197,8 @@ let eps = 1e-9
 
 let search grammar =
   let config = {epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
-  let zmin, _, _ = searchSingularity config grammar in
-  zmin
+  let oracle = make config grammar in
+  oracle.z
 
 let binary_singularity () =
   let grammar = mk_grammar [|
@@ -170,6 +250,7 @@ let singularity_tests = [
 
 let () =
   Alcotest.run "oracle" [
+    "simple evaluation", simple_evaluation_tests;
     "function approximation", evaluation_tests;
     "singularity search", singularity_tests
   ]

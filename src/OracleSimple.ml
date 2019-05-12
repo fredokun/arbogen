@@ -34,9 +34,9 @@ let diverge (epsilon2: float) : float array -> bool =
   Array.exists (fun x -> x > too_big || x < 0. || is_nan x)
 
 (* TODO: allocate only two arrays and swap them at each iteration *)
-let iterationSimple grammar (z: float) (epsilon2: float) : value =
+let iteration_simple grammar (z: float) (epsilon2: float) : value =
   let rec iterate y =
-    let y' = Grammar.eval z y grammar in
+    let y' = Oracle.(eval {z; values=y}) grammar in
     if diverge epsilon2 y' then
       Diverge
     else if distance y y' <= epsilon2 then
@@ -46,15 +46,19 @@ let iterationSimple grammar (z: float) (epsilon2: float) : value =
   in
   iterate (Array.make (Array.length grammar.Grammar.rules) 0.)
 
-let searchSingularity {epsilon1; epsilon2; zmin; zmax; zstart} grammar =
+let search_singularity {epsilon1; epsilon2; zmin; zmax; zstart} grammar =
   let rec search zmin zmax zstart =
     if zmax -. zmin < epsilon1 then
-      (zmin, zmax, iterationSimple grammar zmin epsilon2)
+      (zmin, zmax, iteration_simple grammar zmin epsilon2)
     else
-      match iterationSimple grammar zstart epsilon2 with
+      match iteration_simple grammar zstart epsilon2 with
       | Val _ -> search zstart zmax ((zmax +. zstart) /. 2.)
       | Diverge -> search zmin zstart ((zmin +. zstart) /. 2.)
   in
   match search zmin zmax zstart with
-  | _, _, Diverge -> failwith "searchSingularity failed to find the singularity"
+  | _, _, Diverge -> failwith "search_singularity failed to find the singularity"
   | zmin, zmax, Val v -> zmin, zmax, v
+
+let make config grammar =
+  let z, _, values = search_singularity config grammar in
+  Oracle.{z; values}
