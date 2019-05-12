@@ -212,7 +212,7 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Random number generator used  is %s\n%!" global_options.randgen;
 
-        let module Rand = (val Util.StringHashtbl.find RandGen.randgen_tbl state.randgen: RandGen.Sig) in
+        let module Rand = (val RandGen.get state.randgen) in
         Rand.set_state state.rnd_state;
         let tree, size = Gen.gen (module Rand) state.weighted_grammar in
         Some (tree, size, state)

@@ -1,5 +1,3 @@
-open Util
-
 module type Sig =
 sig
   val name : string
@@ -169,10 +167,10 @@ struct
     state := n
 end
 
-let randgen_tbl = StringHashtbl.create 2
+let all_rand_gens = [
+  OcamlRandom.name, (module OcamlRandom: Sig);
+  Randu.name, (module Randu: Sig);
+  RandNull.name, (module RandNull: Sig);
+]
 
-let _ = StringHashtbl.add randgen_tbl "ocaml" (module OcamlRandom : Sig)
-
-let _ = StringHashtbl.add randgen_tbl "randu" (module Randu : Sig)
-
-let _ = StringHashtbl.add randgen_tbl "randnull" (module RandNull : Sig)
+let get name = List.assoc name all_rand_gens

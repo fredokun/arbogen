@@ -72,11 +72,3 @@ module StringSet = Set.Make(String)
 (* string map *)
 
 module StringMap = Map.Make(String)
-
-(* string Hashtbl *)
-
-module StringHashtbl = Hashtbl.Make (struct
-    type t = string
-    let equal a b = (a=b)
-    let hash = Hashtbl.hash
-  end)

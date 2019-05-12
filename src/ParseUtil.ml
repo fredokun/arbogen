@@ -129,10 +129,7 @@ let set_option ?(preserve=false) name value =
 
   | "randgen" ->
     let value = as_string name value in
-    let valid_names =
-      Util.StringHashtbl.to_seq_keys RandGen.randgen_tbl
-      |> List.of_seq
-    in
+    let valid_names = List.map fst RandGen.all_rand_gens in
     if not (List.mem value valid_names) then
       fail "rangen must belong to: %s" (String.concat "|" valid_names);
     global_options.randgen <- value

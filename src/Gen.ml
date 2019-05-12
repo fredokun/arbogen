@@ -16,7 +16,6 @@ open CombSys
 open OracleSimple
 open Grammar
 open GenState
-open RandGen
 
 let select_component (module R: RandGen.Sig) rule =
   let open WeightedGrammar in
@@ -155,7 +154,7 @@ let gen (module R: RandGen.Sig) wg =
   | _ -> failwith "internal error"
 
 let init_rng ~randgen ~seed ~verbosity =
-  let module Rand = (val Util.StringHashtbl.find randgen_tbl randgen) in
+  let module Rand = (val RandGen.get randgen) in
   let seed = match seed with
     | Some seed -> seed
     | None -> Rand.self_init (); Rand.int 274537
