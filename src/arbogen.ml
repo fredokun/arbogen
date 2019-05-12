@@ -240,49 +240,30 @@ let () =
       (* XXX. ugly workaround *)
       let tree = Tree.annotate tree in
 
+      let print printer filename typ =
+        if filename = "" then
+          printer tree stdout
+        else begin
+          Format.printf "Saving file to '%s%s'@." filename typ;
+          let out = open_out (filename ^ typ) in
+          printer tree out;
+          close_out out
+        end
+      in
+      let arb_printer = Tree.file_of_tree global_options.with_type global_options.with_id in
+      let dot_printer = Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent in
+      let xml_printer = Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent in
+
       begin match global_options.output_type with
-        |0 ->
-          let out =
-            if global_options.fileName = "" then
-              stdout
-            else
-              begin
-                Format.printf "Saving file to '%s.arb'@." global_options.fileName;
-                open_out (global_options.fileName^".arb")
-              end
-          in
-          Tree.file_of_tree global_options.with_type global_options.with_id tree out;
-        |1 ->
-          let out =
-            if global_options.fileName = "" then
-              stdout
-            else
-              begin
-                Format.printf "Saving file to '%s.dot'@." global_options.fileName;
-                open_out (global_options.fileName^".dot")
-              end
-          in
-          Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree out;
-        |2 ->
-          let out =
-            if global_options.fileName = "" then
-              stdout
-            else
-              begin
-                Format.printf "Saving file to '%s.xml'@." global_options.fileName;
-                open_out (global_options.fileName^".xml")
-              end
-          in
-          Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree out;
-        |3 ->
-          if global_options.fileName = "" then
-            global_options.fileName <- "tree";
-          Format.printf "Saving files to '%s.arb', '%s.dot' and '%s.xml'@." global_options.fileName global_options.fileName global_options.fileName;
-          Tree.file_of_tree global_options.with_type global_options.with_id tree (open_out (global_options.fileName^".arb"));
-          Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".dot"));
-          Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent tree (open_out (global_options.fileName^".xml"));
+        | 0 -> print arb_printer global_options.fileName ".arb"
+        | 1 -> print dot_printer global_options.fileName ".dot"
+        | 2 -> print xml_printer global_options.fileName ".xml"
+        | 3 ->
+          let filename = if global_options.fileName = "" then "tree" else global_options.fileName in
+          print arb_printer filename ".arb";
+          print dot_printer filename ".dot";
+          print xml_printer filename ".xml"
         |_ -> failwith "unreachable case" end;
 
-      Format.printf "==> file saved@.";
-      exit 0
+      Format.printf "==> file saved@."
     end

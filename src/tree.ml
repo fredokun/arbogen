@@ -46,8 +46,7 @@ let rec tree_out (show_type:bool) (show_id:bool) tree out =
 
 let file_of_tree (show_type:bool) (show_id:bool) tree out =
   tree_out show_type show_id tree out ;
-  output_string out "\n";
-  close_out out
+  output_string out "\n"
 
 let attributes buf typ id show_type show_id =
   Buffer.add_string buf (if show_type then "type=\"" ^ typ ^ "\" " else "");
@@ -129,8 +128,7 @@ let dot_of_tree (show_type:bool) (show_id:bool) (indent: bool) t =
 
 let file_of_dot (show_type:bool) (show_id:bool) (indent: bool) tree out =
   let buf = dot_of_tree show_type show_id indent tree in
-  Buffer.output_buffer out buf;
-  close_out out
+  Buffer.output_buffer out buf
 
 let file_of_xml (show_type:bool) (show_id:bool) (indent: bool) tree out =
   let buf =
@@ -138,5 +136,5 @@ let file_of_xml (show_type:bool) (show_id:bool) (indent: bool) tree out =
       indent_xml_of_tree show_type show_id tree
     else
       xml_of_tree show_type show_id tree
-  in Buffer.output_buffer out buf;
-  close_out out;
+  in
+  Buffer.output_buffer out buf
