@@ -25,26 +25,32 @@ type config = {
 }
 
 (** The distance for the uniform norm *)
-let distance =
-  Util.array_fold_left_2 (fun norm y y' -> max norm (abs_float (y -. y'))) 0.0
+let distance v1 v2 =
+  let dist = ref 0. in
+  Array.iter2 (fun x y -> dist := max !dist (abs_float (x -. y))) v1 v2;
+  !dist
 
 let diverge (epsilon2: float) : float array -> bool =
-  let too_big = 1.0 /. epsilon2 in
+  (* XXX. dangerous but letting too_big grow too much is dangerous too *)
+  let too_big = min (1.0 /. epsilon2) 100. in
   let is_nan x = x <> x in
   Array.exists (fun x -> x > too_big || x < 0. || is_nan x)
 
-(* TODO: allocate only two arrays and swap them at each iteration *)
-let iteration_simple grammar (z: float) (epsilon2: float) : value =
-  let rec iterate y =
-    let y' = Oracle.(eval {z; values=y}) grammar in
-    if diverge epsilon2 y' then
+let iteration_simple grammar z epsilon2 =
+  let rec iterate v1 v2 =
+    let _ = Oracle.(eval ~dest:v2 {z; values = v1}) grammar in
+    if diverge epsilon2 v2 then
       Diverge
-    else if distance y y' <= epsilon2 then
-      Val y'
+    else if distance v1 v2 <= epsilon2 then
+      Val v2
     else
-      iterate y'
+      iterate v2 v1
   in
-  iterate (Array.make (Array.length grammar.Grammar.rules) 0.)
+  (* Only allocate to arrays and swap them at each iteration *)
+  let len = Array.length grammar.Grammar.rules in
+  let v1 = Array.make len 0. in
+  let v2 = Array.make len 0. in
+  iterate v1 v2
 
 let search_singularity {epsilon1; epsilon2; zmin; zmax; zstart} grammar =
   let rec search zmin zmax zstart =

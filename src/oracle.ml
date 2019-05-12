@@ -18,6 +18,10 @@ let eval_rule oracle terms =
     0.
     terms
 
-let eval oracle grammar =
+let eval ?dest oracle grammar =
   let Grammar.{rules; _} = grammar in
-  Array.map (eval_rule oracle) rules
+  match dest with
+  | Some dest ->
+    Array.iteri (fun i rule -> dest.(i) <- eval_rule oracle rule) rules;
+    dest
+  | None -> Array.map (eval_rule oracle) rules

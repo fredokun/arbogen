@@ -46,14 +46,6 @@ let rec output_list out output_elem op dl cl l = match l with
 
 (* Array utilities *)
 
-let array_fold_left_2 (f:'a -> 'b -> 'c -> 'a) (init:'a) (b:'b array) (c:'c array) : 'a =
-  let rec aux i len acc =
-    if i=len
-    then acc
-    else aux (i+1) len (f acc b.(i) c.(i))
-  in
-  aux 0 (Array.length b) init
-
 let array_for_all2 p u v =
   if Array.length u <> Array.length v then invalid_arg "array_for_all2";
   try
