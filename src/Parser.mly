@@ -1,8 +1,4 @@
-%{
-  let opt_cons x xs = match x with
-    | None -> xs
-    | Some x -> x :: xs
-%}
+%{ open ParseTree %}
 
 %token <string> UIDENT LIDENT
 %token EOF
@@ -17,7 +13,7 @@
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
 %start start
-%type <Options.parameter list * Grammar.grammar> start
+%type <Options.parameter list * ParseTree.rules> start
 
 %%
 
@@ -43,28 +39,19 @@ value:
 
 (* Production rules ***************************************)
 
-/* string * (int option * elem list) list */
 rule:
   name = UIDENT
   EQUAL
   components = separated_nonempty_list(PLUS, component)
   { name, components }
 
-/* int * (elem list) */
 component:
-  | sc = sub_component TIMES c = component
-    {
-      let w, opt_elem = sc in
-      let w', comp = c in
-      w + w', opt_cons opt_elem comp
-    }
- | comp = sub_component { fst comp, opt_cons (snd comp) [] }
+  elements = separated_nonempty_list(TIMES, element)
+  { elements }
 
-
-/* int * elem list */
-sub_component:
-  | uid = UIDENT                     { 0, Some (Grammar.Elem uid) }
-  | SEQ LPAREN uid = UIDENT RPAREN   { 0, Some (Grammar.Seq uid) }
-  | LWEIGHT w = NUMI RWEIGHT         { w, None }
-  | Z                                { 1, None }
-  | ONE                              { 0, None }
+element:
+  | uid = UIDENT                     { Elem uid }
+  | SEQ LPAREN uid = UIDENT RPAREN   { Seq uid }
+  | LWEIGHT w = NUMI RWEIGHT         { Z w }
+  | Z                                { Z 1 }
+  | ONE                              { Z 0 }

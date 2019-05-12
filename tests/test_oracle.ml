@@ -1,25 +1,29 @@
 open Arbolib
+open Grammar
 open OracleSimple
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 let checkfa tolerance = Alcotest.(check (array (float tolerance)))
 
-let iteration sys z epsilon2 =
-  match iterationSimple sys z epsilon2 with
+let iteration grammar z epsilon2 =
+  match iterationSimple grammar z epsilon2 with
   | Diverge -> Alcotest.fail "diverge"
   | Val v -> v
+
+let mk_grammar rules =
+  let names = Array.init (Array.length rules) string_of_int in
+  {names; rules}
 
 (** {2 Tests for generating function evaluation} *)
 
 let eval_binary () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]; [Z; Refe 0; Refe 0]];
-      [[]]
+  let grammar = mk_grammar [|
+      [(1, []); (1, [Elem 0; Elem 0])]
     |] in
   let oracle z = (1. -. sqrt (1. -. 4. *. z *. z)) /. (2. *. z) in
   let test z =
     let name = Format.sprintf "binary(%F)" z in
-    checkf 5e-9 name (oracle z) (iteration sys z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).(0)
   in
   test 0.1;
   test 0.3;
@@ -27,38 +31,37 @@ let eval_binary () =
 (* TODO: test 0.5 *)
 
 let eval_nary () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]];
-      [[Refe 2]; [Refe 0; Refe 1]];
-      [[]]
+  let grammar = mk_grammar [|
+      [(1, [Elem 1])];
+      [epsilon; (0, [Elem 0; Elem 1])]
     |] in
   let oracle z =
     let b z = (1. -. sqrt (1. -. 4. *. z)) /. (2. *. z) in
-    [| z *. b z; b z; 1. |]
+    [|z *. b z; b z|]
   in
   let test z =
     let name = Format.sprintf "nary(%F)" z in
-    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9)
   in
   test 0.1;
   test 0.2
 (* TODO: test 0.Z5 *)
 
 let eval_seq () =
-  let sys = CombSys.[| [[Z; Seq 0]] |] in
+  let grammar = mk_grammar [| [(1, [Seq 0])] |] in
   let oracle z = (1. -. sqrt (1. -. 4. *. z)) /. 2. in
   let test z =
     let name = Format.sprintf "seq2(%F)" z in
-    checkf 5e-9 name (oracle z) (iteration sys z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).(0)
   in
   test 0.1;
   test 0.2
 (* TODO: test 0.25 *)
 
 let eval_seq2 () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]];
-      [[]; [Refe 0; Refe 1]];
+  let grammar = mk_grammar [|
+      [(1, [Elem 1])];
+      [epsilon; (0, [Elem 0; Elem 1])];
     |] in
   let oracle z =
     let b z = (1. -. sqrt (1. -. 4. *. z)) /. (2. *. z) in
@@ -66,17 +69,17 @@ let eval_seq2 () =
   in
   let test z =
     let name = Format.sprintf "seq2(%F)" z in
-    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9)
   in
   test 0.1;
   test 0.2
 (* TODO: test 0.25 *)
 
 let eval_shuffle_plus () =
-  let sys = CombSys.[|
-      [[Refe 1]; [Refe 2]];
-      [[Z; Seq 0]];
-      [[Refe 1; Refe 1; Seq 1]]
+  let grammar = mk_grammar [|
+      [(0, [Elem 1]); (0, [Elem 2])];
+      [(1, [Seq 0])];
+      [(0, [Elem 1; Elem 1; Seq 1])]
     |] in
   let oracle z =
     let par z = (1. +. z -. sqrt ((1. +. z) ** 2. -. 8. *. z)) /. 4. in
@@ -88,7 +91,7 @@ let eval_shuffle_plus () =
   in
   let test z =
     let name = Format.sprintf "shuffle_plus(%F)" z in
-    checkfa 5e-9 name (oracle z) (iteration sys z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9)
   in
   test 0.05;
   test 0.1;
@@ -112,45 +115,43 @@ let evaluation_tests = [
 
 let eps = 1e-9
 
-let search sys =
+let search grammar =
   let config = {epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
-  let zmin, _, _ = searchSingularity config sys in
+  let zmin, _, _ = searchSingularity config grammar in
   zmin
 
 let binary_singularity () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]; [Z; Refe 0; Refe 0]];
-      [[]]
+  let grammar = mk_grammar [|
+      [(1, []); (1, [Elem 0; Elem 0])];
     |] in
-  checkf 5e-9 "singularity(binary)" 0.5 (search sys)
+  checkf 5e-9 "singularity(binary)" 0.5 (search grammar)
 
 let nary_singularity () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]];
-      [[Refe 2]; [Refe 0; Refe 1]];
-      [[]]
+  let grammar = mk_grammar [|
+      [(1, [Elem 1])];
+      [epsilon; (0, [Elem 0; Elem 1])];
     |] in
-  checkf 5e-9 "singularity(nary)" 0.25 (search sys)
+  checkf 5e-9 "singularity(nary)" 0.25 (search grammar)
 
 let seq_singularity () =
-  let sys = CombSys.[| [[Z; Seq 0]] |] in
-  checkf 5e-9 "singularity(seq)" 0.25 (search sys)
+  let grammar = mk_grammar [| [(1, [Seq 0])] |] in
+  checkf 5e-9 "singularity(seq)" 0.25 (search grammar)
 
 let seq2_singularity () =
-  let sys = CombSys.[|
-      [[Z; Refe 1]];
-      [[]; [Refe 0; Refe 1]];
+  let grammar = mk_grammar [|
+      [(1, [Elem 1])];
+      [epsilon; (0, [Elem 0; Elem 1])];
     |] in
-  checkf 5e-9 "singularity(seq2)" 0.25 (search sys)
+  checkf 5e-9 "singularity(seq2)" 0.25 (search grammar)
 
 let shuffle_plus_singularity () =
-  let sys = CombSys.[|
-      [[Refe 1]; [Refe 2]];
-      [[Z; Seq 0]];
-      [[Refe 1; Refe 1; Seq 1]]
+  let grammar = mk_grammar [|
+      [(0, [Elem 1]); (0, [Elem 2])];
+      [(1, [Seq 0])];
+      [(0, [Elem 1; Elem 1; Seq 1])]
     |] in
   let singularity = 3. -. sqrt 8. in
-  checkf 5e-9 "singularity(shuffle_plus)" singularity (search sys)
+  checkf 5e-9 "singularity(shuffle_plus)" singularity (search grammar)
 
 (* TODO: sp *)
 (* TODO: unarybinary *)

@@ -12,9 +12,7 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open CombSys
 open OracleSimple
-open Grammar
 open GenState
 
 
@@ -133,12 +131,8 @@ let search_seed (module R: RandGen.Sig) rules ~size_min ~size_max ~max_try =
 
 (** Compute the oracle and the weighted grammar for a grammar *)
 let compute_weighted_grammar grammar config verbosity =
-  (* sanity check: I think the grammar should be complete at this point *)
-  assert (completion grammar = grammar);
-  let sys = combsys_of_grammar grammar in
-
   if verbosity >= 2 then Format.printf "[ORACLE]: search singularity at z=%F@." config.zstart ;
-  let (zmin, zmax, values) = searchSingularity config sys in
+  let (zmin, zmax, values) = searchSingularity config grammar in
   if verbosity >= 2 then Format.printf "          ==> found singularity at z=%F@." zmin;
 
   let wgrm = WeightedGrammar.of_grammar zmin values grammar in
@@ -174,7 +168,7 @@ let init_rng ~randgen ~seed ~verbosity =
   (module Rand: RandGen.Sig)
 
 let generator
-    (g:grammar)
+    grammar
     ~seed:(seed: int option)
     (sizemin:int)
     (sizemax:int)
@@ -194,7 +188,7 @@ let generator
 
   let oracle_config = OracleSimple.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
 
-  let res = simulator max_refine max_try g oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity in
+  let res = simulator max_refine max_try grammar oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity in
   match res with
   | Some(size,state,wgrm) ->
     let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm} in

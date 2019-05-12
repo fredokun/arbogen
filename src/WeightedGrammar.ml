@@ -17,46 +17,26 @@ type component = {weight: float; atoms: int; elems: elem list}
 type rule = {weight: float; choices: component list}
 type t = {rules: rule array; names: string array}
 
-module Smap = Map.Make(String)
+(** {2 Conversion from grammars} *)
 
-let map_names_to_ids grammar =
-  let names = List.map fst grammar |> Array.of_list in
-  let _, indices = Array.fold_left
-      (fun (i, map) name -> i + 1, Smap.add name i map)
-      (0, Smap.empty)
-      names
-  in
-  names, indices
+let of_elem = function
+  | Grammar.Elem i -> Elem i
+  | Grammar.Seq i -> Seq i
 
-(** {2 Conversion} *)
-
-let eval_elem values = function
-  | Elem i -> values.(i)
-  | Seq i -> 1. /. (1. -. values.(i))
-
-let of_elem indices = function
-  | Grammar.Elem name -> Elem (Smap.find name indices)
-  | Grammar.Seq name -> Seq (Smap.find name indices)
-
-let of_component z values indices component =
+let of_component z values component =
+  let weight = Grammar.eval_component z values component in
   let atoms, elems = component in
-  let elems = List.map (of_elem indices) elems in
-  let atom_weight = z ** float_of_int atoms in
-  let weight = Util.fold_map (eval_elem values) ( *. ) atom_weight elems in
+  let elems = List.map of_elem elems in
   {weight; atoms; elems}
 
-let of_rule z values indices rule =
-  let _, components = rule in
-  let choices = List.map (of_component z values indices) components in
-  let weight = List.fold_left (fun w (comp: component) -> w +. comp.weight) 0. choices in
+let of_rule z values rule =
+  let weight = Grammar.eval_rule z values rule in
+  let choices = List.map (of_component z values) rule in
   {weight; choices}
 
 let of_grammar z values grammar =
-  let names, indices = map_names_to_ids grammar in
-  let rules =
-    List.map (of_rule z values indices) grammar |>
-    Array.of_list
-  in
+  let Grammar.{names; rules} = grammar in
+  let rules = Array.map (of_rule z values) rules in
   {names; rules}
 
 (** {2 Pretty printing} *)
@@ -80,11 +60,11 @@ let pp_sum pp_term fmt terms =
   | [] -> Format.fprintf fmt "0"
   | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
 
-let pp_rule fmt {weight; choices} =
-  Format.fprintf fmt "(%F) %a" weight (pp_sum pp_component) choices
+let pp_rule fmt rule =
+  pp_sum pp_component fmt rule.choices
 
 let pp fmt {rules; names} =
   Array.iteri
     (fun i rule ->
-       Format.fprintf fmt "[%d] %s ::= %a@\n" i names.(i) pp_rule rule)
+       Format.fprintf fmt "%s (%F) ::= %a@\n" names.(i) rule.weight pp_rule rule)
     rules

@@ -16,9 +16,9 @@ open Options
 
 let parse_from_channel chan =
   let lexbuf = Lexing.from_channel chan in
-  let res = Parser.start Lexer.token lexbuf in
+  let params, parse_tree = Parser.start Lexer.token lexbuf in
   close_in chan;
-  res
+  params, ParseTree.to_grammar parse_tree
 
 let parse_from_file filename =
   let chan = open_in filename in

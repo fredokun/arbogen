@@ -8,86 +8,82 @@ let grammar =
 
 let parse test_name =
   let _, grammar = ParseUtil.parse_from_file (test_name ^ ".spec") in
-  Grammar.completion grammar
+  grammar
 
 
 let binary () =
-  let expected = Grammar.[
-      "BinNode", [
-        (1, [Elem "Leaf"]);
-        (1, [Elem "BinNode"; Elem "BinNode"])
-      ];
-      "Leaf", [epsilon]
-    ] in
+  let expected = Grammar.{
+      rules = [|
+        [(1, [Elem 1]); (1, [Elem 0; Elem 0])];
+        [epsilon]
+      |];
+      names = [|"BinNode"; "Leaf"|]
+    } in
   Alcotest.check grammar "binary" expected (parse "binary")
 
 let nary () =
-  let expected = Grammar.[
-      "NTree", [(1, [Elem "Seq"])];
-      "Seq", [
-        (0, [Elem "Leaf"]);
-        (0, [Elem "NTree"; Elem "Seq"])
-      ];
-      "Leaf", [epsilon]
-    ] in
+  let expected = Grammar.{
+      rules = [|
+        [(1, [Elem 1])];
+        [(0, [Elem 2]); (0, [Elem 0; Elem 1])];
+        [epsilon]
+      |];
+      names = [|"NTree"; "Seq"; "Leaf"|]
+    } in
   Alcotest.check grammar "nary" expected (parse "nary")
 
 let seq () =
-  let expected = Grammar.[
-      "Node", [(1, [Seq "Node"])]
-    ] in
+  let expected = Grammar.{
+      rules = [|[(1, [Seq 0])]|];
+      names = [|"Node"|]
+    } in
   Alcotest.check grammar "seq" expected (parse "seq")
 
 let seq2 () =
-  let expected = Grammar.[
-      "Node", [(1, [Elem "Seq"])];
-      "Seq", [
-        (0, []);
-        (0, [Elem "Node"; Elem "Seq"])
-      ];
-    ] in
+  let expected = Grammar.{
+      rules = [|
+        [(1, [Elem 1])];
+        [epsilon; (0, [Elem 0; Elem 1])];
+      |];
+      names = [|"Node"; "Seq"|]
+    } in
   Alcotest.check grammar "seq2" expected (parse "seq2")
 
 let shuffle_plus () =
-  let expected = Grammar.[
-      "A", [
-        (0, [Elem "Ashuffle"]);
-        (0, [Elem "Aplus"])
-      ];
-      "Ashuffle", [(1, [Seq "A"])];
-      "Aplus", [(0, [Elem "Ashuffle"; Elem "Ashuffle"; Seq "Ashuffle"])];
-    ] in
+  let expected = Grammar.{
+      rules = [|
+        [(0, [Elem 1]); (0, [Elem 2])];
+        [(1, [Seq 0])];
+        [(0, [Elem 1; Elem 1; Seq 1])];
+      |];
+      names = [|"A"; "Ashuffle"; "Aplus"|]
+    } in
   Alcotest.check grammar "shuffle_plus" expected (parse "shuffle_plus")
 
 let sp () =
-  let expected = Grammar.[
-      "T", [
-        (1, []);
-        (1, [Elem "T"]);
-        (1, [Elem "T"; Elem "T"; Elem "T"])]
-    ] in
+  let expected = Grammar.{
+      rules = [|[(1, []); (1, [Elem 0]); (1, [Elem 0; Elem 0; Elem 0])]|];
+      names = [|"T"|]
+    } in
   Alcotest.check grammar "sp" expected (parse "sp")
 
 let unarybinary () =
-  let expected = Grammar.[
-      "UBTree", [
-        (1, []);
-        (1, [Elem "UBTree"]);
-        (1, [Elem "UBTree"; Elem "UBTree"])]
-    ] in
+  let expected = Grammar.{
+      rules = [|[(1, []); (1, [Elem 0]); (1, [Elem 0; Elem 0])]|];
+      names = [|"UBTree"|]
+    } in
   Alcotest.check grammar "unarybinary" expected (parse "unarybinary")
 
 let unarybinary2 () =
-  let expected = Grammar.[
-      "UBTree", [
-        (0, [Elem "UBLeaf"]);
-        (0, [Elem "Unary"]);
-        (0, [Elem "Binary"])
-      ];
-      "Unary", [(1, [Elem "UBTree"])];
-      "Binary", [(1, [Elem "UBTree"; Elem "UBTree"])];
-      "UBLeaf", [(1, [])]
-    ] in
+  let expected = Grammar.{
+      rules = [|
+        [(0, [Elem 3]); (0, [Elem 1]); (0, [Elem 2])];
+        [(1, [Elem 0])];
+        [(1, [Elem 0; Elem 0])];
+        [(1, [])]
+      |];
+      names = [|"UBTree"; "Unary"; "Binary"; "UBLeaf"|]
+    } in
   Alcotest.check grammar "unarybinary2" expected (parse "unarybinary2")
 
 

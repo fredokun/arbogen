@@ -1,9 +1,10 @@
 open Arbolib
-
+open Grammar
 
 let fail format =
   Format.kasprintf Alcotest.fail format
 
+(* XXX. *)
 let rec pp_tree fmt tree =
   let Tree.Node (typ, children) = tree in
   let pp_sep fmt () = Format.fprintf fmt ",@," in
@@ -16,6 +17,10 @@ let check_size size_min size_max expected actual =
     fail "the size computed by arbogen is wrong: %d <> %d" actual expected
   else if actual < size_min || actual > size_max then
     fail "wrong size: %d not in [%d, %d]" actual size_min size_max
+
+let mk_grammar rules =
+  let names = Array.init (Array.length rules) string_of_int in
+  {names; rules}
 
 let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
   match Gen.generator
@@ -36,7 +41,7 @@ let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
   with
   | Some (tree, size, _) -> tree, size
   | None ->
-    let name, _ = List.hd grammar in
+    let name = grammar.Grammar.names.(0) in
     fail "generation of %s failed" name
 
 (** {2 Correctness tests} *)
@@ -45,7 +50,10 @@ exception Invalid
 
 let valid_binary () =
   let size_min, size_max = 20, 30 in
-  let grammar = Grammar.["Node", [(0, []); (1, [Elem "Node"; Elem "Node"])]] in
+  let grammar = Grammar.{
+      rules = [|[epsilon; (1, [Elem 0; Elem 0])]|];
+      names = [|"Node"|]
+    } in
   let rec size = function
     | Tree.Node ("Node", [l; r]) -> 1 + size l + size r
     | Tree.Node ("Node", []) -> 0
@@ -57,10 +65,13 @@ let valid_binary () =
 
 let valid_nary () =
   let size_min, size_max = 20, 30 in
-  let grammar = Grammar.[
-      "T", [(1, [Elem "S"])];
-      "S", [(0, []); (0, [Elem "T"; Elem "S"])];
-    ] in
+  let grammar = Grammar.{
+      rules = [|
+        [(1, [Elem 1])];
+        [epsilon; (0, [Elem 0; Elem 1])];
+      |];
+      names = [|"T"; "S"|]
+    } in
   let rec size = function
     | Tree.Node ("T", [s]) -> 1 + size s
     | Tree.Node ("S", []) -> 0
@@ -73,7 +84,10 @@ let valid_nary () =
 
 let valid_nary_bis () =
   let size_min, size_max = 20, 30 in
-  let grammar = Grammar.["T", [(1, [Seq "T"])]] in
+  let grammar = Grammar.{
+      rules = [|[(1, [Seq 0])]|];
+      names = [|"T"|]
+    } in
   let rec size = function
     | Tree.Node ("T", []) -> 1
     | Tree.Node ("T", children) -> List.fold_left (fun acc t -> acc + size t) 1 children
@@ -85,7 +99,10 @@ let valid_nary_bis () =
 
 let valid_motzkin () =
   let size_min, size_max = 40, 50 in
-  let grammar = Grammar.["M", [(0, []); (1, [Elem "M"]); (1, [Elem "M"; Elem "M"])]] in
+  let grammar = Grammar.{
+      rules = [|[epsilon; (1, [Elem 0]); (1, [Elem 0; Elem 0])]|];
+      names = [|"M"|]
+    } in
   let rec size = function
     | Tree.Node ("M", []) -> 0
     | Tree.Node ("M", [t]) -> 1 + size t
@@ -98,11 +115,14 @@ let valid_motzkin () =
 
 let valid_shuffle_plus () =
   let size_min, size_max = 10, 100 in
-  let grammar = Grammar.[
-      "A", [(0, [Elem "Aplus"]); (0, [Elem "Ashuffle"])];
-      "Aplus", [(0, [Elem "Ashuffle"; Elem "Ashuffle"; Seq "Ashuffle"])];
-      "Ashuffle", [(1, [Seq "A"])]
-    ] in
+  let grammar = Grammar.{
+      rules = [|
+        [(0, [Elem 1]); (0, [Elem 2])];
+        [(1, [Seq 0])];
+        [(0, [Elem 1; Elem 1; Seq 1])];
+      |];
+      names = [|"A"; "Ashuffle"; "Aplus"|]
+    } in
   let get_type = function
     | Tree.Node ("Aplus", _) -> `plus
     | Tree.Node ("Ashuffle", _) -> `shuffle
@@ -141,7 +161,10 @@ let incr repr store (tree, size) =
 
 let unif_binary () =
   Random.self_init ();
-  let grammar = Grammar.["Node", [(0, []); (1, [Elem "Node"; Elem "Node"])]] in
+  let grammar = Grammar.{
+      rules = [|[epsilon; (1, [Elem 0; Elem 0])]|];
+      names = [|"Node"|]
+    } in
   let store = Array.init 6 (fun _ -> Hashtbl.create 17) in
   let rec repr = function
     | Tree.Node ("Node", []) -> ""

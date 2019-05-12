@@ -134,19 +134,15 @@ let () =
     begin
       let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
       ParseUtil.set_options ~preserve:true options;
-      let g = Grammar.completion grammar in
-      Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp g;
-      let sys = CombSys.combsys_of_grammar (Grammar.completion g) in
-      Format.printf "[COMBSYS]: combinatorial system is:\n%a@." CombSys.pp sys;
-
+      Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
       let zmin, zmax, zstart, epsilon1, epsilon2 = 0., 1., global_options.zstart,
                                                    global_options.epsilon1,
                                                    global_options.epsilon2 in
       Format.printf "[ORACLE]: search singularity at z=%F@." zstart;
       let oracle_config = OracleSimple.{epsilon1; epsilon2; zmin; zmax; zstart} in
-      let (zmin', _, y) = OracleSimple.searchSingularity oracle_config sys in
+      let (zmin', _, y) = OracleSimple.searchSingularity oracle_config grammar in
       Format.printf "          ==> found singularity at z=%F@." zmin';
-      let wgrm = WeightedGrammar.of_grammar zmin' y g in
+      let wgrm = WeightedGrammar.of_grammar zmin' y grammar in
       Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
       exit 0
     end;
@@ -161,7 +157,6 @@ let () =
 
         let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
         ParseUtil.set_options ~preserve:true options;
-        let grammar = Grammar.completion grammar in
 
         if (global_options.verbosity) > 0 then
           Format.printf "==> Grammar file loaded@.";
