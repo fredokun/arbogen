@@ -30,7 +30,7 @@ let epsilon = (0, [])
 (** {2 Pretty printing} *)
 
 let pp_elem names fmt = function
-  | Elem i -> Format.fprintf fmt "Elem(%s)" names.(i)
+  | Elem i -> Format.pp_print_string fmt names.(i)
   | Seq i -> Format.fprintf fmt "Seq(%s)" names.(i)
 
 let pp_product pp_term fmt terms =
