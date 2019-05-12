@@ -148,7 +148,7 @@ let () =
       let oracle_config = OracleSimple.{epsilon1; epsilon2; zmin; zmax; zstart} in
       let (zmin', _, y) = OracleSimple.searchSingularity oracle_config sys in
       Format.printf "          ==> found singularity at z=%F@." zmin';
-      let wgrm = WeightedGrammar.weighted_grm_of_grm g y zmin' in
+      let wgrm = WeightedGrammar.of_grammar zmin' y g in
       Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
       exit 0
     end;
@@ -212,8 +212,10 @@ let () =
         if (global_options.verbosity) > 0 then
           printf "Random number generator used  is %s\n%!" global_options.randgen;
 
-        let (tree,size) = Gen.gen_tree state in
-        Some(tree,size,state)
+        let module Rand = (val Util.StringHashtbl.find RandGen.randgen_tbl state.randgen: RandGen.Sig) in
+        Rand.set_state state.rnd_state;
+        let tree, size = Gen.gen (module Rand) state.weighted_grammar in
+        Some (tree, size, state)
       end
   in
   match result with
@@ -243,6 +245,9 @@ let () =
 
       output_value out_state state;
       close_out out_state;
+
+      (* XXX. ugly workaround *)
+      let tree = Tree.annotate tree in
 
       match global_options.output_type with
       |0 ->

@@ -4,13 +4,12 @@ open Arbolib
 let fail format =
   Format.kasprintf Alcotest.fail format
 
-let rec pp_tree fmt = function
-  | Tree.Leaf (typ, _) -> Format.fprintf fmt "%s" typ
-  | Tree.Node (typ, _, children) ->
-    let pp_sep fmt () = Format.fprintf fmt ",@," in
-    Format.fprintf fmt "%s[%a]"
-      typ
-      (Format.pp_print_list ~pp_sep (fun fmt t -> pp_tree fmt !t)) children
+let rec pp_tree fmt tree =
+  let Tree.Node (typ, children) = tree in
+  let pp_sep fmt () = Format.fprintf fmt ",@," in
+  Format.fprintf fmt "%s[%a]"
+    typ
+    (Format.pp_print_list ~pp_sep pp_tree) children
 
 let check_size size_min size_max expected actual =
   if actual <> expected then
@@ -28,7 +27,7 @@ let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
           0.5  (* epsilon_factor 1 *)
           1e-9 (* epsilon 1 *)
           0.5  (* epsilon_factor 1 *)
-          100  (* max_try *)
+          1000 (* max_try *)
           0.8  (* ratio_rejected *)
           8    (* max_refine *)
           0.   (* zstart *)
@@ -48,8 +47,8 @@ let valid_binary () =
   let size_min, size_max = 20, 30 in
   let grammar = Grammar.["Node", [(0, []); (1, [Elem "Node"; Elem "Node"])]] in
   let rec size = function
-    | Tree.Node ("Node", _, [l; r]) -> 1 + size !l + size !r
-    | Tree.Leaf ("Node", _) -> 0
+    | Tree.Node ("Node", [l; r]) -> 1 + size l + size r
+    | Tree.Node ("Node", []) -> 0
     | _ -> raise Invalid
   in
   let tree, gen_size = generate grammar ~size_min ~size_max in
@@ -63,9 +62,9 @@ let valid_nary () =
       "S", [(0, []); (0, [Elem "T"; Elem "S"])];
     ] in
   let rec size = function
-    | Tree.Node ("T", _, [s]) -> 1 + size !s
-    | Tree.Leaf ("S", _) -> 0
-    | Tree.Node ("S", _, [x; xs]) -> size !x + size !xs
+    | Tree.Node ("T", [s]) -> 1 + size s
+    | Tree.Node ("S", []) -> 0
+    | Tree.Node ("S", [x; xs]) -> size x + size xs
     | _ -> raise Invalid
   in
   let tree, gen_size = generate grammar ~size_min ~size_max in
@@ -76,8 +75,8 @@ let valid_nary_bis () =
   let size_min, size_max = 20, 30 in
   let grammar = Grammar.["T", [(1, [Seq "T"])]] in
   let rec size = function
-    | Tree.Leaf ("T", _) -> 1
-    | Tree.Node ("T", _, children) -> List.fold_left (fun acc t -> acc + size !t) 1 children
+    | Tree.Node ("T", []) -> 1
+    | Tree.Node ("T", children) -> List.fold_left (fun acc t -> acc + size t) 1 children
     | _ -> raise Invalid
   in
   let tree, gen_size = generate grammar ~size_min ~size_max in
@@ -88,9 +87,9 @@ let valid_motzkin () =
   let size_min, size_max = 40, 50 in
   let grammar = Grammar.["M", [(0, []); (1, [Elem "M"]); (1, [Elem "M"; Elem "M"])]] in
   let rec size = function
-    | Tree.Leaf ("M", _) -> 0
-    | Tree.Node ("M", _, [t]) -> 1 + size !t
-    | Tree.Node ("M", _, [l; r]) -> 1 + size !l + size !r
+    | Tree.Node ("M", []) -> 0
+    | Tree.Node ("M", [t]) -> 1 + size t
+    | Tree.Node ("M", [l; r]) -> 1 + size l + size r
     | _ -> raise Invalid
   in
   let tree, gen_size = generate grammar ~size_min ~size_max in
@@ -105,18 +104,18 @@ let valid_shuffle_plus () =
       "Ashuffle", [(1, [Seq "A"])]
     ] in
   let get_type = function
-    | Tree.Node ("Aplus", _, _) -> `plus
-    | Tree.Node ("Ashuffle", _, _) | Tree.Leaf ("Ashuffle", _) -> `shuffle
+    | Tree.Node ("Aplus", _) -> `plus
+    | Tree.Node ("Ashuffle", _) -> `shuffle
     | _ -> raise Invalid
   in
-  let sum size_fun = List.fold_left (fun acc t -> acc + size_fun !t) 0 in
+  let sum size_fun = List.fold_left (fun acc t -> acc + size_fun t) 0 in
   let rec size typ tree = match typ, tree with
-    | `A, Tree.Node ("A", _, [t]) -> size (get_type !t) !t
-    | `plus, Tree.Node ("Aplus", _, children) ->
+    | `A, Tree.Node ("A", [t]) -> size (get_type t) t
+    | `plus, Tree.Node ("Aplus", children) ->
       if List.compare_length_with children 2 < 0 then raise Invalid;
       sum (size `shuffle) children
-    | `shuffle, Tree.Leaf ("Ashuffle", _) -> 1
-    | `shuffle, Tree.Node ("Ashuffle", _, children) -> 1 + sum (size `A) children
+    | `shuffle, Tree.Node ("Ashuffle", []) -> 1
+    | `shuffle, Tree.Node ("Ashuffle", children) -> 1 + sum (size `A) children
     | _ -> raise Invalid
   in
   let tree, gen_size = generate ~seed:1234512345 grammar ~size_min ~size_max in
@@ -145,8 +144,8 @@ let unif_binary () =
   let grammar = Grammar.["Node", [(0, []); (1, [Elem "Node"; Elem "Node"])]] in
   let store = Array.init 6 (fun _ -> Hashtbl.create 17) in
   let rec repr = function
-    | Tree.Leaf ("Node", _) -> ""
-    | Tree.Node ("Node", _, [l; r]) -> "(" ^ repr !l ^ ")" ^ repr !r
+    | Tree.Node ("Node", []) -> ""
+    | Tree.Node ("Node", [l; r]) -> "(" ^ repr l ^ ")" ^ repr r
     | _ -> invalid_arg "repr"
   in
   let nb_iterations = 1000 in (* 1000 is not enough *)

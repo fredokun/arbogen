@@ -12,73 +12,79 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Util
-open Grammar
+type elem = Elem of int | Seq of int
+type component = {weight: float; atoms: int; elems: elem list}
+type rule = {weight: float; choices: component list}
+type t = {rules: rule array; names: string array}
 
-type weighted_grammar = {
-  rules: (float * (Grammar.component * float) list) StringMap.t;
-  first_rule: string
-}
+module Smap = Map.Make(String)
 
-let rule_names_to_index grm =
-  let rec rn_to_ind grm index_map index =
-    match grm with
-    | [] -> index_map
-    | (rule_name, _) :: grm' ->
-      rn_to_ind grm' (StringMap.add rule_name index index_map) (index+1)
+let map_names_to_ids grammar =
+  let names = List.map fst grammar |> Array.of_list in
+  let _, indices = Array.fold_left
+      (fun (i, map) name -> i + 1, Smap.add name i map)
+      (0, Smap.empty)
+      names
   in
-  let index_map = StringMap.empty in
-  rn_to_ind grm index_map 0
+  names, indices
 
-let cpnt_to_wcpnt z rules_indexes values component =
-  let zn, l = component in
-  let w = (z ** (float_of_int zn)) *.
-          (List.fold_left
-             (fun total_weight elem ->
-                match elem with
-                | Elem name ->
-                  begin
-                    let rule_index = StringMap.find name rules_indexes in
-                    total_weight *. values.(rule_index)
-                  end
-                | Seq name ->
-                  begin
-                    let rule_index = StringMap.find name rules_indexes in
-                    total_weight /. (1. -. values.(rule_index))
-                  end
-             )
-             1.
-             l)
-  in (component, w)
+(** {2 Conversion} *)
 
-let weighted_grm_of_grm grammar values z =
-  let rules_indexes = rule_names_to_index grammar in
-  let add_rule wrules (name, components) =
-    let components_weight = List.map (cpnt_to_wcpnt z rules_indexes values) components in
-    let rule_weight = List.fold_left (fun r (_, w) -> r +. w) 0. components_weight in
-    StringMap.add name (rule_weight, components_weight) wrules
+let eval_elem values = function
+  | Elem i -> values.(i)
+  | Seq i -> 1. /. (1. -. values.(i))
+
+let of_elem indices = function
+  | Grammar.Elem name -> Elem (Smap.find name indices)
+  | Grammar.Seq name -> Seq (Smap.find name indices)
+
+let of_component z values indices component =
+  let atoms, elems = component in
+  let elems = List.map (of_elem indices) elems in
+  let atom_weight = z ** float_of_int atoms in
+  let weight = Util.fold_map (eval_elem values) ( *. ) atom_weight elems in
+  {weight; atoms; elems}
+
+let of_rule z values indices rule =
+  let _, components = rule in
+  let choices = List.map (of_component z values indices) components in
+  let weight = List.fold_left (fun w (comp: component) -> w +. comp.weight) 0. choices in
+  {weight; choices}
+
+let of_grammar z values grammar =
+  let names, indices = map_names_to_ids grammar in
+  let rules =
+    List.map (of_rule z values indices) grammar |>
+    Array.of_list
   in
-  let rules = List.fold_left add_rule StringMap.empty grammar in
-  let (first_rule, _) = List.hd grammar in
-  {rules; first_rule}
+  {names; rules}
 
-let pp_component fmt (component, weight) =
-  Format.fprintf fmt "%F, %a" weight Grammar.pp_component component
+(** {2 Pretty printing} *)
 
-let pp_components fmt = function
-  | [] -> Format.fprintf fmt "<empty>"
-  | components ->
-    let pp_sep fmt () = Format.fprintf fmt " + " in
-    Format.pp_print_list ~pp_sep pp_component fmt components
+let pp_elem fmt = function
+  | Elem i -> Format.fprintf fmt "Elem %d" i
+  | Seq i -> Format.fprintf fmt "Seq %d" i
 
-let print_rule fmt name weight components =
-  Format.fprintf fmt "%s, %F ::= %a@\n" name weight pp_components components
+let pp_product pp_term fmt terms =
+  let pp_sep fmt () = Format.fprintf fmt " * " in
+  match terms with
+  | [] -> Format.fprintf fmt "1"
+  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
 
-let pp fmt {rules; first_rule} =
-  let (weight, components) = StringMap.find first_rule rules in
-  print_rule fmt first_rule weight components;
-  let rules = StringMap.remove first_rule rules in
-  StringMap.iter
-    (fun name (weight, components) ->
-       Format.fprintf fmt "%s, %F ::= %a" name weight pp_components components)
+let pp_component fmt {weight; atoms; elems} =
+  Format.fprintf fmt "(%F) z^%d * %a" weight atoms (pp_product pp_elem) elems
+
+let pp_sum pp_term fmt terms =
+  let pp_sep fmt () = Format.fprintf fmt " + " in
+  match terms with
+  | [] -> Format.fprintf fmt "0"
+  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
+
+let pp_rule fmt {weight; choices} =
+  Format.fprintf fmt "(%F) %a" weight (pp_sum pp_component) choices
+
+let pp fmt {rules; names} =
+  Array.iteri
+    (fun i rule ->
+       Format.fprintf fmt "[%d] %s ::= %a@\n" i names.(i) pp_rule rule)
     rules
