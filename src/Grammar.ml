@@ -12,8 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Util
-
 (* {2 Grammar encoding} *)
 
 (** A grammar is a list of rules *)
@@ -39,42 +37,44 @@ let make_epsilon_rule name =
 
 (** {2 Grammar completion} *)
 
+module Sset = Set.Make(String)
+
 let name_of_elem = function
   | Seq name -> name
   | Elem name -> name
 
 let names_of_component (_, elems) =
   List.fold_left
-    (fun names elem -> StringSet.add (name_of_elem elem) names)
-    StringSet.empty
+    (fun names elem -> Sset.add (name_of_elem elem) names)
+    Sset.empty
     elems
 
 let names_of_rule (_, comps) =
   List.fold_left
-    (fun names comp -> StringSet.union (names_of_component comp) names)
-    StringSet.empty
+    (fun names comp -> Sset.union (names_of_component comp) names)
+    Sset.empty
     comps
 
 let names_of_grammar grammar =
   List.fold_left
-    (fun gnames rule -> StringSet.union (names_of_rule rule) gnames)
-    StringSet.empty
+    (fun gnames rule -> Sset.union (names_of_rule rule) gnames)
+    Sset.empty
     grammar
 
 let rule_names_of_grammar grammar =
   List.fold_left
-    (fun rnames (rname, _) -> StringSet.add rname rnames)
-    StringSet.empty
+    (fun rnames (rname, _) -> Sset.add rname rnames)
+    Sset.empty
     grammar
 
 let leaves_of_grammar grammar =
-  StringSet.diff (names_of_grammar grammar) (rule_names_of_grammar grammar)
+  Sset.diff (names_of_grammar grammar) (rule_names_of_grammar grammar)
 
 (** [completion g] adds rule of the form [name ::= ε] for each unbound symbol
     in the grammar *)
 let completion grammar =
   let leaves =
-    StringSet.fold
+    Sset.fold
       (fun leaf_name rules -> make_epsilon_rule leaf_name :: rules)
       (leaves_of_grammar grammar)
       []

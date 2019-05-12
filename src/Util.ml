@@ -65,10 +65,6 @@ let array_for_all2 p u v =
     true
   with Exit -> false
 
-(* string set *)
-
-module StringSet = Set.Make(String)
-
 (* string map *)
 
 module StringMap = Map.Make(String)
