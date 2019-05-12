@@ -1,8 +1,8 @@
 (menhir
-  (modules Parser))
+  (modules parser))
 
 (ocamllex
-  (modules Lexer))
+  (modules lexer))
 
 (library
   (name arbolib)
