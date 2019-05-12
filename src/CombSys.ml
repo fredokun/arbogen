@@ -68,6 +68,8 @@ let eval_eq (z: float) (y: float array) (eq: combeq) : float =
 let evaluation (phi: combsys) (z: float) (y: float array) : float array =
   Array.init (combsys_size phi) (fun i -> eval_eq z y phi.(i))
 
+module Smap = Map.Make(String)
+
 let rec make_z = function
   | 0 -> []
   | n -> Z::(make_z ((-) n 1))
@@ -75,8 +77,8 @@ let rec make_z = function
 let rec make_refs map refs =
   match refs with
   | [] -> []
-  | Grammar.Seq(a)::refs' -> (Seq (StringMap.find a map))::(make_refs map refs')
-  | ref::refs' -> (Refe (StringMap.find (name_of_elem ref) map))::(make_refs map refs')
+  | Grammar.Seq(a)::refs' -> (Seq (Smap.find a map))::(make_refs map refs')
+  | ref::refs' -> (Refe (Smap.find (name_of_elem ref) map))::(make_refs map refs')
 
 let comprod_of_component map (weight, refs) =
   (make_refs map refs) @ (make_z weight)
@@ -87,15 +89,15 @@ let combeq_of_rule map (_,comps) =
 let refmap_of_grammar grm =
   let rec aux i grm map = match grm with
     | [] -> map
-    | (rname,_)::grm' -> aux (i+1) grm' (StringMap.add rname i map)
+    | (rname,_)::grm' -> aux (i+1) grm' (Smap.add rname i map)
   in
-  aux 0 grm StringMap.empty
+  aux 0 grm Smap.empty
 
 let combsys_of_grammar grm =
   let rec aux grm map sys = match grm with
     | [] -> sys
     | ((rname,_) as rule)::grm' ->
-      let index = StringMap.find rname map in
+      let index = Smap.find rname map in
       Array.set sys index (combeq_of_rule map rule) ;
       aux grm' map sys
   in

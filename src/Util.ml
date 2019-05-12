@@ -21,18 +21,14 @@ let string_of_list_buf str_of_elem buf op dl cl l =
   let rec aux = function
     | [] -> Buffer.add_string buf cl
     | [e] ->
-      begin
-        Buffer.add_string buf op;
-        str_of_elem e;
-        Buffer.add_string buf cl;
-      end
+      Buffer.add_string buf op;
+      str_of_elem e;
+      Buffer.add_string buf cl;
     | e::l' ->
-      begin
-        Buffer.add_string buf op;
-        str_of_elem e;
-        Buffer.add_string buf dl;
-        (aux l');
-      end
+      Buffer.add_string buf op;
+      str_of_elem e;
+      Buffer.add_string buf dl;
+      (aux l');
   in Buffer.add_string buf op;
   (aux l)
 
@@ -64,7 +60,3 @@ let array_for_all2 p u v =
     Array.iter2 (fun x y -> if not (p x y) then raise Exit) u v;
     true
   with Exit -> false
-
-(* string map *)
-
-module StringMap = Map.Make(String)
