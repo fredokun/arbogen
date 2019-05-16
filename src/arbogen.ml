@@ -125,16 +125,17 @@ let print_tree tree =
   (* XXX. ugly workaround *)
   let tree = Tree.annotate tree in
 
-  let arb_printer = Tree.file_of_tree global_options.with_type global_options.with_id in
-  let dot_printer = Tree.file_of_dot global_options.with_type global_options.with_id global_options.indent in
-  let xml_printer = Tree.file_of_xml global_options.with_type global_options.with_id global_options.indent in
+  let {with_type; with_id; indent; _} = global_options in
+  let arb_printer = Tree.output_arb ~show_type:with_type ~show_id:with_id ~indent in
+  let dot_printer = Tree.output_dot ~show_type:with_type ~show_id:with_id ~indent in
+  let xml_printer = Tree.output_xml ~show_type:with_type ~show_id:with_id ~indent in
 
   let print printer filename typ =
-    if filename = "" then printer tree stdout
+    if filename = "" then printer stdout tree
     else begin
       Format.printf "Saving file to '%s%s'@." filename typ;
       let out = open_out (filename ^ typ) in
-      printer tree out;
+      printer out tree;
       close_out out
     end
   in

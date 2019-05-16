@@ -44,10 +44,6 @@ let rec tree_out (show_type:bool) (show_id:bool) tree out =
     (fun (out:out_channel) t -> (tree_out show_type show_id t out))
     "[" "," "]" ts
 
-let file_of_tree (show_type:bool) (show_id:bool) tree out =
-  tree_out show_type show_id tree out ;
-  output_string out "\n"
-
 let attributes buf typ id show_type show_id =
   Buffer.add_string buf (if show_type then "type=\"" ^ typ ^ "\" " else "");
   Buffer.add_string buf (if show_id then "id=\"" ^ id ^ "\"" else "")
@@ -126,11 +122,17 @@ let dot_of_tree (show_type:bool) (show_id:bool) (indent: bool) t =
   Buffer.add_string buf "}\n";
   buf
 
-let file_of_dot (show_type:bool) (show_id:bool) (indent: bool) tree out =
+let output_arb ~show_type ~show_id ~indent out tree =
+  if indent then
+    Format.printf "Warning: -indent not supported for the arb format@.";
+  tree_out show_type show_id tree out ;
+  output_string out "\n"
+
+let output_dot ~show_type ~show_id ~indent out tree =
   let buf = dot_of_tree show_type show_id indent tree in
   Buffer.output_buffer out buf
 
-let file_of_xml (show_type:bool) (show_id:bool) (indent: bool) tree out =
+let output_xml ~show_type ~show_id ~indent out tree =
   let buf =
     if indent then
       indent_xml_of_tree show_type show_id tree
