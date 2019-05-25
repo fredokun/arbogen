@@ -12,10 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-(* {2 Grammar internal representation} *)
-
-(** A grammar is an array of production rules and a mapping from integers
-    to non-terminal names *)
 type t = {names: string array; rules: rule array}
 
 and rule = component list
@@ -27,7 +23,7 @@ and elem =
 let epsilon = (0, [])
 
 
-(** {2 Pretty printing} *)
+(* Pretty printing *)
 
 let pp_elem names fmt = function
   | Elem i -> Format.pp_print_string fmt names.(i)
