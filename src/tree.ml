@@ -24,9 +24,41 @@ let annotate tree =
   in
   aux tree
 
+(* Some pretty printing utilities *)
+
+let string_of_list_buf str_of_elem buf op dl cl l =
+  let rec aux = function
+    | [] -> Buffer.add_string buf cl
+    | [e] ->
+      Buffer.add_string buf op;
+      str_of_elem e;
+      Buffer.add_string buf cl;
+    | e::l' ->
+      Buffer.add_string buf op;
+      str_of_elem e;
+      Buffer.add_string buf dl;
+      (aux l');
+  in
+  Buffer.add_string buf op;
+  aux l
+
+let rec output_list out output_elem op dl cl = function
+  | [] -> output_string out cl
+  | [e] ->
+    output_string out op ;
+    output_elem out e ;
+    output_string out cl
+  | e::l' ->
+    output_string out op ;
+    output_elem out e ;
+    output_string out dl ;
+    output_list out output_elem "" dl cl l'
+
 let rec indent_string = function
   | 0 -> ""
   | n -> "  " ^  indent_string (n-1)
+
+(* .arb *)
 
 let rec tree_out (show_type:bool) (show_id:bool) tree out =
   let label typ id =
@@ -39,10 +71,12 @@ let rec tree_out (show_type:bool) (show_id:bool) tree out =
   in
   let Node ((typ, id), ts) = tree in
   output_string out (label typ id) ;
-  Util.output_list
+  output_list
     out
     (fun (out:out_channel) t -> (tree_out show_type show_id t out))
     "[" "," "]" ts
+
+(* .xml *)
 
 let attributes buf typ id show_type show_id =
   Buffer.add_string buf (if show_type then "type=\"" ^ typ ^ "\" " else "");
@@ -54,7 +88,7 @@ let xml_of_tree (show_type:bool) (show_id:bool) t =
     Buffer.add_string buf "<node ";
     attributes buf typ id show_type show_id;
     Buffer.add_string buf ">";
-    Util.string_of_list_buf aux buf "" "" "</node>" ts
+    string_of_list_buf aux buf "" "" "</node>" ts
   in
   Buffer.add_string buf "<?xml version=\"1.0\"?><tree>";
   aux t;
@@ -85,6 +119,8 @@ let indent_xml_of_tree (show_type:bool) (show_id:bool) t =
   Buffer.add_string buf "\n</tree>\n";
   buf
 
+(* .dot *)
+
 let dot_of_tree (show_type:bool) (show_id:bool) (indent: bool) t =
   let label typ id =
     let aux typ id =
@@ -106,21 +142,23 @@ let dot_of_tree (show_type:bool) (show_id:bool) (indent: bool) t =
     Buffer.add_string buf "  ";
     Buffer.add_string buf id;
     Buffer.add_string buf (label typ id);
-    Util.string_of_list_buf nodes buf "" "" "" ts;
+    string_of_list_buf nodes buf "" "" "" ts;
   and edges level pred (Node ((_, id), ts)) =
     Buffer.add_string buf (if indent then (indent_string level) else "");
     Buffer.add_string buf pred;
     Buffer.add_string buf " -> ";
     Buffer.add_string buf id;
     Buffer.add_string buf ";\n";
-    Util.string_of_list_buf (fun t -> edges (level+1) id t) buf "" "" "" ts;
+    string_of_list_buf (fun t -> edges (level+1) id t) buf "" "" "" ts;
   in
   Buffer.add_string buf "digraph {\n";
   nodes t;
-  (match t with Node ((_,id),ts) ->
-     Util.string_of_list_buf (fun t -> edges 1 id t) buf "" "" "" ts);
+  let Node ((_, id), ts) = t in
+  string_of_list_buf (fun t -> edges 1 id t) buf "" "" "" ts;
   Buffer.add_string buf "}\n";
   buf
+
+(* public functions *)
 
 let output_arb ~show_type ~show_id ~indent out tree =
   if indent then
