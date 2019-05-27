@@ -14,7 +14,6 @@
 
 open Arbolib
 open Options
-open GenState
 
 let version_str = "arbogen v0.20121006 (beta)"
 let usage = "Usage: arbogen <opt> <specfile>.spec"
@@ -204,14 +203,11 @@ let () =
       if (global_options.verbosity) > 0 then
         Format.printf "Loading state file: %s@." global_options.state_file;
 
-      let in_channel = open_in global_options.state_file in
-      let state: gen_state = input_value in_channel in
-      close_in in_channel;
-
+      let state = GenState.from_file global_options.state_file in
       global_options.randgen <- state.randgen;
-
       let module Rand = (val RandGen.get state.randgen) in
-      Rand.set_state state.rnd_state;
+      Rand.(State.from_bytes state.GenState.rnd_state |> set_state);
+
       let tree, size = Gen.gen (module Rand) state.weighted_grammar in
       Some (tree, size, state)
     end
@@ -231,7 +227,5 @@ let () =
     if global_options.verbosity >= 2 then
       Format.printf "==> Saving state to file '%s'@." out_state;
 
-    let out_state = open_out out_state in
-    output_value out_state state;
-    close_out out_state;
+    GenState.to_file out_state state;
     print_tree tree

@@ -112,7 +112,8 @@ let gen (module R: RandGen.Sig) wg =
 (** {2 High level interface} *)
 
 (** Search for a tree in a specific size window *)
-let search_seed (module R: RandGen.Sig) rules ~size_min ~size_max ~max_try =
+let search_seed (type state) (module R: RandGen.Sig with type State.t = state) rules ~size_min ~size_max ~max_try
+  : (int * state) option * int * int =
   let rec search rej_small rej_big nb_try =
     if nb_try = 0 then
       None, rej_small, rej_big
@@ -173,17 +174,26 @@ let generator
     (randgen:string)
     (verbosity:int)
   =
-  let randgen = init_rng ~randgen ~seed ~verbosity in
-  let module Rand = (val randgen) in
-
   let oracle_config = OracleSimple.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
-
-  let res = simulator max_refine max_try grammar oracle_config epsilon1_factor epsilon2_factor sizemin sizemax ratio_rejected randgen verbosity in
+  let module R = (val init_rng ~randgen ~seed ~verbosity) in
+  let res = simulator
+      max_refine
+      max_try
+      grammar
+      oracle_config
+      epsilon1_factor
+      epsilon2_factor
+      sizemin
+      sizemax
+      ratio_rejected
+      (module R)
+      verbosity
+  in
   match res with
-  | Some(size,state,wgrm) ->
-    let final_state = {randgen = Rand.name; rnd_state = state; weighted_grammar = wgrm} in
-    Rand.set_state state;
-    let tree, size' = gen (module Rand) wgrm in
+  | Some (size, state, wgrm) ->
+    let final_state = {randgen = R.name; rnd_state = R.State.to_bytes state; weighted_grammar = wgrm} in
+    R.set_state state;
+    let tree, size' = gen (module R) wgrm in
     assert (size = size');
-    Some(tree,size,final_state)
+    Some (tree, size, final_state)
   | None -> None

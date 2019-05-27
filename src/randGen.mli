@@ -1,12 +1,20 @@
 (** A PRNG must implement this interface to be used for Boltzmann generation *)
 module type Sig = sig
+  (** The internal state of the RNG must be serializable type *)
+  module State: sig
+    type t
+
+    val to_bytes: t -> Bytes.t
+    val from_bytes: Bytes.t -> t
+  end
+
   val name: string
   val init: int -> unit
   val self_init: unit -> unit
   val int: int -> int
   val float: float -> float
-  val get_state: unit -> Random.State.t
-  val set_state: Random.State.t -> unit
+  val get_state: unit -> State.t
+  val set_state: State.t -> unit
 end
 
 (** OCaml's Random module *)
