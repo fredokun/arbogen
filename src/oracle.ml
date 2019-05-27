@@ -1,6 +1,8 @@
-(** {2 Unlabelled oracles} *)
 
 type unlabelled = {z: float; values: float array}
+
+
+(** {2} Grammar evaluation *)
 
 let eval_elem oracle = function
   | Grammar.Elem i -> oracle.values.(i)
