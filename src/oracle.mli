@@ -4,7 +4,7 @@
     generating functions at [z] *)
 type unlabelled = {z: float; values: float array}
 
-(** {2} Grammar evaluation *)
+(** {2 Grammar evaluation} *)
 
 (** Evaluate an element with respect to an oracle *)
 val eval_elem: unlabelled -> Grammar.elem -> float
