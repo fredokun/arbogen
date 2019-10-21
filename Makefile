@@ -35,4 +35,4 @@ uninstall: build
 
 clean:
 	dune clean
-	rm -f bin lib
+	rm -f bin lib doc
