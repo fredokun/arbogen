@@ -1,7 +1,5 @@
-.PHONY: all build doc bench profile longtest test clean install uninstall
+.PHONY: build doc bench profile longtest test clean install uninstall
 COMMIT = $(shell git log --pretty=format:'%h' -n 1)
-
-all: build test
 
 build:
 	dune build @install
