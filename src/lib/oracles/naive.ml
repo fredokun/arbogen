@@ -38,7 +38,7 @@ let diverge (epsilon2: float) : float array -> bool =
 
 let iteration_simple grammar z ?init_values epsilon2 =
   let rec iterate v1 v2 =
-    let _ = Oracle.(eval ~dest:v2 {z; values = v1}) grammar in
+    let _ = Grammar.eval ~dest:v2 ~z ~values:v1 grammar in
     if diverge epsilon2 v2 then
       Diverge
     else if distance v1 v2 <= epsilon2 then
@@ -70,4 +70,4 @@ let search_singularity {epsilon1; epsilon2; zmin; zmax; zstart} grammar =
 
 let make config grammar =
   let z, _, values = search_singularity config grammar in
-  Oracle.{z; values}
+  z, values

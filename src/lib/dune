@@ -1,4 +1,11 @@
 (library
- (name arbolib)
+ (name grammar)
+ (public_name arbogen.grammar)
  (libraries frontend)
- (public_name arbogen))
+ (modules Grammar))
+
+(library
+ (name arbolib)
+ (public_name arbogen)
+ (libraries frontend oracles grammar)
+ (modules :standard \ Grammar))

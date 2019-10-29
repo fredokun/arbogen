@@ -1,0 +1,4 @@
+(library
+ (name oracles)
+ (public_name arbogen.oracles)
+ (libraries grammar))

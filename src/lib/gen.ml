@@ -12,7 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open OracleSimple
 open GenState
 
 
@@ -133,8 +132,8 @@ let search_seed (type state) (module R: RandGen.Sig with type State.t = state) r
 (** Search for a size in a specific size window and refine the singularity
     search in case of failure *)
 let rec simulator nb_refine max_try grammar oracle_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity =
-  let oracle = OracleSimple.make oracle_config grammar in
-  let wgrm = WeightedGrammar.of_grammar oracle grammar in
+  let z, values = Oracles.Naive.make oracle_config grammar in
+  let wgrm = WeightedGrammar.of_grammar ~z ~values grammar in
   let result, nb_smaller, nb_bigger = search_seed randgen wgrm.rules ~size_min ~size_max ~max_try in
   match result with
   | Some (size, state) -> Some (size, state, wgrm)
@@ -174,7 +173,7 @@ let generator
     (randgen:string)
     (verbosity:int)
   =
-  let oracle_config = OracleSimple.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
+  let oracle_config = Oracles.Naive.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
   let module R = (val init_rng ~randgen ~seed ~verbosity) in
   let res = simulator
       max_refine

@@ -20,13 +20,13 @@ type t = {rules: rule array; names: string array}
 val of_elem: Grammar.elem -> elem
 
 (** Annotate a grammar component *)
-val of_component: Oracle.unlabelled -> Grammar.component -> component
+val of_component: z:float -> values:float array -> Grammar.component -> component
 
 (** Annotate a grammar rule *)
-val of_rule: Oracle.unlabelled -> Grammar.rule -> rule
+val of_rule: z:float -> values:float array -> Grammar.rule -> rule
 
 (** Annotate a grammar *)
-val of_grammar: Oracle.unlabelled -> Grammar.t -> t
+val of_grammar: z:float -> values:float array -> Grammar.t -> t
 
 (** {2 Pretty printing} *)
 

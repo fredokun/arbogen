@@ -168,16 +168,16 @@ let () =
     let grammar = Grammar.of_parsetree parsetree in
     ParseUtil.set_options ~preserve:true options;
     Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
-    let oracle_config = OracleSimple.{
+    let oracle_config = Oracles.Naive.{
         epsilon1 = global_options.epsilon1;
         epsilon2 = global_options.epsilon2;
         zmin = 0.;
         zmax = 1.;
         zstart = global_options.zstart;
       } in
-    let oracle = OracleSimple.make oracle_config grammar in
-    Format.printf "[ORACLE]: found singularity at z=%F@." oracle.z;
-    let wgrm = WeightedGrammar.of_grammar oracle grammar in
+    let z, values = Oracles.Naive.make oracle_config grammar in
+    Format.printf "[ORACLE]: found singularity at z=%F@." z;
+    let wgrm = WeightedGrammar.of_grammar ~z ~values grammar in
     Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
     exit 0
   end;

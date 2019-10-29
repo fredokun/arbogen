@@ -23,20 +23,20 @@ let of_elem = function
   | Grammar.Elem i -> Elem i
   | Grammar.Seq i -> Seq i
 
-let of_component oracle component =
-  let weight = Oracle.eval_component oracle component in
+let of_component ~z ~values component =
+  let weight = Grammar.eval_component ~z ~values component in
   let atoms, elems = component in
   let elems = List.map of_elem elems in
   {weight; atoms; elems}
 
-let of_rule oracle rule =
-  let weight = Oracle.eval_rule oracle rule in
-  let choices = List.map (of_component oracle) rule in
+let of_rule ~z ~values rule =
+  let weight = Grammar.eval_rule ~z ~values rule in
+  let choices = List.map (of_component ~z ~values) rule in
   {weight; choices}
 
-let of_grammar oracle grammar =
+let of_grammar ~z ~values grammar =
   let Grammar.{names; rules} = grammar in
-  let rules = Array.map (of_rule oracle) rules in
+  let rules = Array.map (of_rule ~z ~values) rules in
   {names; rules}
 
 (** {2 Pretty printing} *)
