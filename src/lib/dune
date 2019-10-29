@@ -1,11 +1,41 @@
+; Main entry point of the arbolib library.
+; Arbolib is split in 6 sub-libraries (see below)
+(library
+ (name arbolib)
+ (public_name arbogen)
+ (libraries grammar randgen tree frontend boltzmann oracles)
+ (modules))
+
+; ** Grammar **
+; Low-level efficient grammar reprensentation
 (library
  (name grammar)
  (public_name arbogen.grammar)
  (libraries frontend)
  (modules Grammar))
 
+; ** Randgen **
+; Various PRNGs
 (library
- (name arbolib)
- (public_name arbogen)
- (libraries frontend oracles grammar)
- (modules :standard \ Grammar))
+ (name randgen)
+ (public_name arbogen.randgen)
+ (modules Randgen))
+
+; ** Tree **
+; A generic tree datastructure
+(library
+ (name tree)
+ (public_name arbogen.tree)
+ (modules Tree))
+
+; ** Frontend **
+; Parsing and high level grammar construction
+; (see the `frontend` folder)
+
+; ** Boltzmann **
+; Boltzmann uniform random generation
+; (see the `boltzmann` folder)
+
+; ** Oracles **
+; Various oracle implementations
+; (see the `oracles` folder)

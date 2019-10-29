@@ -1,4 +1,3 @@
-open Arbolib
 open Grammar
 
 let fail format =
@@ -23,7 +22,7 @@ let mk_grammar rules =
   {names; rules}
 
 let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
-  match Gen.generator
+  match Boltzmann.Gen.generator
           grammar
           ~seed:(Some seed)
           size_min

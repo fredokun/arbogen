@@ -12,9 +12,9 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Arbolib
 open Frontend
 open Options
+module WeightedGrammar = Boltzmann.WeightedGrammar
 
 
 let version_str = "arbogen v0.20121006 (beta)"
@@ -188,7 +188,7 @@ let () =
       let grammar = Grammar.of_parsetree parsetree in
       ParseUtil.set_options ~preserve:true options;
       if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
-      Gen.generator
+      Boltzmann.Gen.generator
         grammar
         ~seed:global_options.random_seed
         global_options.size_min
@@ -207,12 +207,12 @@ let () =
       if (global_options.verbosity) > 0 then
         Format.printf "Loading state file: %s@." global_options.state_file;
 
-      let state = GenState.from_file global_options.state_file in
+      let state = Boltzmann.GenState.from_file global_options.state_file in
       global_options.randgen <- state.randgen;
-      let module Rand = (val RandGen.get state.randgen) in
-      Rand.(State.from_bytes state.GenState.rnd_state |> set_state);
+      let module Rand = (val Randgen.get state.randgen) in
+      Rand.(State.from_bytes state.rnd_state |> set_state);
 
-      let tree, size = Gen.gen (module Rand) state.weighted_grammar in
+      let tree, size = Boltzmann.Gen.gen (module Rand) state.weighted_grammar in
       Some (tree, size, state)
     end
   in
@@ -231,5 +231,5 @@ let () =
     if global_options.verbosity >= 2 then
       Format.printf "==> Saving state to file '%s'@." out_state;
 
-    GenState.to_file out_state state;
+    Boltzmann.GenState.to_file out_state state;
     print_tree tree
