@@ -59,34 +59,6 @@ let of_parsetree t =
   {rules; names}
 
 
-(* Evaluation *)
-
-let eval_elem ~values = function
-  | Elem i -> values.(i)
-  | Seq i -> 1. /. (1. -. values.(i))
-
-let eval_component ~z ~values (atoms, factors) =
-  List.fold_left
-    (fun x elem -> x *. eval_elem ~values elem)
-    (z ** float_of_int atoms)
-    factors
-
-let eval_rule ~z ~values terms =
-  List.fold_left
-    (fun x component -> x +. eval_component ~z ~values component)
-    0.
-    terms
-
-let eval ?dest ~z ~values grammar =
-  match dest with
-  | Some dest ->
-    Array.iteri
-      (fun i rule -> dest.(i) <- eval_rule ~z ~values rule)
-      grammar.rules;
-    dest
-  | None -> Array.map (eval_rule ~z ~values) grammar.rules
-
-
 (* Pretty printing *)
 
 let pp_elem names fmt = function

@@ -1,12 +1,13 @@
 open Grammar
-open Oracles.Naive
+open Oracles
+open Oracles.Types
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 let checkfa tolerance = Alcotest.(check (array (float tolerance)))
 let foi = float_of_int
 
 let iteration grammar z epsilon2 =
-  match iteration_simple grammar z epsilon2 with
+  match Naive.iteration_simple grammar z epsilon2 with
   | Diverge -> Alcotest.fail "diverge"
   | Val v -> v
 
@@ -18,17 +19,20 @@ let mk_grammar rules =
 (** {2 tests for simple evaluations} *)
 
 let eval_elem () =
-  checkf 0. "eval(Elem)" 0.23 (eval_elem ~values:[|0.23|] (Elem 0));
-  checkf 1e-12 "eval(Seq)" 5. (eval_elem ~values:[|0.8|] (Seq 0))
+  let oracle = {z = 0.; values = [|0.23|]} in
+  checkf 0. "eval(Elem)" 0.23 (Eval.elem oracle (Elem 0));
+  let oracle = {z = 0.; values = [|0.8|]} in
+  checkf 1e-12 "eval(Seq)" 5. (Eval.elem oracle (Seq 0))
 
 let eval_empty_product () =
-  checkf 0. "eval(empty_prod)" 1. (eval_component ~z:0.23 ~values:[||] (0, []))
+  let oracle = {z = 0.23; values = [||]} in
+  checkf 0. "eval(empty_prod)" 1. (Eval.component oracle (0, []))
 
 let eval_powers_of_z () =
   let test n z =
     let name = Format.sprintf "eval(z^%d)" n in
-    let values = [||] in
-    checkf 1e-12 name (z ** foi n) (eval_component ~z ~values (n, []))
+    let oracle = {z; values = [||]} in
+    checkf 1e-12 name (z ** foi n) (Eval.component oracle (n, []))
   in
   test 5 0.8;
   test 10 0.95;
@@ -37,39 +41,35 @@ let eval_powers_of_z () =
 
 let eval_products () =
   let prod = (1, [Elem 0; Elem 0]) in
-  checkf 1e-12 "eval(z*A*A)" 1. (eval_component ~z:0.25 ~values:[|2.|] prod);
+  let oracle = {z = 0.25; values = [|2.|]} in
+  checkf 1e-12 "eval(z*A*A)" 1. (Eval.component oracle prod);
 
   let prod = (1, [Elem 1; Elem 2]) in
-  let z = 0.5 in
-  let values = [|20.; 3.; 4.|] in
-  checkf 1e-12 "eval(B*C*z)" 6. (eval_component ~z ~values prod);
+  let oracle = {z = 0.5; values = [|20.; 3.; 4.|]} in
+  checkf 1e-12 "eval(B*C*z)" 6. (Eval.component oracle prod);
 
   let prod = (1, [Elem 1; Seq 3]) in
-  let z = 0.4 in
-  let values = [|20.; 1.234; 4.; 0.8|] in
-  checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (eval_component ~z ~values prod)
+  let oracle = {z = 0.4; values = [|20.; 1.234; 4.; 0.8|]} in
+  checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (Eval.component oracle prod)
 
 let eval_empty_sum () =
-  let z = 1. in
-  let values = [|1.; 2.; 3.|] in
-  checkf 0. "eval(empty_sum)" 0. (eval_rule ~z ~values [])
+  let oracle = {z = 1.; values = [|1.; 2.; 3.|]} in
+  checkf 0. "eval(empty_sum)" 0. (Eval.rule oracle [])
 
 let eval_sums () =
   let sum = [(1, []); (1, []); (1, [])] in
   let z = 0.34567 in
-  let values = [||] in
-  checkf 1e-12 "eval(z + z + z)" (3. *. z) (eval_rule ~z ~values sum);
+  let oracle = {z; values = [||]} in
+  checkf 1e-12 "eval(z + z + z)" (3. *. z) (Eval.rule oracle sum);
 
   let sum = [(0, [Elem 0]); (0, [Seq 3]); (1, [])] in
-  let z = 0.11 in
-  let values = [|0.33; 10.; 20.; 0.2|] in
-  checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (eval_rule ~z ~values sum);
+  let oracle = {z = 0.11; values = [|0.33; 10.; 20.; 0.2|]} in
+  checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (Eval.rule oracle sum);
 
   let sum = [(0, [Elem 0; Elem 0]); (0, []); (1, [])] in
-  let z = 0.87 in
-  let values = [|0.7|] in
-  let expected = 0.7 ** 2. +. 1. +. z in
-  checkf 1e-12 "eval(A^2 + 1 + z)" expected (eval_rule ~z ~values sum)
+  let oracle = {z = 0.87; values = [|0.7|]} in
+  let expected = oracle.values.(0) ** 2. +. 1. +. oracle.z in
+  checkf 1e-12 "eval(A^2 + 1 + z)" expected (Eval.rule oracle sum)
 
 let eval_plane_trees () =
   let grammar = mk_grammar [|
@@ -79,13 +79,15 @@ let eval_plane_trees () =
   (* at a random point / context *)
   let z = 0.28 in
   let values = [|2.3; 8.1|] in
+  let oracle = {z; values} in
   let expected = [|z *. 8.1; 1. +. 2.3 *. 8.1|] in
-  checkfa 1e-12 "eval(plane tree)" expected (eval ~z ~values grammar);
+  checkfa 1e-12 "eval(plane tree)" expected (Eval.grammar oracle grammar);
   (* at the singularity *)
   let z = 0.25 in
   let values = [|0.5; 2.|] in
+  let oracle = {z; values} in
   let expected = values in
-  checkfa 1e-12 "eval(plane tree)@singularity" expected (eval ~z ~values grammar)
+  checkfa 1e-12 "eval(plane tree)@singularity" expected (Eval.grammar oracle grammar)
 
 let simple_evaluation_tests = [
   "Evaluate atomic elements", `Quick, eval_elem;
@@ -200,9 +202,9 @@ let evaluation_tests = [
 let eps = 1e-9
 
 let search grammar =
-  let config = {epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
-  let z, _ = make config grammar in
-  z
+  let config = Naive.{epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
+  let oracle = Naive.make config grammar in
+  oracle.z
 
 let binary_singularity () =
   let grammar = mk_grammar [|

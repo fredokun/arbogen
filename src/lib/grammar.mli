@@ -29,12 +29,6 @@ and elem =
 (** The only component of size 0 *)
 val epsilon: component
 
-(** {2 Evaluation using the symbolic method} *)
-
-val eval_elem: values:float array -> elem -> float
-val eval_component: z:float -> values:float array -> component -> float
-val eval_rule: z:float -> values:float array -> rule -> float
-val eval: ?dest:float array -> z:float -> values:float array -> t -> float array
 
 (** {2 Conversion} *)
 

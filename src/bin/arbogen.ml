@@ -175,9 +175,9 @@ let () =
         zmax = 1.;
         zstart = global_options.zstart;
       } in
-    let z, values = Oracles.Naive.make oracle_config grammar in
-    Format.printf "[ORACLE]: found singularity at z=%F@." z;
-    let wgrm = WeightedGrammar.of_grammar ~z ~values grammar in
+    let oracle = Oracles.Naive.make oracle_config grammar in
+    Format.printf "[ORACLE]: found singularity at z=%F@." oracle.z;
+    let wgrm = WeightedGrammar.of_grammar oracle grammar in
     Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
     exit 0
   end;
