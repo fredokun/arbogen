@@ -1,11 +1,11 @@
-type symbol =
+type t = rule list
+and rule = string * product list
+and product = atomic list
+
+and atomic =
   | Z of int
   | Elem of string
   | Seq of string
-type product = symbol list
-type rule = string * product list
-type t = rule list
-
 
 (** {2 Grammar completion} *)
 
@@ -23,13 +23,41 @@ let rule_names set (_, terms) =
 
 let names = List.fold_left rule_names Sset.empty
 
-(** Transform every undefined non-terminal into an leaf *)
-let completion grammar =
+let unbound_symbols grammar =
   let all_names = names grammar in
-  let defined_names = List.map fst grammar |> Sset.of_list in
-  let undefined = Sset.diff all_names defined_names in
+  let bound_names = List.map fst grammar |> Sset.of_list in
+  Sset.diff all_names bound_names
+
+let is_complete grammar =
+  Sset.is_empty (unbound_symbols grammar)
+
+let completion grammar =
+  let unbound = unbound_symbols grammar in
   let extra_rules =
     let epsilon = [[]] in
-    Sset.fold (fun name rules -> (name, epsilon) :: rules) undefined []
+    Sset.fold (fun name rules -> (name, epsilon) :: rules) unbound []
   in
   grammar @ extra_rules
+
+
+(** {2 Pretty-printing} *)
+
+let pp_atomic fmt = function
+  | Z n -> Format.fprintf fmt "z^%d" n
+  | Elem name -> Format.pp_print_string fmt name
+  | Seq name -> Format.fprintf fmt "Seq(%s)" name
+
+let pp_product =
+  let pp_sep fmt () = Format.pp_print_string fmt " * " in
+  Format.pp_print_list ~pp_sep pp_atomic
+
+let pp_derivations =
+  let pp_sep fmt () = Format.pp_print_string fmt " + " in
+  Format.pp_print_list ~pp_sep pp_product
+
+let pp_rule fmt (name, derivations) =
+  Format.fprintf fmt "%s ::= %a" name pp_derivations derivations
+
+let pp =
+  let pp_sep fmt () = Format.fprintf fmt "@\n" in
+  Format.pp_print_list ~pp_sep pp_rule
