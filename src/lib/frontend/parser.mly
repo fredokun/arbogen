@@ -13,7 +13,7 @@
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
 %start start
-%type <Options.parameter list * ParseTree.rules> start
+%type <Options.parameter list * ParseTree.t> start
 
 %%
 

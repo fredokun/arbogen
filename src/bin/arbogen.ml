@@ -13,7 +13,9 @@
  *********************************************************)
 
 open Arbolib
+open Frontend
 open Options
+
 
 let version_str = "arbogen v0.20121006 (beta)"
 let usage = "Usage: arbogen <opt> <specfile>.spec"
@@ -162,7 +164,8 @@ let () =
   if (global_options.verbosity) > 0 then Format.printf "%s@." banner;
 
   if global_options.print_oracle then begin
-    let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+    let (options, parsetree) = ParseUtil.parse_from_file global_options.grammar_file in
+    let grammar = Grammar.of_parsetree parsetree in
     ParseUtil.set_options ~preserve:true options;
     Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
     let oracle_config = OracleSimple.{
@@ -181,7 +184,8 @@ let () =
 
   let result =
     if not global_options.with_state then begin
-      let (options, grammar) = ParseUtil.parse_from_file global_options.grammar_file in
+      let (options, parsetree) = ParseUtil.parse_from_file global_options.grammar_file in
+      let grammar = Grammar.of_parsetree parsetree in
       ParseUtil.set_options ~preserve:true options;
       if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
       Gen.generator

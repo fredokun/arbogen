@@ -1,9 +1,4 @@
-(menhir
- (modules parser))
-
-(ocamllex
- (modules lexer))
-
 (library
  (name arbolib)
+ (libraries frontend)
  (public_name arbogen))

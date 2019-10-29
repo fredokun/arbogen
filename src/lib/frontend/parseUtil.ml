@@ -16,8 +16,7 @@ open Options
 
 let parse_from_channel chan =
   let lexbuf = Lexing.from_channel chan in
-  let params, parse_tree = Parser.start Lexer.token lexbuf in
-  params, ParseTree.to_grammar parse_tree
+  Parser.start Lexer.token lexbuf
 
 let parse_from_file filename =
   let chan = open_in filename in
@@ -130,7 +129,7 @@ let set_option ?(preserve=false) name value =
 
   | "randgen" ->
     let value = as_string name value in
-    let valid_names = List.map fst RandGen.all_rand_gens in
+    let valid_names = ["ocaml"; "randu"; "randnull"] in
     if not (List.mem value valid_names) then
       fail "rangen must belong to: %s" (String.concat "|" valid_names);
     global_options.randgen <- value

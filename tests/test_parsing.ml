@@ -1,4 +1,4 @@
-open Arbolib
+open Frontend
 
 
 let grammar =
@@ -7,8 +7,8 @@ let grammar =
   Alcotest.testable pp equal
 
 let parse test_name =
-  let _, grammar = ParseUtil.parse_from_file (test_name ^ ".spec") in
-  grammar
+  let _, parsetree = ParseUtil.parse_from_file (test_name ^ ".spec") in
+  Grammar.of_parsetree parsetree
 
 
 let binary () =

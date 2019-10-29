@@ -1,0 +1,10 @@
+(menhir
+ (modules parser))
+
+(ocamllex
+ (modules lexer))
+
+(library
+ (name frontend)
+ (public_name arbogen.frontend))
+
