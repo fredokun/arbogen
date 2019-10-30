@@ -32,14 +32,9 @@ let select_component (module R: Randtools.Sig.S) rule =
   | [{elems; atoms; _}] -> elems, atoms
   | _ -> aux (R.float rule.weight) rule.choices
 
-(** Simulate a geometric law of parameter [w] *)
-let gen_seq_len (module R: Randtools.Sig.S) w x =
-  let rec gen r wi =
-    let r = r -. wi in
-    if r < 0. then []
-    else x :: gen r (wi *. w)
-  in
-  gen (R.float 1.) (1. -. w)
+let gen_seq_len (module R: Randtools.Sig.S) p x =
+  let n = Randtools.Distribution.geometric (module R) p in
+  List.init n (fun _ -> x)
 
 (** Simulate the generation of a tree: only compute the size *)
 let sim (module R: Randtools.Sig.S) size_max rules =
