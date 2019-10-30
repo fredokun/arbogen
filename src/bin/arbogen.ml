@@ -51,9 +51,6 @@ let speclist =
   [("-version", Arg.Unit (fun () -> Format.printf "%s@." version_str; exit 0),
     "print version information");
 
-   ("-interactive", Arg.Unit (fun () -> global_options.interactive_mode <- true),
-    "activate interactive mode");
-
    ("-verbose", Arg.Int set_verbosity,
     "<n> : set the verbosity level to <n>  (a non-negative positive integer)");
 
@@ -146,6 +143,22 @@ let print_tree tree =
     print xml_printer filename ".xml"
   |_ -> failwith "unreachable case"
 
+let parse_grammar () =
+  let opts, ptree = ParseUtil.parse_from_file global_options.grammar_file in
+  ParseUtil.set_options ~preserve:true opts;
+  Grammar.of_parsetree ptree
+
+let make_oracle grammar =
+  let open Oracles.Naive in
+  let oracle_config = {
+      epsilon1 = global_options.epsilon1;
+      epsilon2 = global_options.epsilon2;
+      zmin = 0.;
+      zmax = 1.;
+      zstart = global_options.zstart;
+    } in
+  make oracle_config grammar
+
 let () =
   Arg.parse speclist
     (fun arg ->
@@ -158,18 +171,9 @@ let () =
   if (global_options.verbosity) > 0 then Format.printf "%s@." banner;
 
   if global_options.print_oracle then begin
-    let (options, parsetree) = ParseUtil.parse_from_file global_options.grammar_file in
-    let grammar = Grammar.of_parsetree parsetree in
-    ParseUtil.set_options ~preserve:true options;
+    let grammar = parse_grammar () in
     Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
-    let oracle_config = Oracles.Naive.{
-        epsilon1 = global_options.epsilon1;
-        epsilon2 = global_options.epsilon2;
-        zmin = 0.;
-        zmax = 1.;
-        zstart = global_options.zstart;
-      } in
-    let oracle = Oracles.Naive.make oracle_config grammar in
+    let oracle = make_oracle grammar in
     Format.printf "[ORACLE]: found singularity at z=%F@." oracle.z;
     let wgrm = WeightedGrammar.of_grammar oracle grammar in
     Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
@@ -178,19 +182,16 @@ let () =
 
   let result =
     if not global_options.with_state then begin
-      let (options, parsetree) = ParseUtil.parse_from_file global_options.grammar_file in
-      let grammar = Grammar.of_parsetree parsetree in
-      ParseUtil.set_options ~preserve:true options;
+      let grammar = parse_grammar () in
+      let oracle = make_oracle grammar in
       if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
       Boltzmann.Gen.generator
         grammar
+        oracle
         ~seed:global_options.random_seed
         ~size_min:global_options.size_min
         ~size_max:global_options.size_max
         ~max_try:global_options.max_try
-        global_options.epsilon1
-        global_options.epsilon2
-        global_options.zstart
         global_options.randgen
         global_options.verbosity
     end else begin

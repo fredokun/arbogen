@@ -140,19 +140,15 @@ let init_rng ~randgen ~seed ~verbosity =
 
 let generator
     grammar
+    oracle
     ~seed:(seed: int option)
     ~size_min
     ~size_max
     ~max_try
-    (epsilon1:float)
-    (epsilon2:float)
-    (zstart:float)
     (randgen:string)
     (verbosity:int)
   =
   let module R = (val init_rng ~randgen ~seed ~verbosity) in
-  let oracle_config = Oracles.Naive.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
-  let oracle = Oracles.Naive.make oracle_config grammar in
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
   match search_seed (module R) wgrm.rules ~size_min ~size_max ~max_try with
   | Some size ->

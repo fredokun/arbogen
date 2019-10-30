@@ -22,15 +22,17 @@ let mk_grammar rules =
   {names; rules}
 
 let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
+  let oracle_config = Oracles.Naive.{
+    epsilon1 = 1e-9; epsilon2 = 1e-9; zstart = 0.; zmin = 0.; zmax = 1.
+  } in
+  let oracle = Oracles.Naive.make oracle_config grammar in
   match Boltzmann.Gen.generator
           grammar
+          oracle
           ~seed:(Some seed)
           ~size_min
           ~size_max
           ~max_try:1000
-          1e-9 (* epsilon 1 *)
-          1e-9 (* epsilon 2 *)
-          0.   (* zstart *)
           "ocaml" (* randgen *)
           0    (* verbosity *)
   with

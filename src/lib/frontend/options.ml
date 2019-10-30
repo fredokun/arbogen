@@ -10,7 +10,6 @@ type parameter = Param of string * value
 (** {2 Global options} *)
 
 type options_record = {
-  mutable interactive_mode : bool;
   mutable grammar_file: string;
   mutable verbosity: int;
   mutable random_seed: int option;
@@ -38,7 +37,6 @@ type options_record = {
 }
 
 let global_options = {
-  interactive_mode = false;
   grammar_file = "";
   verbosity = 1;
   random_seed = None;
