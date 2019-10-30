@@ -106,8 +106,8 @@ let gen (module R: Randtools.Sig.S) wg =
 (** {2 High level interface} *)
 
 (** Search for a tree in a specific size window *)
-let search_seed (type state) (module R: Randtools.Sig.S with type State.t = state) rules ~size_min ~size_max ~max_try
-  : (int * state) option * int * int =
+let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try
+  : int option * int * int =
   let rec search rej_small rej_big nb_try =
     if nb_try = 0 then
       None, rej_small, rej_big
@@ -119,8 +119,10 @@ let search_seed (type state) (module R: Randtools.Sig.S with type State.t = stat
         search (rej_small + size) rej_big nb_try
       else if size > size_max then
         search rej_small (rej_big + size) nb_try
-      else
-        Some (size, state), rej_small, rej_big
+      else begin
+        R.set_state state;
+        Some size, rej_small, rej_big
+      end
   in
   search 0 0 max_try
 
@@ -131,7 +133,7 @@ let rec simulator nb_refine max_try grammar oracle_config epsilon1_factor epsilo
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
   let result, nb_smaller, nb_bigger = search_seed randgen wgrm.rules ~size_min ~size_max ~max_try in
   match result with
-  | Some (size, state) -> Some (size, state, wgrm)
+  | Some size -> Some (size, wgrm)
   | None when nb_refine > 0 ->
     if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
       let new_config = {oracle_config with
@@ -191,10 +193,10 @@ let generator
       verbosity
   in
   match res with
-  | Some (size, state, wgrm) ->
-    let final_state = {randgen = R.name; rnd_state = R.State.to_bytes state; weighted_grammar = wgrm} in
-    R.set_state state;
+  | Some (size, wgrm) ->
     let tree, size' = gen (module R) wgrm in
-    assert (size = size');
+    assert (size = size');  (* sanity check *)
+    let state = R.get_state () in
+    let final_state = {randgen = R.name; rnd_state = R.State.to_bytes state; weighted_grammar = wgrm} in
     Some (tree, size, final_state)
   | None -> None
