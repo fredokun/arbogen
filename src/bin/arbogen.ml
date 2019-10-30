@@ -16,6 +16,12 @@ open Frontend
 open Options
 module WeightedGrammar = Boltzmann.WeightedGrammar
 
+(** XXX. I don't like this at all. *)
+let get_rng : string -> (module Randtools.Sig.S) = function
+  | "ocaml" -> (module Randtools.OcamlRandom)
+  | "randu" -> (module Randtools.Randu)
+  | "randnull" -> (module Randtools.Randnull)
+  | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
 
 let version_str = "arbogen v0.20121006 (beta)"
 let usage = "Usage: arbogen <opt> <specfile>.spec"
@@ -209,7 +215,7 @@ let () =
 
       let state = Boltzmann.GenState.from_file global_options.state_file in
       global_options.randgen <- state.randgen;
-      let module Rand = (val Randgen.get state.randgen) in
+      let module Rand = (val get_rng state.randgen) in
       Rand.(State.from_bytes state.rnd_state |> set_state);
 
       let tree, size = Boltzmann.Gen.gen (module Rand) state.weighted_grammar in

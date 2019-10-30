@@ -3,7 +3,7 @@
 (library
  (name arbolib)
  (public_name arbogen)
- (libraries grammar randgen tree frontend boltzmann oracles)
+ (libraries grammar randtools tree frontend boltzmann oracles)
  (modules))
 
 ; ** Grammar **
@@ -14,12 +14,9 @@
  (libraries frontend)
  (modules Grammar))
 
-; ** Randgen **
-; Various PRNGs
-(library
- (name randgen)
- (public_name arbogen.randgen)
- (modules Randgen))
+; ** Randtools **
+; Some PRNGs + probability distributions built on top of them
+; (see the `randtools` folder)
 
 ; ** Tree **
 ; A generic tree datastructure

@@ -18,7 +18,7 @@ open GenState
 (** {2 Core algorithms of the Boltzmann generation} *)
 
 (** Select a rule component at random based on their weights *)
-let select_component (module R: Randgen.Sig) rule =
+let select_component (module R: Randtools.Sig.S) rule =
   let open WeightedGrammar in
   let rec aux r = function
     | [] -> invalid_arg "select_component"
@@ -33,7 +33,7 @@ let select_component (module R: Randgen.Sig) rule =
   | _ -> aux (R.float rule.weight) rule.choices
 
 (** Simulate a geometric law of parameter [w] *)
-let gen_seq_len (module R: Randgen.Sig) w x =
+let gen_seq_len (module R: Randtools.Sig.S) w x =
   let rec gen r wi =
     let r = r -. wi in
     if r < 0. then []
@@ -42,7 +42,7 @@ let gen_seq_len (module R: Randgen.Sig) w x =
   gen (R.float 1.) (1. -. w)
 
 (** Simulate the generation of a tree: only compute the size *)
-let sim (module R: Randgen.Sig) size_max rules =
+let sim (module R: Randtools.Sig.S) size_max rules =
   let rec gen_size s = function
     (* Generation complete *)
     | [] -> s
@@ -74,7 +74,7 @@ let rec build vals children = match vals with
   | [] -> invalid_arg "build"
 
 (** Generate a tree *)
-let gen (module R: Randgen.Sig) wg =
+let gen (module R: Randtools.Sig.S) wg =
   let open WeightedGrammar in
   let {names; rules} = wg in
   let rec gen_tree size vals = function
@@ -111,7 +111,7 @@ let gen (module R: Randgen.Sig) wg =
 (** {2 High level interface} *)
 
 (** Search for a tree in a specific size window *)
-let search_seed (type state) (module R: Randgen.Sig with type State.t = state) rules ~size_min ~size_max ~max_try
+let search_seed (type state) (module R: Randtools.Sig.S with type State.t = state) rules ~size_min ~size_max ~max_try
   : (int * state) option * int * int =
   let rec search rej_small rej_big nb_try =
     if nb_try = 0 then
@@ -147,15 +147,22 @@ let rec simulator nb_refine max_try grammar oracle_config epsilon1_factor epsilo
       failwith "try with other parameters Trees too big"
   | None -> None
 
+(** XXX. I don't like this at all. *)
+let get_rng : string -> (module Randtools.Sig.S) = function
+  | "ocaml" -> (module Randtools.OcamlRandom)
+  | "randu" -> (module Randtools.Randu)
+  | "randnull" -> (module Randtools.Randnull)
+  | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
+
 let init_rng ~randgen ~seed ~verbosity =
-  let module Rand = (val Randgen.get randgen) in
+  let module Rand = (val get_rng randgen) in
   let seed = match seed with
     | Some seed -> seed
     | None -> Rand.self_init (); Rand.int 274537
   in
   if verbosity >= 2 then Format.printf "[SEED] starting seed = %d@." seed;
   Rand.init seed;
-  (module Rand: Randgen.Sig)
+  (module Rand: Randtools.Sig.S)
 
 let generator
     grammar
