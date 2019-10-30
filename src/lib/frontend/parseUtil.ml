@@ -71,44 +71,12 @@ let set_option ?(preserve=false) name value =
       global_options.epsilon1 <- value
     end
 
-  | "eps1_factor" ->
-    let value = as_float name value in
-    if value <= 0. then fail "eps1_factor must be positive";
-    if not global_options.epsilon1_factor_set || not preserve then begin
-      global_options.epsilon1_factor_set <- true;
-      global_options.epsilon1_factor <- value
-    end
-
   | "eps2" ->
     let value = as_float name value in
     if value <= 0. then fail "eps2 must be positive";
     if not global_options.epsilon2_set || not preserve then begin
       global_options.epsilon2_set <- true;
       global_options.epsilon2 <- value
-    end
-
-  | "eps2_factor" ->
-    let value = as_float name value in
-    if value <= 0. then fail "eps2_factor must be positive";
-    if not global_options.epsilon2_factor_set || not preserve then begin
-      global_options.epsilon2_factor_set <- true;
-      global_options.epsilon2_factor <- value
-    end
-
-  | "reject_ratio" ->
-    let value = as_float name value in
-    if value < 0. then fail "reject_ratio must be non-negative";
-    if not global_options.ratio_rejected_set || not preserve then begin
-      global_options.ratio_rejected_set <- true;
-      global_options.ratio_rejected <- value
-    end
-
-  | "max_refine" ->
-    let value = as_int name value in
-    if value <= 0 then fail "max_refine must be positive";
-    if not global_options.max_refine_set || not preserve then begin
-      global_options.max_refine_set <- true;
-      global_options.max_refine <- value
     end
 
   | "try" ->

@@ -20,20 +20,12 @@ type options_record = {
   mutable size_max_set: bool;
   mutable epsilon1: float;
   mutable epsilon1_set: bool;
-  mutable epsilon1_factor: float;
-  mutable epsilon1_factor_set: bool;
   mutable epsilon2: float;
   mutable epsilon2_set: bool;
-  mutable epsilon2_factor: float;
-  mutable epsilon2_factor_set: bool;
   mutable with_id : bool;
   mutable with_type : bool;
   mutable max_try: int;
   mutable max_try_set: bool;
-  mutable ratio_rejected: float;
-  mutable ratio_rejected_set: bool;
-  mutable max_refine: int;
-  mutable max_refine_set: bool;
   mutable output_type: int;
   mutable fileName: string;
   mutable zstart: float;
@@ -43,7 +35,7 @@ type options_record = {
   mutable randgen:string;
   mutable indent:bool;
   mutable print_oracle:bool
-} ;;
+}
 
 let global_options = {
   interactive_mode = false;
@@ -56,20 +48,12 @@ let global_options = {
   size_max_set = false;
   epsilon1 = 0.001;
   epsilon1_set = false;
-  epsilon1_factor = 0.1;
-  epsilon1_factor_set = false;
   epsilon2 = 0.0001;
   epsilon2_set = false;
-  epsilon2_factor = 0.1;
-  epsilon2_factor_set = false;
   with_id = false;
   with_type = false;
   max_try = 100;
   max_try_set = false;
-  ratio_rejected = 0.8;
-  ratio_rejected_set = false;
-  max_refine = 8;
-  max_refine_set = false;
   output_type = 0;
   fileName = "";
   zstart = 0.0;

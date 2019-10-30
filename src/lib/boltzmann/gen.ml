@@ -106,43 +106,20 @@ let gen (module R: Randtools.Sig.S) wg =
 (** {2 High level interface} *)
 
 (** Search for a tree in a specific size window *)
-let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try
-  : int option * int * int =
-  let rec search rej_small rej_big nb_try =
-    if nb_try = 0 then
-      None, rej_small, rej_big
+let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try =
+  let rec search nb_try =
+    if nb_try = 0 then None
     else
       let state = R.get_state () in
-      let nb_try = nb_try - 1 in
       let size = sim (module R) size_max rules in
-      if size < size_min then
-        search (rej_small + size) rej_big nb_try
-      else if size > size_max then
-        search rej_small (rej_big + size) nb_try
+      if size < size_min || size > size_max then
+        search (nb_try - 1)
       else begin
         R.set_state state;
-        Some size, rej_small, rej_big
+        Some size
       end
   in
-  search 0 0 max_try
-
-(** Search for a size in a specific size window and refine the singularity
-    search in case of failure *)
-let rec simulator nb_refine max_try grammar oracle_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity =
-  let oracle = Oracles.Naive.make oracle_config grammar in
-  let wgrm = WeightedGrammar.of_grammar oracle grammar in
-  let result, nb_smaller, nb_bigger = search_seed randgen wgrm.rules ~size_min ~size_max ~max_try in
-  match result with
-  | Some size -> Some (size, wgrm)
-  | None when nb_refine > 0 ->
-    if (float_of_int nb_smaller) /. (float_of_int (nb_smaller+nb_bigger)) >= ratio_rejected then
-      let new_config = {oracle_config with
-                        epsilon1 = oracle_config.epsilon1 *. epsilon1_factor;
-                        epsilon2 = oracle_config.epsilon2 *. epsilon2_factor} in
-      simulator (nb_refine - 1) max_try grammar new_config epsilon1_factor epsilon2_factor size_min size_max ratio_rejected randgen verbosity
-    else
-      failwith "try with other parameters Trees too big"
-  | None -> None
+  search max_try
 
 (** XXX. I don't like this at all. *)
 let get_rng : string -> (module Randtools.Sig.S) = function
@@ -164,36 +141,21 @@ let init_rng ~randgen ~seed ~verbosity =
 let generator
     grammar
     ~seed:(seed: int option)
-    (sizemin:int)
-    (sizemax:int)
+    ~size_min
+    ~size_max
+    ~max_try
     (epsilon1:float)
-    (epsilon1_factor:float)
     (epsilon2:float)
-    (epsilon2_factor:float)
-    (max_try:int)
-    (ratio_rejected:float)
-    (max_refine:int)
     (zstart:float)
     (randgen:string)
     (verbosity:int)
   =
-  let oracle_config = Oracles.Naive.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
   let module R = (val init_rng ~randgen ~seed ~verbosity) in
-  let res = simulator
-      max_refine
-      max_try
-      grammar
-      oracle_config
-      epsilon1_factor
-      epsilon2_factor
-      sizemin
-      sizemax
-      ratio_rejected
-      (module R)
-      verbosity
-  in
-  match res with
-  | Some (size, wgrm) ->
+  let oracle_config = Oracles.Naive.{epsilon1; epsilon2; zstart; zmin = 0.; zmax = 1.} in
+  let oracle = Oracles.Naive.make oracle_config grammar in
+  let wgrm = WeightedGrammar.of_grammar oracle grammar in
+  match search_seed (module R) wgrm.rules ~size_min ~size_max ~max_try with
+  | Some size ->
     let tree, size' = gen (module R) wgrm in
     assert (size = size');  (* sanity check *)
     let state = R.get_state () in

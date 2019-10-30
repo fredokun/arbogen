@@ -72,20 +72,8 @@ let speclist =
    ("-eps1", Arg.Float (fun f -> ParseUtil.set_option "eps1" (Vfloat f)),
     "<x> : set the epsilon for singularity search (a positive float number)");
 
-   ("-eps1_factor", Arg.Float (fun f -> ParseUtil.set_option "eps1_factor" (Vfloat f)),
-    "<x> : set the refinement factor for epsilon in singularity search (a positive float number)");
-
    ("-eps2", Arg.Float (fun f -> ParseUtil.set_option "eps2" (Vfloat f)),
     "<x> : set the epsilon for simple iteration (a positive float number)");
-
-   ("-eps2_factor", Arg.Float (fun f -> ParseUtil.set_option "eps2_factor" (Vfloat f)),
-    "<x> : set the refinement factor for epsilon in simple iteration (a positive float number)");
-
-   ("-reject_ratio", Arg.Float (fun f -> ParseUtil.set_option "reject_ratio" (Vfloat f)),
-    "<x> : set the rejection's ratio (a positive float number)");
-
-   ("-max_refine", Arg.Int (fun n -> ParseUtil.set_option "max_refine" (Vint n)),
-    "<n> : set the refinement's maximum number of the simpel iteration's parameters (a positive integer number)");
 
    ("-try", Arg.Int (fun n -> ParseUtil.set_option "try" (Vint n)),
     "<n> : set the maximum of tries when generating trees");
@@ -197,15 +185,11 @@ let () =
       Boltzmann.Gen.generator
         grammar
         ~seed:global_options.random_seed
-        global_options.size_min
-        global_options.size_max
+        ~size_min:global_options.size_min
+        ~size_max:global_options.size_max
+        ~max_try:global_options.max_try
         global_options.epsilon1
-        global_options.epsilon1_factor
         global_options.epsilon2
-        global_options.epsilon2_factor
-        global_options.max_try
-        global_options.ratio_rejected
-        global_options.max_refine
         global_options.zstart
         global_options.randgen
         global_options.verbosity

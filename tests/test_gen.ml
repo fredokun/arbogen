@@ -25,15 +25,11 @@ let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
   match Boltzmann.Gen.generator
           grammar
           ~seed:(Some seed)
-          size_min
-          size_max
+          ~size_min
+          ~size_max
+          ~max_try:1000
           1e-9 (* epsilon 1 *)
-          0.5  (* epsilon_factor 1 *)
-          1e-9 (* epsilon 1 *)
-          0.5  (* epsilon_factor 1 *)
-          1000 (* max_try *)
-          0.8  (* ratio_rejected *)
-          8    (* max_refine *)
+          1e-9 (* epsilon 2 *)
           0.   (* zstart *)
           "ocaml" (* randgen *)
           0    (* verbosity *)
