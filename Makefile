@@ -22,9 +22,9 @@ bench: build
 
 profile:
 	dune clean
-	dune build --profile=profiling benchs/bench.exe
-	_build/default/benchs/bench.exe
-	gprof _build/default/benchs/bench.exe gmon.out > profiling-$(COMMIT).txt
+	dune build benchs/bench.exe
+	perf record --call-graph=dwarg -- _build/default/benchs/bench.exe
+	@echo Run `perf report` to see the profiling results
 
 clean:
 	dune clean

@@ -1,2 +1,0 @@
-(env
- (profiling (ocamlopt_flags (:standard -p))))
