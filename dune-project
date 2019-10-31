@@ -1,2 +1,4 @@
-(lang dune 1.4)
-(using menhir 2.0)
+(lang dune 1.0)
+(name arbogen)
+(version 1.0c)
+(using menhir 1.0)
