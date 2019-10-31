@@ -22,7 +22,7 @@ bug-reports: "https://github.com/fredokun/arbogen/issues"
 dev-repo: "git://github.com/fredokun/arbogen.git"
 
 depends: [
-  "ocaml" {>= "4.04"}
+  "ocaml" {>= "4.03"}
   "dune" {build & >= "1.4.0"}
   "menhir" {>= "20170509"}
   "alcotest" {with-test}
