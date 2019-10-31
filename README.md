@@ -56,19 +56,17 @@ internal grammar representation, our oracle implementation and the random
 generator for use as part of other projects. Note that the library should be
 considered rather unstable and *will* change in the future.
 
-Arbogen is packaged for the `opam` package manager. It can be installed in your
-current opam switch by running one of this two commands from the root of the
-repository:
+Arbogen is packaged for the `opam` package manager. This means that it can be
+installed in your current switch by running `opam install .`. Opam will resolve
+all the dependencies.
 
-- For **Opam 2**: `opam install .`
-- For **Opam 1**: `opam pin add arbogen . && opam install arbogen`. (Not tested
-  but should work, source: https://opam.ocaml.org/blog/opam-1-2-pin/).
+If you just want opam to install the dependencies but don't want to install
+arbogen, run `opam install . --deps-only --with-test --with-doc`. The explicit
+list of all dependencies can be found in `arbogen.opam`.
 
-In both cases, opam will resolve all the dependencies and install them in your
-current switch. In case you do not want to use opam, you should first install
-the dependencies listed in `arbogen.opam` and then run `dune build @install` or
-`make build`. This will build both the executable and the library and expose
-them under `bin/` and `lib/` at the root of the repository.
+To build arbogen manually, run `dune build @install` or `make build`. This will
+build both the executable and the library and expose them under `bin/` and
+`lib/` at the root of the repository.
 
 ### Documentation
 
