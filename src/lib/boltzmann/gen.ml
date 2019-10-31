@@ -37,7 +37,7 @@ let gen_seq_len (module R: Randtools.Sig.S) p x =
   List.init n (fun _ -> x)
 
 (** Simulate the generation of a tree: only compute the size *)
-let sim (module R: Randtools.Sig.S) size_max rules =
+let free_size (module R: Randtools.Sig.S) size_max rules =
   let rec gen_size s = function
     (* Generation complete *)
     | [] -> s
@@ -69,7 +69,7 @@ let rec build vals children = match vals with
   | [] -> invalid_arg "build"
 
 (** Generate a tree *)
-let gen (module R: Randtools.Sig.S) wg =
+let free_gen (module R: Randtools.Sig.S) wg =
   let open WeightedGrammar in
   let {names; rules} = wg in
   let rec gen_tree size vals = function
@@ -111,7 +111,7 @@ let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try =
     if nb_try = 0 then None
     else
       let state = R.get_state () in
-      let size = sim (module R) size_max rules in
+      let size = free_size (module R) size_max rules in
       if size < size_min || size > size_max then
         search (nb_try - 1)
       else begin
@@ -126,7 +126,7 @@ let generator grammar oracle rng ~size_min ~size_max ~max_try =
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
   match search_seed rng wgrm.rules ~size_min ~size_max ~max_try with
   | Some size ->
-    let tree, size' = gen rng wgrm in
+    let tree, size' = free_gen rng wgrm in
     assert (size = size');  (* sanity check *)
     let final_state = {
       randgen = R.name;

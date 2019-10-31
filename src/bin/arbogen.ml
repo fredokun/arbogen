@@ -212,7 +212,7 @@ let () =
       let module Rand = (val get_rng state.randgen) in
       Rand.(State.from_bytes state.rnd_state |> set_state);
 
-      let tree, size = Boltzmann.Gen.gen (module Rand) state.weighted_grammar in
+      let tree, size = Boltzmann.Gen.free_gen (module Rand) state.weighted_grammar in
       Some (tree, size, state)
     end
   in
