@@ -26,15 +26,15 @@ let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
     epsilon1 = 1e-9; epsilon2 = 1e-9; zstart = 0.; zmin = 0.; zmax = 1.
   } in
   let oracle = Oracles.Naive.make oracle_config grammar in
+  let module Rng = Randtools.OcamlRandom in
+  Rng.init seed;
   match Boltzmann.Gen.generator
           grammar
           oracle
-          ~seed:(Some seed)
+          (module Rng)
           ~size_min
           ~size_max
           ~max_try:1000
-          "ocaml" (* randgen *)
-          0    (* verbosity *)
   with
   | Some (tree, size, _) -> tree, size
   | None ->

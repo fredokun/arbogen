@@ -121,40 +121,17 @@ let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try =
   in
   search max_try
 
-(** XXX. I don't like this at all. *)
-let get_rng : string -> (module Randtools.Sig.S) = function
-  | "ocaml" -> (module Randtools.OcamlRandom)
-  | "randu" -> (module Randtools.Randu)
-  | "randnull" -> (module Randtools.Randnull)
-  | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
-
-let init_rng ~randgen ~seed ~verbosity =
-  let module Rand = (val get_rng randgen) in
-  let seed = match seed with
-    | Some seed -> seed
-    | None -> Rand.self_init (); Rand.int 274537
-  in
-  if verbosity >= 2 then Format.printf "[SEED] starting seed = %d@." seed;
-  Rand.init seed;
-  (module Rand: Randtools.Sig.S)
-
-let generator
-    grammar
-    oracle
-    ~seed:(seed: int option)
-    ~size_min
-    ~size_max
-    ~max_try
-    (randgen:string)
-    (verbosity:int)
-  =
-  let module R = (val init_rng ~randgen ~seed ~verbosity) in
+let generator grammar oracle rng ~size_min ~size_max ~max_try =
+  let module R = (val rng: Randtools.Sig.S) in
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
-  match search_seed (module R) wgrm.rules ~size_min ~size_max ~max_try with
+  match search_seed rng wgrm.rules ~size_min ~size_max ~max_try with
   | Some size ->
-    let tree, size' = gen (module R) wgrm in
+    let tree, size' = gen rng wgrm in
     assert (size = size');  (* sanity check *)
-    let state = R.get_state () in
-    let final_state = {randgen = R.name; rnd_state = R.State.to_bytes state; weighted_grammar = wgrm} in
+    let final_state = {
+      randgen = R.name;
+      rnd_state = R.(State.to_bytes (get_state ()));
+      weighted_grammar = wgrm
+    } in
     Some (tree, size, final_state)
   | None -> None

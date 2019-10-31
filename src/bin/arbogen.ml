@@ -16,13 +16,6 @@ open Frontend
 open Options
 module WeightedGrammar = Boltzmann.WeightedGrammar
 
-(** XXX. I don't like this at all. *)
-let get_rng : string -> (module Randtools.Sig.S) = function
-  | "ocaml" -> (module Randtools.OcamlRandom)
-  | "randu" -> (module Randtools.Randu)
-  | "randnull" -> (module Randtools.Randnull)
-  | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
-
 let version_str = "arbogen v1.0c"
 let usage = "Usage: arbogen <opt> <specfile>.spec"
 let banner = "
@@ -159,6 +152,23 @@ let make_oracle grammar =
     } in
   make oracle_config grammar
 
+let get_rng : string -> (module Randtools.Sig.S) = function
+  | "ocaml" -> (module Randtools.OcamlRandom)
+  | "randu" -> (module Randtools.Randu)
+  | "randnull" -> (module Randtools.Randnull)
+  | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
+
+let init_rng () =
+  let module Rand = (val get_rng global_options.randgen) in
+  let seed = match global_options.random_seed with
+    | Some seed -> seed
+    | None -> Rand.self_init (); Rand.int 274537
+  in
+  if global_options.verbosity >= 2 then
+    Format.printf "[SEED] starting seed = %d@." seed;
+  Rand.init seed;
+  (module Rand: Randtools.Sig.S)
+
 let () =
   Arg.parse speclist
     (fun arg ->
@@ -184,16 +194,15 @@ let () =
     if not global_options.with_state then begin
       let grammar = parse_grammar () in
       let oracle = make_oracle grammar in
+      let rng = init_rng () in
       if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
       Boltzmann.Gen.generator
         grammar
         oracle
-        ~seed:global_options.random_seed
+        rng
         ~size_min:global_options.size_min
         ~size_max:global_options.size_max
         ~max_try:global_options.max_try
-        global_options.randgen
-        global_options.verbosity
     end else begin
       if (global_options.verbosity) > 0 then
         Format.printf "Loading state file: %s@." global_options.state_file;
