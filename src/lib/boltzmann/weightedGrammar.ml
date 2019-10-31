@@ -35,7 +35,8 @@ let of_rule oracle rule =
   {weight; choices}
 
 let of_grammar oracle grammar =
-  let Grammar.{names; rules} = grammar in
+  let rules = grammar.Grammar.rules in
+  let names = grammar.Grammar.names in
   let rules = Array.map (of_rule oracle) rules in
   {names; rules}
 

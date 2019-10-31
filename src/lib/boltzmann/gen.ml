@@ -30,9 +30,17 @@ let select_component (module R: Randtools.Sig.S) rule =
   | [{elems; atoms; _}] -> elems, atoms
   | _ -> aux (R.float rule.weight) rule.choices
 
+(* compatibility with ocaml < 4.06 *)
+let list_init =
+  let rec aux n i f =
+    if i = n then []
+    else f i :: aux n (i + 1) f
+  in
+  fun n f -> aux n 0 f
+
 let gen_seq_len (module R: Randtools.Sig.S) p x =
   let n = Randtools.Distribution.geometric (module R) p in
-  List.init n (fun _ -> x)
+  list_init n (fun _ -> x)
 
 (** Simulate the generation of a tree: only compute the size *)
 let free_size (module R: Randtools.Sig.S) size_max rules =
