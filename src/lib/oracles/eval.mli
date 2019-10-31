@@ -5,7 +5,7 @@ val grammar: Types.unlabelled -> Grammar.t -> float array
 
 val grammar_inplace: float array -> Types.unlabelled -> Grammar.t -> unit
 (** Same as [!grammar] but the result of the evaluation is stored in the array
- * passed as first argument. *)
+  passed as first argument. *)
 
 val rule: Types.unlabelled -> Grammar.rule -> float
 (** Evaluate a rule. *)

@@ -13,7 +13,6 @@ module type S = sig
 
   val name: string
   (** A unique name for PRNG. *)
-  (* XXX. I don't like this at all. *)
 
   val init: int -> unit
   (** Seed the random generator with an integer. *)
@@ -23,7 +22,7 @@ module type S = sig
 
   val int: int -> int
   (** [int bound] computes a random integer between [0] (inclusive) and [bound]
-   * (exclusive). *)
+    (exclusive). *)
 
   val float: float -> float
   (** [float bound] computes a random float between [0.] (inclusive) and [bound]
