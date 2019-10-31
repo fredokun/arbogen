@@ -15,7 +15,7 @@ authors: [
   "Marwan Ghanem"
   "Martin Pépin"
 ]
-license: "GPL3"
+license: "GPL2"
 
 homepage: "https://github.com/fredokun/arbogen"
 bug-reports: "https://github.com/fredokun/arbogen/issues"
