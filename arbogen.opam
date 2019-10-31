@@ -1,9 +1,9 @@
 opam-version: "2.0"
 
-name: "arbolib"
+name: "arbogen"
 version: "1.0c"
 
-synopsis: "A fast uniform random generator of tree structure"
+synopsis: "A fast uniform random generator of tree structures"
 
 maintainer: "Martin Pépin <kerl@wkerl.me>"
 authors: [
