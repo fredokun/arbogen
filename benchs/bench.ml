@@ -1,23 +1,19 @@
-open Arbolib
-
 let generate ?(seed=42424242) grammar ~size_min ~size_max =
-  match Gen.generator
+  let oracle_config = Oracles.Naive.{
+    epsilon1 = 1e-9; epsilon2 = 1e-9; zstart = 0.; zmin = 0.; zmax = 1.
+  } in
+  let oracle = Oracles.Naive.make oracle_config grammar in
+  let module Rng = Randtools.OcamlRandom in
+  Rng.init seed;
+  match Boltzmann.Gen.generator
           grammar
-          ~seed:(Some seed)
-          size_min
-          size_max
-          1e-9    (* epsilon 1 *)
-          0.5     (* epsilon_factor 1 *)
-          1e-9    (* epsilon 2 *)
-          0.5     (* epsilon_factor 2 *)
-          10000   (* max_try *)
-          0.8     (* ratio_rejected *)
-          8       (* max_refine *)
-          0.      (* zstart *)
-          "ocaml" (* randgen *)
-          0       (* verbosity *)
+          oracle
+          (module Rng)
+          ~size_min
+          ~size_max
+          ~max_try:10000
   with
-  | Some (tree, size, _) -> tree, size
+  | Some (tree, size) -> tree, size
   | None -> assert false
 
 let bench ?(size_min=100_000) ?(size_max=200_000) ?(seed=4242424242) grammar =
