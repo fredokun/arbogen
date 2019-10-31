@@ -178,7 +178,7 @@ let () =
     usage;
   ParseUtil.extra_checks ();
 
-  if (global_options.verbosity) > 0 then Format.printf "%s@." banner;
+  if global_options.verbosity > 0 then Format.printf "%s@." banner;
 
   if global_options.print_oracle then begin
     let grammar = parse_grammar () in
@@ -190,37 +190,54 @@ let () =
     exit 0
   end;
 
-  let result =
-    if not global_options.with_state then begin
+  let state =
+    if global_options.with_state then begin
+      if global_options.verbosity > 0 then
+        Format.printf "Loading state file: %s@." global_options.state_file;
+      let state = Boltzmann.GenState.from_file global_options.state_file in
+      global_options.randgen <- state.randgen;
+      Some state
+    end else
+      None
+  in
+
+  let module Rng = (val
+    match state with
+    | Some s -> get_rng s.randgen
+    | None -> init_rng ()
+  ) in
+
+  let result, wgrm = match state with
+    | None -> 
       let grammar = parse_grammar () in
       let oracle = make_oracle grammar in
-      let rng = init_rng () in
       if (global_options.verbosity) > 0 then Format.printf "Generating tree...@.";
-      Boltzmann.Gen.generator
+      let tree = Boltzmann.Gen.generator
         grammar
         oracle
-        rng
+        (module Rng)
         ~size_min:global_options.size_min
         ~size_max:global_options.size_max
         ~max_try:global_options.max_try
-    end else begin
-      if (global_options.verbosity) > 0 then
-        Format.printf "Loading state file: %s@." global_options.state_file;
-
-      let state = Boltzmann.GenState.from_file global_options.state_file in
-      global_options.randgen <- state.randgen;
-      let module Rand = (val get_rng state.randgen) in
-      Rand.(State.from_bytes state.rnd_state |> set_state);
-
-      let tree, size = Boltzmann.Gen.free_gen (module Rand) state.weighted_grammar in
-      Some (tree, size, state)
-    end
+      in
+      tree, WeightedGrammar.of_grammar oracle grammar
+    | Some state ->
+      Rng.(State.from_bytes state.rnd_state |> set_state);
+      let tree = Boltzmann.Gen.free_gen (module Rng) state.weighted_grammar in
+      Some tree, state.weighted_grammar
   in
+
   match result with
   | None ->
     Format.eprintf "No tree generated ==> try to use different parameters@.";
     exit 1
-  | Some (tree, size, state) ->
+  | Some (tree, size) ->
+    let final_state = Boltzmann.GenState.{
+      randgen = Rng.name;
+      rnd_state = Rng.(State.to_bytes (get_state ()));
+      weighted_grammar = wgrm
+    } in
+
     if global_options.verbosity > 0 then
       Format.printf "==> Tree generated with %d nodes@." size;
 
@@ -231,5 +248,5 @@ let () =
     if global_options.verbosity >= 2 then
       Format.printf "==> Saving state to file '%s'@." out_state;
 
-    Boltzmann.GenState.to_file out_state state;
+    Boltzmann.GenState.to_file out_state final_state;
     print_tree tree

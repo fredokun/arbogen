@@ -31,7 +31,7 @@ val generator:
   -> size_min:int
   -> size_max:int
   -> max_try:int
-  -> (string Tree.t * int * GenState.t) option
+  -> (string Tree.t * int) option
 (** [generator grammar oracle rng ~size_max ~size_min ~max_try] generates trees
  * until it finds one of size at least [size_min] and at most [size_max]. After
  * [max_try] unsuccessful attempts, it returns [None]. *)

@@ -36,7 +36,7 @@ let generate ?seed:(seed=42424242) grammar ~size_min ~size_max =
           ~size_max
           ~max_try:1000
   with
-  | Some (tree, size, _) -> tree, size
+  | Some (tree, size) -> tree, size
   | None ->
     let name = grammar.Grammar.names.(0) in
     fail "generation of %s failed" name

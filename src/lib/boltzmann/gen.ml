@@ -12,8 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open GenState
-
 
 (** {2 Core algorithms of the Boltzmann generation} *)
 
@@ -106,7 +104,14 @@ let free_gen (module R: Randtools.Sig.S) wg =
 (** {2 High level interface} *)
 
 (** Search for a tree in a specific size window *)
-let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try =
+let search_seed
+  (type state)
+  (module R: Randtools.Sig.S with type State.t = state)
+  rules
+  ~size_min
+  ~size_max
+  ~max_try
+  : (int * state) option =
   let rec search nb_try =
     if nb_try = 0 then None
     else
@@ -114,24 +119,18 @@ let search_seed (module R: Randtools.Sig.S) rules ~size_min ~size_max ~max_try =
       let size = free_size (module R) size_max rules in
       if size < size_min || size > size_max then
         search (nb_try - 1)
-      else begin
-        R.set_state state;
-        Some size
-      end
+      else
+        Some (size, state)
   in
   search max_try
 
 let generator grammar oracle rng ~size_min ~size_max ~max_try =
   let module R = (val rng: Randtools.Sig.S) in
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
-  match search_seed rng wgrm.rules ~size_min ~size_max ~max_try with
-  | Some size ->
+  match search_seed (module R) wgrm.rules ~size_min ~size_max ~max_try with
+  | Some (size, state) ->
+    R.set_state state;
     let tree, size' = free_gen rng wgrm in
     assert (size = size');  (* sanity check *)
-    let final_state = {
-      randgen = R.name;
-      rnd_state = R.(State.to_bytes (get_state ()));
-      weighted_grammar = wgrm
-    } in
-    Some (tree, size, final_state)
+    Some (tree, size)
   | None -> None
