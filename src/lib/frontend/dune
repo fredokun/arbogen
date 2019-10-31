@@ -6,5 +6,6 @@
 
 (library
  (name frontend)
- (public_name arbogen.frontend))
+ (public_name arbogen.frontend)
+ (libraries grammar))
 

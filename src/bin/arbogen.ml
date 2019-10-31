@@ -144,9 +144,9 @@ let print_tree tree =
   |_ -> failwith "unreachable case"
 
 let parse_grammar () =
-  let opts, ptree = ParseUtil.parse_from_file global_options.grammar_file in
+  let opts, g = ParseUtil.parse_from_file global_options.grammar_file in
   ParseUtil.set_options ~preserve:true opts;
-  Grammar.of_parsetree ptree
+  g
 
 let make_oracle grammar =
   let open Oracles.Naive in

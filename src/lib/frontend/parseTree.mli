@@ -31,6 +31,10 @@ val is_complete: t -> bool
 val completion: t -> t
 (** Add a rule for each unbound symbol, interpreting it as an atom of size 0. *)
 
+(** {2 Conversion to Grammars} *)
+
+val to_grammar: t -> Grammar.t
+
 (** {2 Pretty-printing} *)
 
 val pp: Format.formatter -> t -> unit

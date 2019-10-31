@@ -29,11 +29,6 @@ and elem =
 (** The only component of size 0 *)
 val epsilon: component
 
-
-(** {2 Conversion} *)
-
-val of_parsetree: Frontend.ParseTree.t -> t
-
 (** {2 Pretty printing} *)
 
 (** Pretty printer for grammars *)

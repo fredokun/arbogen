@@ -40,6 +40,41 @@ let completion grammar =
   grammar @ extra_rules
 
 
+(* Conversion from Grammars *)
+
+module Smap = Map.Make(String)
+
+let map_names_to_ids rules =
+  let names = List.map fst rules |> Array.of_list in
+  let _, indices = Array.fold_left
+      (fun (i, map) name -> i + 1, Smap.add name i map)
+      (0, Smap.empty)
+      names
+  in
+  names, indices
+
+let product_to_component indices product =
+  let add_symbol (atoms, factors) = function
+    | Z n -> atoms + n, factors
+    | Elem name -> atoms, Grammar.Elem (Smap.find name indices) :: factors
+    | Seq name -> atoms, Grammar.Seq (Smap.find name indices) :: factors
+  in
+  let atoms, factors = List.fold_left add_symbol (0, []) product in
+  atoms, List.rev factors
+
+let rule_to_grammar_rule indices (_, terms) =
+  List.map (product_to_component indices) terms
+
+let to_grammar t =
+  let t = completion t in
+  let names, indices = map_names_to_ids t in
+  let rules =
+    List.map (rule_to_grammar_rule indices) t
+    |> Array.of_list
+  in
+  Grammar.{rules; names}
+
+
 (** {2 Pretty-printing} *)
 
 let pp_atomic fmt = function
