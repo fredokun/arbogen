@@ -23,7 +23,7 @@ let get_rng : string -> (module Randtools.Sig.S) = function
   | "randnull" -> (module Randtools.Randnull)
   | name -> Format.kasprintf invalid_arg "Unknown PRNG: %s" name
 
-let version_str = "arbogen v0.20121006 (beta)"
+let version_str = "arbogen v1.0c"
 let usage = "Usage: arbogen <opt> <specfile>.spec"
 let banner = "
               A      ...:'....:'':...':......
