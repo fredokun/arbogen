@@ -1,4 +1,4 @@
-.PHONY: build doc bench profile longtest test clean install uninstall
+.PHONY: build doc bench profile longtest test clean
 COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 
 build:
@@ -9,6 +9,7 @@ build:
 doc:
 	dune build @doc
 	[ -e doc ] || ln -sf _build/default/_doc/_html doc
+	@echo Documentation available at doc/index.html
 
 test: build
 	ALCOTEST_QUICK_TESTS=1 dune runtest --no-buffer
@@ -24,12 +25,6 @@ profile:
 	dune build --profile=profiling benchs/bench.exe
 	_build/default/benchs/bench.exe
 	gprof _build/default/benchs/bench.exe gmon.out > profiling-$(COMMIT).txt
-
-install: build
-	dune install
-
-uninstall: build
-	dune uninstall
 
 clean:
 	dune clean
