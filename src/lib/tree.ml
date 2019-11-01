@@ -26,33 +26,30 @@ let annotate tree =
 
 (* Some pretty printing utilities *)
 
-let string_of_list_buf str_of_elem buf op dl cl l =
+let print_list ~print_elem ~print_op ~print_dl ~print_cl xs =
   let rec aux = function
-    | [] -> Buffer.add_string buf cl
-    | [e] ->
-      Buffer.add_string buf op;
-      str_of_elem e;
-      Buffer.add_string buf cl;
-    | e::l' ->
-      Buffer.add_string buf op;
-      str_of_elem e;
-      Buffer.add_string buf dl;
-      (aux l');
+    | [] -> ()
+    | [x] -> print_elem x
+    | x :: xs -> print_elem x; print_dl (); aux xs
   in
-  Buffer.add_string buf op;
-  aux l
+  print_op ();
+  aux xs;
+  print_cl ()
 
-let rec output_list out output_elem op dl cl = function
-  | [] -> output_string out cl
-  | [e] ->
-    output_string out op ;
-    output_elem out e ;
-    output_string out cl
-  | e::l' ->
-    output_string out op ;
-    output_elem out e ;
-    output_string out dl ;
-    output_list out output_elem "" dl cl l'
+let string_of_list_buf print_elem buf op dl cl =
+  print_list
+    ~print_elem
+    ~print_op:(fun () -> Buffer.add_string buf op)
+    ~print_dl:(fun () -> Buffer.add_string buf dl)
+    ~print_cl:(fun () -> Buffer.add_string buf cl)
+
+let output_list out output_elem op dl cl =
+  print_list
+    ~print_elem:(fun x -> output_elem out x)
+    ~print_op:(fun () -> output_string out op)
+    ~print_dl:(fun () -> output_string out dl)
+    ~print_cl:(fun () -> output_string out cl)
+
 
 let rec indent_string = function
   | 0 -> ""
