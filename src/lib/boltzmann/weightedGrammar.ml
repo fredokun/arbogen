@@ -12,60 +12,56 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-type elem = Elem of int | Seq of int
-type component = {weight: float; atoms: int; elems: elem list}
-type rule = {weight: float; choices: component list}
-type t = {rules: rule array; names: string array}
+open Oracles.Types
+
+type t = {rules: expression array; names: string array}
+and expression = {weight: float; desc: expression_desc}
+and expression_desc =
+  | Z of int
+  | Product of expression * expression
+  | Union of expression * expression
+  | Seq of expression
+  | Reference of int
+
+let product e1 e2 = {weight = e1.weight *. e2.weight; desc = Product (e1, e2)}
+let union e1 e2 = {weight = e1.weight +. e2.weight; desc = Union (e1, e2)}
+let seq e = {weight = 1. /. (1. -. e.weight); desc = Seq e}
+
 
 (** {2 Conversion from grammars} *)
 
-let of_elem = function
-  | Grammar.Elem i -> Elem i
-  | Grammar.Seq i -> Seq i
-
-let of_component oracle component =
-  let weight = Oracles.Eval.component oracle component in
-  let atoms, elems = component in
-  let elems = List.map of_elem elems in
-  {weight; atoms; elems}
-
-let of_rule oracle rule =
-  let weight = Oracles.Eval.rule oracle rule in
-  let choices = List.map (of_component oracle) rule in
-  {weight; choices}
+let of_expression oracle =
+  let rec aux = function
+    | Grammar.Z n -> {weight = oracle.z ** (float_of_int n); desc = Z n}
+    | Grammar.Product (e1, e2) -> product (aux e1) (aux e2)
+    | Grammar.Union (e1, e2) -> union (aux e1) (aux e2)
+    | Grammar.Seq e -> seq (aux e)
+    | Grammar.Reference i -> {weight = oracle.values.(i); desc = Reference i}
+  in
+  aux
 
 let of_grammar oracle grammar =
   let rules = grammar.Grammar.rules in
   let names = grammar.Grammar.names in
-  let rules = Array.map (of_rule oracle) rules in
+  let rules = Array.map (of_expression oracle) rules in
   {names; rules}
 
 (** {2 Pretty printing} *)
 
-let pp_elem fmt = function
-  | Elem i -> Format.fprintf fmt "Elem %d" i
-  | Seq i -> Format.fprintf fmt "Seq %d" i
-
-let pp_product pp_term fmt terms =
-  let pp_sep fmt () = Format.fprintf fmt " * " in
-  match terms with
-  | [] -> Format.fprintf fmt "1"
-  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
-
-let pp_component fmt {weight; atoms; elems} =
-  Format.fprintf fmt "(%F) z^%d * %a" weight atoms (pp_product pp_elem) elems
-
-let pp_sum pp_term fmt terms =
-  let pp_sep fmt () = Format.fprintf fmt " + " in
-  match terms with
-  | [] -> Format.fprintf fmt "0"
-  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
-
-let pp_rule fmt rule =
-  pp_sum pp_component fmt rule.choices
+let pp_expression =
+  let rec pp fmt {weight; desc} =
+    Format.fprintf fmt "{%F; %a}" weight pp_desc desc
+  and pp_desc fmt = function
+    | Z n -> Format.fprintf fmt "z^%d" n
+    | Product (e1, e2) -> Format.fprintf fmt "%a * %a" pp e1 pp e2
+    | Union (e1, e2) -> Format.fprintf fmt "%a + %a" pp e1 pp e2
+    | Seq e -> Format.fprintf fmt "Seq(%a)" pp e
+    | Reference i -> Format.fprintf fmt "Ref(%d)" i
+  in
+  pp
 
 let pp fmt {rules; names} =
   Array.iteri
-    (fun i rule ->
-       Format.fprintf fmt "%s (%F) ::= %a@\n" names.(i) rule.weight pp_rule rule)
+    (fun i expr ->
+       Format.fprintf fmt "%s ::= %a@\n" names.(i) pp_expression expr)
     rules

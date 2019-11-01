@@ -2,31 +2,28 @@
 
 (** {2 Type definitions} *)
 
-(** Analog to {!Grammar.elem} *)
-type elem = Elem of int | Seq of int
+(** Analog of {!Grammar.t} with weight information *)
+type t = {rules: expression array; names: string array}
 
-(** Analog to {!Grammar.component} with weight information *)
-type component = {weight: float; atoms: int; elems: elem list}
-
-(** Analog to {!Grammar.rule} with weight information *)
-type rule = {weight: float; choices: component list}
-
-(** Analog to {!Grammar.t} with weight information *)
-type t = {rules: rule array; names: string array}
+(** Analog of {!Grammar.expression} with weight information. *)
+and expression = {weight: float; desc: expression_desc}
+and expression_desc =
+  | Z of int
+  | Product of expression * expression
+  | Union of expression * expression
+  | Seq of expression
+  | Reference of int
 
 
 (** {2 Grammar annotations} *)
 
-(** Convert a grammar element into an element *)
-val of_elem: Grammar.elem -> elem
+(** Annotate an expression. *)
+val of_expression:
+  Oracles.Types.unlabelled
+  -> int Grammar.expression
+  -> expression
 
-(** Annotate a grammar component *)
-val of_component: Oracles.Types.unlabelled -> Grammar.component -> component
-
-(** Annotate a grammar rule *)
-val of_rule: Oracles.Types.unlabelled -> Grammar.rule -> rule
-
-(** Annotate a grammar *)
+(** Annotate a grammar. *)
 val of_grammar: Oracles.Types.unlabelled -> Grammar.t -> t
 
 (** {2 Pretty printing} *)

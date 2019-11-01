@@ -12,44 +12,31 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-type t = {names: string array; rules: rule array}
+type t = {names: string array; rules: int expression array}
 
-and rule = component list
-and component = int * elem list
-and elem =
-  | Elem of int
-  | Seq of int
-
-let epsilon = (0, [])
-
+and 'ref expression =
+  | Z of int
+  | Product of 'ref expression * 'ref expression
+  | Union of 'ref expression * 'ref expression
+  | Seq of 'ref expression
+  | Reference of 'ref
 
 (* Pretty printing *)
 
-let pp_elem names fmt = function
-  | Elem i -> Format.pp_print_string fmt names.(i)
-  | Seq i -> Format.fprintf fmt "Seq(%s)" names.(i)
-
-let pp_product pp_term fmt terms =
-  let pp_sep fmt () = Format.fprintf fmt " * " in
-  match terms with
-  | [] -> Format.fprintf fmt "1"
-  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
-
-let pp_component names fmt (weight, elems) =
-  if weight <> 0 then
-    Format.fprintf fmt "z^%d * " weight;
-  pp_product (pp_elem names) fmt elems
-
-let pp_union pp_term fmt terms =
-  let pp_sep fmt () = Format.fprintf fmt " + " in
-  match terms with
-  | [] -> Format.fprintf fmt "0"
-  | _ -> Format.pp_print_list ~pp_sep pp_term fmt terms
+let pp_expression ~pp_ref =
+  let rec aux fmt = function
+    | Product (e1, e2) -> Format.fprintf fmt "%a * %a" aux e1 aux e2
+    | Union (e1, e2) -> Format.fprintf fmt "(%a + %a)" aux e1 aux e2
+    | Seq e -> Format.fprintf fmt "Seq(%a)" aux e
+    | Reference name -> pp_ref fmt name
+    | Z i -> Format.fprintf fmt "z^%d" i
+  in
+  aux
 
 let pp fmt {rules; names} =
   Array.iteri
-    (fun i rule ->
+    (fun i expr ->
        Format.fprintf fmt "%s ::= %a@\n"
          names.(i)
-         (pp_union (pp_component names)) rule)
+         (pp_expression ~pp_ref:Format.pp_print_int) expr)
     rules

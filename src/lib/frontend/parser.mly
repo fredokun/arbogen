@@ -1,5 +1,3 @@
-%{ open ParseTree %}
-
 %token <string> UIDENT LIDENT
 %token EOF
 
@@ -11,6 +9,10 @@
 (* grammar tokens *)
 %token SEQ
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
+
+(* precedence rules *)
+%left PLUS
+%left TIMES
 
 %start start
 %type <Options.parameter list * ParseTree.t> start
@@ -42,16 +44,15 @@ value:
 rule:
   name = UIDENT
   EQUAL
-  components = separated_nonempty_list(PLUS, component)
-  { name, components }
+  expr = expr
+  { name, expr }
 
-component:
-  elements = separated_nonempty_list(TIMES, element)
-  { elements }
-
-element:
-  | uid = UIDENT                     { Elem uid }
-  | SEQ LPAREN uid = UIDENT RPAREN   { Seq uid }
-  | LWEIGHT w = NUMI RWEIGHT         { Z w }
-  | Z                                { Z 1 }
-  | ONE                              { Z 0 }
+expr:
+  | LPAREN e = expr RPAREN          { e }
+  | e1 = expr PLUS e2 = expr        { Grammar.Union (e1, e2) }
+  | e1 = expr TIMES e2 = expr       { Grammar.Product (e1, e2) }
+  | uid = UIDENT                    { Grammar.Reference uid }
+  | SEQ LPAREN e = expr RPAREN      { Grammar.Seq e }
+  | LWEIGHT w = NUMI RWEIGHT        { Grammar.Z w }
+  | Z                               { Grammar.Z 1 }
+  | ONE                             { Grammar.Z 0 }

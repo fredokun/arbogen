@@ -8,7 +8,7 @@
 val free_size:
   (module Randtools.Sig.S)
   -> int
-  -> WeightedGrammar.rule array
+  -> WeightedGrammar.t
   -> int
 (** [free_size rng size_max rules] simulates the generation of a tree following
   the weighted grammar [rules] (starting by the first symbol) but only generate

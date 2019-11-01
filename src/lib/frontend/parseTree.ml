@@ -1,27 +1,22 @@
 type t = rule list
-and rule = string * product list
-and product = atomic list
-
-and atomic =
-  | Z of int
-  | Elem of string
-  | Seq of string
+and rule = string * string Grammar.expression
 
 (** {2 Grammar completion} *)
 
 module Sset = Set.Make(String)
 
-let symbol_names set = function
-  | Z _ -> set
-  | Elem name -> Sset.add name set
-  | Seq name -> Sset.add name set
+let rec expr_names set = function
+  | Grammar.Product (e1, e2) -> expr_names (expr_names set e1) e2
+  | Grammar.Union (e1, e2) -> expr_names (expr_names set e1) e2
+  | Grammar.Seq e -> expr_names set e
+  | Grammar.Z _ -> set
+  | Grammar.Reference name -> Sset.add name set
 
-let product_names = List.fold_left symbol_names
-
-let rule_names set (_, terms) =
-  List.fold_left product_names set terms
-
-let names = List.fold_left rule_names Sset.empty
+let names grammar =
+  List.fold_left
+    (fun set (_, expr) -> expr_names set expr)
+    Sset.empty
+    grammar
 
 let unbound_symbols grammar =
   let all_names = names grammar in
@@ -34,13 +29,13 @@ let is_complete grammar =
 let completion grammar =
   let unbound = unbound_symbols grammar in
   let extra_rules =
-    let epsilon = [[]] in
+    let epsilon = Grammar.Z 0 in
     Sset.fold (fun name rules -> (name, epsilon) :: rules) unbound []
   in
   grammar @ extra_rules
 
 
-(* Conversion from Grammars *)
+(* Conversion to Grammars *)
 
 module Smap = Map.Make(String)
 
@@ -53,23 +48,23 @@ let map_names_to_ids rules =
   in
   names, indices
 
-let product_to_component indices product =
-  let add_symbol (atoms, factors) = function
-    | Z n -> atoms + n, factors
-    | Elem name -> atoms, Grammar.Elem (Smap.find name indices) :: factors
-    | Seq name -> atoms, Grammar.Seq (Smap.find name indices) :: factors
+let expr_to_id indices =
+  let open Grammar in
+  let rec aux = function
+    | Z n -> Z n
+    | Product (e1, e2) -> Product (aux e1, aux e2)
+    | Union (e1, e2) -> Union (aux e1, aux e2)
+    | Seq e -> Seq (aux e)
+    | Reference r -> Reference (Smap.find r indices)
   in
-  let atoms, factors = List.fold_left add_symbol (0, []) product in
-  atoms, List.rev factors
-
-let rule_to_grammar_rule indices (_, terms) =
-  List.map (product_to_component indices) terms
+  aux
 
 let to_grammar t =
   let t = completion t in
   let names, indices = map_names_to_ids t in
   let rules =
-    List.map (rule_to_grammar_rule indices) t
+    t
+    |> List.map (fun (_, expr) -> expr_to_id indices expr)
     |> Array.of_list
   in
   Grammar.{rules; names}
@@ -77,22 +72,12 @@ let to_grammar t =
 
 (** {2 Pretty-printing} *)
 
-let pp_atomic fmt = function
-  | Z n -> Format.fprintf fmt "z^%d" n
-  | Elem name -> Format.pp_print_string fmt name
-  | Seq name -> Format.fprintf fmt "Seq(%s)" name
+let pp_rule fmt (name, expr) =
+  let pp_expr = Grammar.pp_expression ~pp_ref:Format.pp_print_string in
+  Format.fprintf fmt "%s ::= %a" name pp_expr expr
 
-let pp_product =
-  let pp_sep fmt () = Format.pp_print_string fmt " * " in
-  Format.pp_print_list ~pp_sep pp_atomic
-
-let pp_derivations =
-  let pp_sep fmt () = Format.pp_print_string fmt " + " in
-  Format.pp_print_list ~pp_sep pp_product
-
-let pp_rule fmt (name, derivations) =
-  Format.fprintf fmt "%s ::= %a" name pp_derivations derivations
 
 let pp =
-  let pp_sep fmt () = Format.fprintf fmt "@\n" in
-  Format.pp_print_list ~pp_sep pp_rule
+  Format.pp_print_list
+    ~pp_sep:(fun fmt () -> Format.fprintf fmt "@\n")
+    pp_rule

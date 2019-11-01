@@ -13,60 +13,50 @@
  *********************************************************)
 
 
+let rec list_make_append n x l = 
+  if n <= 0 then l
+  else list_make_append (n - 1) x (x :: l)
+
 (** {2 Core algorithms of the Boltzmann generation} *)
 
-(** Select a rule component at random based on their weights *)
-let select_component (module R: Randtools.Sig.S) rule =
-  let open WeightedGrammar in
-  let rec aux r = function
-    | [] -> invalid_arg "select_component"
-    | [{elems; atoms; _}] -> elems, atoms
-    | {elems; atoms; weight} :: comps ->
-      let r = r -. weight in
-      if r < 0. then elems, atoms
-      else aux r comps
-  in
-  match rule.choices with
-  | [{elems; atoms; _}] -> elems, atoms
-  | _ -> aux (R.float rule.weight) rule.choices
-
-(* compatibility with ocaml < 4.06 *)
-let list_init =
-  let rec aux n i f =
-    if i = n then []
-    else f i :: aux n (i + 1) f
-  in
-  fun n f -> aux n 0 f
-
-let gen_seq_len (module R: Randtools.Sig.S) p x =
-  let n = Randtools.Distribution.geometric (module R) p in
-  list_init n (fun _ -> x)
-
 (** Simulate the generation of a tree: only compute the size *)
-let free_size (module R: Randtools.Sig.S) size_max rules =
+let free_size (module R: Randtools.Sig.S) size_max wgrm =
+  let open WeightedGrammar in
   let rec gen_size s = function
     (* Generation complete *)
     | [] -> s
 
-    (* Generate a tree of type [i]: draw a derivation among the possible
-       derivations of [i] and add its components to the call stack *)
-    | WeightedGrammar.Elem i :: next ->
-      let elems, atoms = select_component (module R) rules.(i) in
-      let s = s + atoms in
+    (* Add the atom size to the total size and continue. *)
+    | {desc = Z n; _} :: next ->
+      let s = s + n in
       if s > size_max then s
-      else gen_size s (List.rev_append elems next)
+      else gen_size s next
 
-    (* Generate a sequence of type [i]: draw the length of the list according
-       to the geometric law and add the according number of [Elem i] to the
-       call stack *)
-    | WeightedGrammar.Seq i :: next ->
-      let elems = gen_seq_len (module R) rules.(i).weight (WeightedGrammar.Elem i) in
-      gen_size s (List.rev_append elems next)
+    (* Lookup the definition of i and add it to the call stack *)
+    | {desc = Reference i; _} :: next ->
+      gen_size s (wgrm.rules.(i) :: next)
+
+    (* Draw the length of the list according to the geometric law and add the
+      corresponding number of [expr] to the call stack *)
+    | {desc = Seq expr; _} :: next ->
+      let n = Randtools.Distribution.geometric (module R) expr.weight in
+      gen_size s (list_make_append n expr next)
+
+    (* Add both component of the product to the call stack. *)
+    | {desc = Product (e1, e2); _} :: next ->
+      gen_size s (e2 :: e1 :: next)
+
+    (* Add one term of the union to the call stack and drop the other one. *)
+    | {desc = Union (e1, e2); weight} :: next ->
+      if Random.float weight < e1.weight then
+        gen_size s (e1 :: next)
+      else
+        gen_size s (e2 :: next)
   in
-  gen_size 0 [Elem 0]
+  gen_size 0 [wgrm.rules.(0)]
 
 type instr =
-  | Gen of WeightedGrammar.elem
+  | Gen of WeightedGrammar.expression_desc
   | Build of int
 
 let rec build vals children = match vals with
@@ -75,36 +65,45 @@ let rec build vals children = match vals with
   | [] -> invalid_arg "build"
 
 (** Generate a tree *)
-let free_gen (module R: Randtools.Sig.S) wg =
+let free_gen (module R: Randtools.Sig.S) wgrm =
   let open WeightedGrammar in
-  let {names; rules} = wg in
   let rec gen_tree size vals = function
     (* Generation complete *)
     | [] -> vals, size
 
-    (* Build a node: pop [nb] trees form the generated stack and pack them as
-       a single tree *)
+    (* Build a node *)
     | Build rule_id :: next ->
       let vals, children = build vals [] in
-      let tree = Tree.Node (names.(rule_id), children) in
+      let tree = Tree.Node (wgrm.names.(rule_id), children) in
       gen_tree size (Some tree :: vals) next
 
-    (* Generate a tree of type [i]: select a derivation among the possible
-       derivations of [i] and add its components to the call stack *)
-    | Gen (Elem i) :: next ->
-      let elems, atoms = select_component (module R) rules.(i) in
-      let elems = List.map (fun e -> Gen e) elems in
-      let next = List.rev_append elems (Build i :: next) in
-      gen_tree (size + atoms) (None :: vals) next
+    (* Add the atom size to the total size and continue. *)
+    | Gen (Z n) :: next ->
+      gen_tree (size + n) vals next
 
-    (* Generate a sequence of type [i]: draw the length of the list according
-       to the geometric law and add the according number of [Gen Elem i] to
-       the call stack *)
-    | Gen (Seq i) :: next ->
-      let elems = gen_seq_len (module R) rules.(i).weight (Gen (Elem i)) in
-      gen_tree size vals (List.rev_append elems next)
+    (* Lookup the definition of i and add it to the call stack *)
+    | Gen (Reference i) :: next ->
+      let expr_i = wgrm.rules.(i) in
+      gen_tree size (None :: vals) (Gen expr_i.desc :: Build i :: next)
+
+    (* Draw the length of the list according to the geometric law and add the
+      corresponding number of [expr] to the call stack *)
+    | Gen (Seq expr) :: next ->
+      let n = Randtools.Distribution.geometric (module R) expr.weight in
+      gen_tree size vals (list_make_append n (Gen expr.desc) next)
+
+    (* Add both component of the product to the call stack. *)
+    | Gen (Product (e1, e2)) :: next ->
+      gen_tree size vals (Gen e2.desc :: Gen e1.desc :: next)
+
+    (* Add one term of the union to the call stack and drop the other one. *)
+    | Gen (Union (e1, e2)) :: next ->
+      if Random.float (e1.weight +. e2.weight) < e1.weight then
+        gen_tree size vals (Gen e1.desc :: next)
+      else
+        gen_tree size vals (Gen e2.desc :: next)
   in
-  match gen_tree 0 [] [Gen (Elem 0)] with
+  match gen_tree 0 [] [Gen (Reference 0)] with
   | [Some tree], size -> tree, size
   | _ -> failwith "internal error"
 
@@ -135,7 +134,7 @@ let search_seed
 let generator grammar oracle rng ~size_min ~size_max ~max_try =
   let module R = (val rng: Randtools.Sig.S) in
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
-  match search_seed (module R) wgrm.rules ~size_min ~size_max ~max_try with
+  match search_seed (module R) wgrm ~size_min ~size_max ~max_try with
   | Some (size, state) ->
     R.set_state state;
     let tree, size' = free_gen rng wgrm in
