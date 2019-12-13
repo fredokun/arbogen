@@ -1,5 +1,5 @@
 ; Main entry point of the arbolib library.
-; Arbolib is split in 6 sub-libraries (see below)
+; Arbolib is split in 8 sub-libraries (see below)
 (library
  (name arbolib)
  (public_name arbogen)
@@ -35,3 +35,15 @@
 ; ** Oracles **
 ; Various oracle implementations
 ; (see the `oracles` folder)
+
+; ** Counting **
+(library
+ (name counting)
+ (libraries grammar)
+ (modules Counting))
+
+; ** Exact-size generation **
+(library
+ (name recursive_method)
+ (libraries grammar counting)
+ (modules RecursiveMethod))
