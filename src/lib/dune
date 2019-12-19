@@ -3,7 +3,7 @@
 (library
  (name arbolib)
  (public_name arbogen)
- (libraries grammar randtools tree frontend boltzmann oracles)
+ (libraries grammar randtools tree frontend boltzmann oracles counting recursive_method)
  (modules))
 
 ; ** Grammar **
@@ -39,11 +39,13 @@
 ; ** Counting **
 (library
  (name counting)
+ (public_name arbogen.counting)
  (libraries grammar)
  (modules Counting))
 
 ; ** Exact-size generation **
 (library
  (name recursive_method)
+ (public_name arbogen.recursive_method)
  (libraries grammar counting)
  (modules RecursiveMethod))
