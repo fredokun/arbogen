@@ -1,7 +1,7 @@
 open Grammar
 
 let fail format =
-  Format.kasprintf Alcotest.fail format
+  Format.kasprintf (fun s -> Alcotest.fail s) format
 
 (* XXX. *)
 let rec pp_tree fmt tree =
