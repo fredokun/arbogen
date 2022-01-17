@@ -147,11 +147,11 @@ let parse_grammar () =
 let make_oracle grammar =
   let open Oracles.Naive in
   let oracle_config = {
-      epsilon1 = Options.globals.epsilon1;
-      epsilon2 = Options.globals.epsilon2;
+      epsilon1 = Options.(WithDefault.value globals.epsilon1);
+      epsilon2 = Options.(WithDefault.value globals.epsilon2);
       zmin = 0.;
       zmax = 1.;
-      zstart = Options.globals.zstart;
+      zstart = Options.(WithDefault.value globals.zstart);
     } in
   make oracle_config grammar
 
@@ -219,9 +219,9 @@ let () =
         grammar
         oracle
         (module Rng)
-        ~size_min:Options.globals.size_min
-        ~size_max:Options.globals.size_max
-        ~max_try:Options.globals.max_try
+        ~size_min:Options.(WithDefault.value globals.size_min)
+        ~size_max:Options.(WithDefault.value globals.size_max)
+        ~max_try:Options.(WithDefault.value globals.max_try)
       in
       tree, WeightedGrammar.of_grammar oracle grammar
     | Some state ->

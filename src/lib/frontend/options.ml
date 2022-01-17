@@ -27,33 +27,37 @@ end
 (** A configuration option is given by a name and a value *)
 type parameter = string * Value.t
 
+module WithDefault = struct
+  (** Either a default value or a user-defined value *)
+  type 'a t =
+    | Default of 'a
+    | Value of 'a
+
+  (** Get the value hold by a {!t} *)
+  let value = function
+    | Default x | Value x -> x
+end
 
 (** A record holding all the configuration options *)
 type t = {
   mutable grammar_file: string;
   mutable verbosity: int;
   mutable random_seed: int option;
-  mutable size_min: int;
-  mutable size_min_set: bool;
-  mutable size_max: int;
-  mutable size_max_set: bool;
-  mutable epsilon1: float;
-  mutable epsilon1_set: bool;
-  mutable epsilon2: float;
-  mutable epsilon2_set: bool;
+  mutable size_min: int WithDefault.t;
+  mutable size_max: int WithDefault.t;
+  mutable epsilon1: float WithDefault.t;
+  mutable epsilon2: float WithDefault.t;
   mutable with_id : bool;
   mutable with_type : bool;
-  mutable max_try: int;
-  mutable max_try_set: bool;
+  mutable max_try: int WithDefault.t;
   mutable output_type: int;
   mutable fileName: string;
-  mutable zstart: float;
-  mutable zstart_set: bool;
-  mutable with_state:bool;
-  mutable state_file:string;
-  mutable randgen:string;
-  mutable indent:bool;
-  mutable print_oracle:bool
+  mutable zstart: float WithDefault.t;
+  mutable with_state: bool;
+  mutable state_file: string;
+  mutable randgen: string;
+  mutable indent: bool;
+  mutable print_oracle: bool
 }
 
 (** Global variable holding the current configuration *)
@@ -61,22 +65,16 @@ let globals = {
   grammar_file = "";
   verbosity = 1;
   random_seed = None;
-  size_min = 10;
-  size_min_set = false;
-  size_max = 20;
-  size_max_set = false;
-  epsilon1 = 0.001;
-  epsilon1_set = false;
-  epsilon2 = 0.0001;
-  epsilon2_set = false;
+  size_min = Default 10;
+  size_max = Default 20;
+  epsilon1 = Default 0.001;
+  epsilon2 = Default 0.0001;
   with_id = false;
   with_type = false;
-  max_try = 100;
-  max_try_set = false;
+  max_try = Default 100;
   output_type = 0;
   fileName = "";
-  zstart = 0.0;
-  zstart_set = false;
+  zstart = Default 0.0;
   with_state = false;
   state_file = "";
   randgen = "ocaml";
@@ -92,19 +90,18 @@ let set ?(preserve=false) name value =
   | "min" ->
     let value = Value.as_int name value in
     if value < 0 then fail "min must be non-negative";
-    if not globals.size_min_set || not preserve then begin
-      globals.size_min_set <- true;
-      globals.size_min <- value
+    begin match globals.size_min with
+      | Default _ -> globals.size_min <- Value value
+      | Value _ -> if not preserve then globals.size_min <- Value value
     end
 
   | "max" ->
     let value = Value.as_int name value in
     if value < 0 then fail "max must be non-negative";
-    if not globals.size_max_set || not preserve then
-      begin
-        globals.size_max_set <- true;
-        globals.size_max <- value
-      end
+    begin match globals.size_max with
+      | Default _ -> globals.size_max <- Value value
+      | Value _ -> if not preserve then globals.size_max <- Value value
+    end
 
   | "seed" ->
     begin match globals.random_seed with
@@ -115,33 +112,33 @@ let set ?(preserve=false) name value =
   | "eps1" ->
     let value = Value.as_float name value in
     if value <= 0. then fail "eps1 must be positive";
-    if not globals.epsilon1_set || not preserve then begin
-      globals.epsilon1_set <- true;
-      globals.epsilon1 <- value
+    begin match globals.epsilon1 with
+      | Default _ -> globals.epsilon1 <- Value value
+      | Value _ -> if not preserve then globals.epsilon1 <- Value value
     end
 
   | "eps2" ->
     let value = Value.as_float name value in
     if value <= 0. then fail "eps2 must be positive";
-    if not globals.epsilon2_set || not preserve then begin
-      globals.epsilon2_set <- true;
-      globals.epsilon2 <- value
+    begin match globals.epsilon2 with
+      | Default _ -> globals.epsilon2 <- Value value
+      | Value _ -> if not preserve then globals.epsilon2 <- Value value
     end
 
   | "try" ->
     let value = Value.as_int name value in
     if value <= 0 then fail "try must be positive";
-    if not globals.max_try_set || not preserve then begin
-      globals.max_try_set <- true;
-      globals.max_try <- value
+    begin match globals.max_try with
+      | Default _ -> globals.max_try <- Value value
+      | Value _ -> if not preserve then globals.max_try <- Value value
     end
 
   | "zstart" ->
     let value = Value.as_float name value in
     if value < 0. || value > 1. then fail "zstart must be between 0 and 1";
-    if not globals.zstart_set || not preserve then begin
-      globals.zstart_set <- true;
-      globals.zstart <- value
+    begin match globals.zstart with
+      | Default _ -> globals.zstart <- Value value
+      | Value _ -> if not preserve then globals.zstart <- Value value
     end
 
   | "randgen" ->
