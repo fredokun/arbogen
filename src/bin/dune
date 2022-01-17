@@ -1,4 +1,4 @@
 (executable
  (name arbogen)
  (public_name arbogen)
- (libraries arbolib))
+ (libraries arbogen))

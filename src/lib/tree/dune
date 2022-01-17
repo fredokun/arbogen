@@ -1,0 +1,4 @@
+(library
+ (name tree)
+ (public_name arbogen.tree)
+ (modules Tree))

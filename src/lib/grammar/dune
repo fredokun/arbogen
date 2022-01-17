@@ -1,0 +1,3 @@
+(library
+ (name grammar)
+ (public_name arbogen.grammar))

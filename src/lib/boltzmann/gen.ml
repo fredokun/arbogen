@@ -20,7 +20,7 @@ let rec list_make_append n x l =
 (** {2 Core algorithms of the Boltzmann generation} *)
 
 (** Simulate the generation of a tree: only compute the size *)
-let free_size (module R: Randtools.S) size_max wgrm =
+let free_size (module R: Randtools.S) ~size_max wgrm =
   let open WeightedGrammar in
   let rec gen_size s = function
     (* Generation complete *)
@@ -121,7 +121,7 @@ let search_seed
     if nb_try = 0 then None
     else
       let state = R.get_state () in
-      let size = free_size (module R) size_max rules in
+      let size = free_size (module R) ~size_max rules in
       if size < size_min || size > size_max then
         search (nb_try - 1)
       else
