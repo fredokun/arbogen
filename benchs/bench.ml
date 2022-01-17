@@ -22,19 +22,22 @@ let bench ?(size_min=100_000) ?(size_max=200_000) ?(seed=4242424242) grammar =
 let binary () =
   Grammar.{
     names = [|"B"|];
-    rules = [|[(0, []); (1, [Elem 0; Elem 0])]|]
+    rules = [|Union (Z 0, Product (Z 1, Product (Reference 0, Reference 0)))|];
   } |> bench
 
 let nary1 () =
   Grammar.{
     names = [|"T"|];
-    rules = [|[(1, [Seq 0])]|]
+    rules = [|Product (Z 1, Seq (Reference 0))|]
   } |> bench
 
 let nary2 () =
   Grammar.{
     names = [|"T"; "S"|];
-    rules = [|[(1, [Elem 1])]; [(0, []); (0, [Elem 0; Elem 1])]|]
+    rules = [|
+      Product (Z 1, Reference 1);
+      Union (Z 0, Product (Reference 0, Reference 1));
+    |]
   } |> bench
 
 (* XXX. it takes forever to find a shuffle_plus tree in the window [20, 500000]
