@@ -6,12 +6,11 @@
 type t = {rules: expression array; names: string array}
 
 (** Analog of {!Grammar.expression} with weight information. *)
-and expression = {weight: float; desc: expression_desc}
-and expression_desc =
+and expression =
   | Z of int
   | Product of expression * expression
-  | Union of expression * expression
-  | Seq of expression
+  | Union of float * expression * expression
+  | Seq of float * expression
   | Ref of int
 
 

@@ -27,28 +27,28 @@ let free_size (module R: Randtools.Sig.S) size_max wgrm =
     | [] -> s
 
     (* Add the atom size to the total size and continue. *)
-    | {desc = Z n; _} :: next ->
+    | Z n :: next ->
       let s = s + n in
       if s > size_max then s
       else gen_size s next
 
     (* Lookup the definition of i and add it to the call stack *)
-    | {desc = Ref i; _} :: next ->
+    | Ref i :: next ->
       gen_size s (wgrm.rules.(i) :: next)
 
     (* Draw the length of the list according to the geometric law and add the
       corresponding number of [expr] to the call stack *)
-    | {desc = Seq expr; _} :: next ->
-      let n = Randtools.Distribution.geometric (module R) expr.weight in
+    | Seq (w, expr) :: next ->
+      let n = Randtools.Distribution.geometric (module R) w in
       gen_size s (list_make_append n expr next)
 
     (* Add both component of the product to the call stack. *)
-    | {desc = Product (e1, e2); _} :: next ->
+    | Product (e1, e2) :: next ->
       gen_size s (e2 :: e1 :: next)
 
     (* Add one term of the union to the call stack and drop the other one. *)
-    | {desc = Union (e1, e2); weight} :: next ->
-      if Random.float weight < e1.weight then
+    | Union (w, e1, e2) :: next ->
+      if Random.float 1. < w then
         gen_size s (e1 :: next)
       else
         gen_size s (e2 :: next)
@@ -56,7 +56,7 @@ let free_size (module R: Randtools.Sig.S) size_max wgrm =
   gen_size 0 [wgrm.rules.(0)]
 
 type instr =
-  | Gen of WeightedGrammar.expression_desc
+  | Gen of WeightedGrammar.expression
   | Build of int
 
 let rec build vals children = match vals with
@@ -84,24 +84,22 @@ let free_gen (module R: Randtools.Sig.S) wgrm =
     (* Lookup the definition of i and add it to the call stack *)
     | Gen (Ref i) :: next ->
       let expr_i = wgrm.rules.(i) in
-      gen_tree size (None :: vals) (Gen expr_i.desc :: Build i :: next)
+      gen_tree size (None :: vals) (Gen expr_i :: Build i :: next)
 
     (* Draw the length of the list according to the geometric law and add the
       corresponding number of [expr] to the call stack *)
-    | Gen (Seq expr) :: next ->
-      let n = Randtools.Distribution.geometric (module R) expr.weight in
-      gen_tree size vals (list_make_append n (Gen expr.desc) next)
+    | Gen (Seq (w, expr)) :: next ->
+      let n = Randtools.Distribution.geometric (module R) w in
+      gen_tree size vals (list_make_append n (Gen expr) next)
 
     (* Add both component of the product to the call stack. *)
     | Gen (Product (e1, e2)) :: next ->
-      gen_tree size vals (Gen e2.desc :: Gen e1.desc :: next)
+      gen_tree size vals (Gen e2 :: Gen e1 :: next)
 
     (* Add one term of the union to the call stack and drop the other one. *)
-    | Gen (Union (e1, e2)) :: next ->
-      if Random.float (e1.weight +. e2.weight) < e1.weight then
-        gen_tree size vals (Gen e1.desc :: next)
-      else
-        gen_tree size vals (Gen e2.desc :: next)
+    | Gen (Union (w, e1, e2)) :: next ->
+      let e = if Random.float 1. < w then e1 else e2 in
+      gen_tree size vals (Gen e :: next)
   in
   match gen_tree 0 [] [Gen (Ref 0)] with
   | [Some tree], size -> tree, size
