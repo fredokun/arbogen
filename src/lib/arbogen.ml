@@ -13,13 +13,55 @@
     [size_max] in linear time (in its size), provided that [size_max - size_min]
     grows linearly with [size_min].
 
-    To be continued...
+    The process of Boltzmann sampling consists in:
+      1. specifying the objects to be generated;
+      2. running a pre-processing step which computes some constants used in the
+         generation;
+      3. generating objects in a size window using rejection sampling.
+    At the moment, the objects produced by Arbogen all belong to the {!Tree.t}
+    type. *)
+
+
+(** {2 Combinatorial specifications} *)
+
+(** They are two ways to specify the objects to be generated.
+
+    When using Arbogen as a library, the simpler way is to write a grammar using
+    the {!Grammar} module.
+    Alternatively, one may describe the grammar in a .spec file (several
+    examples are given in the [examples/] folder of the git repository). In that
+    case, one must use the functions provided by the {!Frontend} to parse the
+    file and obtain the corresponding grammar.
+
+    In both cases, it is important to ensure that there exists a finite number
+    of objects of each size.
+    The size of an object is defined as the number of atoms ([Z n] in the
+    grammar and [<z>] in the .spec language) occurring in a derivation.
+    For instance, in the following grammar describing binary trees, the size of
+    a tree corresponds to its number of internal nodes:
+
+    - in the .spec language: [B ::= <1> + <z> * B * B]
+    - as a {!Grammar.t} value: {[{
+        names = [|"B"|];
+        rules = [| Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0))) |]
+      }]}
     *)
 
 module Frontend = Frontend
 module Grammar = Grammar
-module Boltzmann = Boltzmann
 
+
+(** {2 Pre-processing} *)
+
+(** TODO: explain *)
+
+module Oracles = Oracles
+
+
+(** {2 Random generation} *)
+
+(** TODO: explain *)
+
+module Boltzmann = Boltzmann
 module Randtools = Randtools
 module Tree = Tree
-module Oracles = Oracles
