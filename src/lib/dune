@@ -1,5 +1,6 @@
 ; Main entry point of the arbolib library.
 ; Arbolib is split in 6 sub-libraries (see below)
+
 (library
  (name arbolib)
  (public_name arbogen)
@@ -8,6 +9,7 @@
 
 ; ** Grammar **
 ; Low-level efficient grammar reprensentation
+
 (library
  (name grammar)
  (public_name arbogen.grammar)
@@ -19,6 +21,7 @@
 
 ; ** Tree **
 ; A generic tree datastructure
+
 (library
  (name tree)
  (public_name arbogen.tree)
