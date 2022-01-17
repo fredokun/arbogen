@@ -6,7 +6,7 @@
   generate one object following the Boltzmann distribution. *)
 
 val free_size:
-  (module Randtools.Sig.S)
+  (module Randtools.S)
   -> int
   -> WeightedGrammar.t
   -> int
@@ -15,7 +15,7 @@ val free_size:
   its size. The generation stop early if the size goes beyond [size_max]. *)
 
 val free_gen:
-  (module Randtools.Sig.S)
+  (module Randtools.S)
   -> WeightedGrammar.t
   -> string Tree.t * int
 (** Generate a tree and its size, following the weigthed grammar given as
@@ -26,7 +26,7 @@ val free_gen:
 val generator:
   Grammar.t
   -> Oracles.Types.unlabelled
-  -> (module Randtools.Sig.S)
+  -> (module Randtools.S)
   -> size_min:int
   -> size_max:int
   -> max_try:int

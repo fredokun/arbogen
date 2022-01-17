@@ -155,7 +155,7 @@ let make_oracle grammar =
     } in
   make oracle_config grammar
 
-let get_rng : string -> (module Randtools.Sig.S) = function
+let get_rng : string -> (module Randtools.S) = function
   | "ocaml" -> (module Randtools.OcamlRandom)
   | "randu" -> (module Randtools.Randu)
   | "randnull" -> (module Randtools.Randnull)
@@ -170,7 +170,7 @@ let init_rng () =
   if Options.globals.verbosity >= 2 then
     Format.printf "[SEED] starting seed = %d@." seed;
   Rand.init seed;
-  (module Rand: Randtools.Sig.S)
+  (module Rand: Randtools.S)
 
 let () =
   Arg.parse speclist

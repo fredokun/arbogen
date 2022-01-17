@@ -20,7 +20,7 @@ let rec list_make_append n x l =
 (** {2 Core algorithms of the Boltzmann generation} *)
 
 (** Simulate the generation of a tree: only compute the size *)
-let free_size (module R: Randtools.Sig.S) size_max wgrm =
+let free_size (module R: Randtools.S) size_max wgrm =
   let open WeightedGrammar in
   let rec gen_size s = function
     (* Generation complete *)
@@ -39,7 +39,7 @@ let free_size (module R: Randtools.Sig.S) size_max wgrm =
     (* Draw the length of the list according to the geometric law and add the
       corresponding number of [expr] to the call stack *)
     | Seq (w, expr) :: next ->
-      let n = Randtools.Distribution.geometric (module R) w in
+      let n = Randtools.geometric (module R) w in
       gen_size s (list_make_append n expr next)
 
     (* Add both component of the product to the call stack. *)
@@ -65,7 +65,7 @@ let rec build vals children = match vals with
   | [] -> invalid_arg "build"
 
 (** Generate a tree *)
-let free_gen (module R: Randtools.Sig.S) wgrm =
+let free_gen (module R: Randtools.S) wgrm =
   let open WeightedGrammar in
   let rec gen_tree size vals = function
     (* Generation complete *)
@@ -89,7 +89,7 @@ let free_gen (module R: Randtools.Sig.S) wgrm =
     (* Draw the length of the list according to the geometric law and add the
       corresponding number of [expr] to the call stack *)
     | Gen (Seq (w, expr)) :: next ->
-      let n = Randtools.Distribution.geometric (module R) w in
+      let n = Randtools.geometric (module R) w in
       gen_tree size vals (list_make_append n (Gen expr) next)
 
     (* Add both component of the product to the call stack. *)
@@ -111,7 +111,7 @@ let free_gen (module R: Randtools.Sig.S) wgrm =
 (** Search for a tree in a specific size window *)
 let search_seed
   (type state)
-  (module R: Randtools.Sig.S with type State.t = state)
+  (module R: Randtools.S with type State.t = state)
   rules
   ~size_min
   ~size_max
@@ -130,7 +130,7 @@ let search_seed
   search max_try
 
 let generator grammar oracle rng ~size_min ~size_max ~max_try =
-  let module R = (val rng: Randtools.Sig.S) in
+  let module R = (val rng: Randtools.S) in
   let wgrm = WeightedGrammar.of_grammar oracle grammar in
   match search_seed (module R) wgrm ~size_min ~size_max ~max_try with
   | Some (size, state) ->
