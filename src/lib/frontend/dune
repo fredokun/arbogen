@@ -1,4 +1,4 @@
-(menhir
+(ocamlyacc
  (modules parser))
 
 (ocamllex

@@ -1,16 +1,16 @@
 %token <string> UIDENT LIDENT
 %token EOF
 
-(* options tokens *)
+/* options tokens */
 %token SET
 %token <int> NUMI
 %token <float> NUMF
 
-(* grammar tokens *)
+/* grammar tokens */
 %token SEQ
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
-(* precedence rules *)
+/* precedence rules */
 %left PLUS
 %left TIMES
 
@@ -19,40 +19,44 @@
 
 %%
 
-(* Grammar entry point *)
+/* Grammar entry point */
 
 start:
-  options = list(option)
-  rules = nonempty_list(rule)
-  EOF
-  { options, rules }
+  option_list rule_list EOF { $1, $2 }
 
 
-(* Options ************************************************)
+/* Options ********************************************** */
 
-option:
-  SET id = LIDENT value = value { Options.Param (id, value) }
+/* Possibly empty list */
+option_list:
+  | { [] }
+  | arbogen_option option_list { $1 :: $2 }
+
+arbogen_option:
+  SET LIDENT value { Options.Param ($2, $3) }
 
 value:
-  | f = NUMF    { Options.Vfloat f }
-  | n = NUMI    { Options.Vint n }
-  | s = LIDENT  { Options.Vstring s }
+  | NUMF    { Options.Vfloat $1 }
+  | NUMI    { Options.Vint $1 }
+  | LIDENT  { Options.Vstring $1 }
 
 
-(* Production rules ***************************************)
+/* Production rules ************************************* */
+
+/* non-empty list */
+rule_list:
+  | rule           { [$1] }
+  | rule rule_list { $1 :: $2 }
 
 rule:
-  name = UIDENT
-  EQUAL
-  expr = expr
-  { name, expr }
+  UIDENT EQUAL expr { $1, $3 }
 
 expr:
-  | LPAREN e = expr RPAREN          { e }
-  | e1 = expr PLUS e2 = expr        { Grammar.Union (e1, e2) }
-  | e1 = expr TIMES e2 = expr       { Grammar.Product (e1, e2) }
-  | uid = UIDENT                    { Grammar.Reference uid }
-  | SEQ LPAREN e = expr RPAREN      { Grammar.Seq e }
-  | LWEIGHT w = NUMI RWEIGHT        { Grammar.Z w }
-  | Z                               { Grammar.Z 1 }
-  | ONE                             { Grammar.Z 0 }
+  | LPAREN expr RPAREN      { $2 }
+  | expr PLUS expr          { Grammar.Union ($1, $3) }
+  | expr TIMES expr         { Grammar.Product ($1, $3) }
+  | UIDENT                  { Grammar.Reference $1 }
+  | SEQ LPAREN expr RPAREN  { Grammar.Seq $3 }
+  | LWEIGHT NUMI RWEIGHT    { Grammar.Z $2 }
+  | Z                       { Grammar.Z 1 }
+  | ONE                     { Grammar.Z 0 }
