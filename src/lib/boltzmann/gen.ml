@@ -33,7 +33,7 @@ let free_size (module R: Randtools.Sig.S) size_max wgrm =
       else gen_size s next
 
     (* Lookup the definition of i and add it to the call stack *)
-    | {desc = Reference i; _} :: next ->
+    | {desc = Ref i; _} :: next ->
       gen_size s (wgrm.rules.(i) :: next)
 
     (* Draw the length of the list according to the geometric law and add the
@@ -82,7 +82,7 @@ let free_gen (module R: Randtools.Sig.S) wgrm =
       gen_tree (size + n) vals next
 
     (* Lookup the definition of i and add it to the call stack *)
-    | Gen (Reference i) :: next ->
+    | Gen (Ref i) :: next ->
       let expr_i = wgrm.rules.(i) in
       gen_tree size (None :: vals) (Gen expr_i.desc :: Build i :: next)
 
@@ -103,7 +103,7 @@ let free_gen (module R: Randtools.Sig.S) wgrm =
       else
         gen_tree size vals (Gen e2.desc :: next)
   in
-  match gen_tree 0 [] [Gen (Reference 0)] with
+  match gen_tree 0 [] [Gen (Ref 0)] with
   | [Some tree], size -> tree, size
   | _ -> failwith "internal error"
 

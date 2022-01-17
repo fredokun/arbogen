@@ -21,7 +21,7 @@ and expression_desc =
   | Product of expression * expression
   | Union of expression * expression
   | Seq of expression
-  | Reference of int
+  | Ref of int
 
 let product e1 e2 = {weight = e1.weight *. e2.weight; desc = Product (e1, e2)}
 let union e1 e2 = {weight = e1.weight +. e2.weight; desc = Union (e1, e2)}
@@ -36,7 +36,7 @@ let of_expression oracle =
     | Grammar.Product (e1, e2) -> product (aux e1) (aux e2)
     | Grammar.Union (e1, e2) -> union (aux e1) (aux e2)
     | Grammar.Seq e -> seq (aux e)
-    | Grammar.Reference i -> {weight = oracle.values.(i); desc = Reference i}
+    | Grammar.Ref i -> {weight = oracle.values.(i); desc = Ref i}
   in
   aux
 
@@ -56,7 +56,7 @@ let pp_expression =
     | Product (e1, e2) -> Format.fprintf fmt "%a * %a" pp e1 pp e2
     | Union (e1, e2) -> Format.fprintf fmt "%a + %a" pp e1 pp e2
     | Seq e -> Format.fprintf fmt "Seq(%a)" pp e
-    | Reference i -> Format.fprintf fmt "Ref(%d)" i
+    | Ref i -> Format.fprintf fmt "Ref(%d)" i
   in
   pp
 

@@ -10,7 +10,7 @@ let rec expr_names set = function
   | Grammar.Union (e1, e2) -> expr_names (expr_names set e1) e2
   | Grammar.Seq e -> expr_names set e
   | Grammar.Z _ -> set
-  | Grammar.Reference name -> Sset.add name set
+  | Grammar.Ref name -> Sset.add name set
 
 let names grammar =
   List.fold_left
@@ -55,7 +55,7 @@ let expr_to_id indices =
     | Product (e1, e2) -> Product (aux e1, aux e2)
     | Union (e1, e2) -> Union (aux e1, aux e2)
     | Seq e -> Seq (aux e)
-    | Reference r -> Reference (Smap.find r indices)
+    | Ref r -> Ref (Smap.find r indices)
   in
   aux
 

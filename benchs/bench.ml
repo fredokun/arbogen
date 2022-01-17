@@ -22,21 +22,21 @@ let bench ?(size_min=100_000) ?(size_max=200_000) ?(seed=4242424242) grammar =
 let binary () =
   Grammar.{
     names = [|"B"|];
-    rules = [|Union (Z 0, Product (Z 1, Product (Reference 0, Reference 0)))|];
+    rules = [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|];
   } |> bench
 
 let nary1 () =
   Grammar.{
     names = [|"T"|];
-    rules = [|Product (Z 1, Seq (Reference 0))|]
+    rules = [|Product (Z 1, Seq (Ref 0))|]
   } |> bench
 
 let nary2 () =
   Grammar.{
     names = [|"T"; "S"|];
     rules = [|
-      Product (Z 1, Reference 1);
-      Union (Z 0, Product (Reference 0, Reference 1));
+      Product (Z 1, Ref 1);
+      Union (Z 0, Product (Ref 0, Ref 1));
     |]
   } |> bench
 

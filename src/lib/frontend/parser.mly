@@ -55,7 +55,7 @@ expr:
   | LPAREN expr RPAREN      { $2 }
   | expr PLUS expr          { Grammar.Union ($1, $3) }
   | expr TIMES expr         { Grammar.Product ($1, $3) }
-  | UIDENT                  { Grammar.Reference $1 }
+  | UIDENT                  { Grammar.Ref $1 }
   | SEQ LPAREN expr RPAREN  { Grammar.Seq $3 }
   | LWEIGHT NUMI RWEIGHT    { Grammar.Z $2 }
   | Z                       { Grammar.Z 1 }

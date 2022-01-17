@@ -12,7 +12,7 @@ and expression_desc =
   | Product of expression * expression
   | Union of expression * expression
   | Seq of expression
-  | Reference of int
+  | Ref of int
 
 
 (** {2 Grammar annotations} *)

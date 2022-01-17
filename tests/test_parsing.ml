@@ -13,8 +13,8 @@ let binary () =
     names = [|"BinNode"; "Leaf"|];
     rules = [|
       Union (
-        Product (Reference 1, Z 1),
-        Product (Product (Reference 0, Reference 0), Z 1));
+        Product (Ref 1, Z 1),
+        Product (Product (Ref 0, Ref 0), Z 1));
       Z 0;
     |];
   } in
@@ -24,8 +24,8 @@ let nary () =
   let expected = Grammar.{
     names = [|"NTree"; "Seq"; "Leaf"|];
     rules = [|
-      Product (Z 1, Reference 1);
-      Union (Reference 2, Product (Reference 0, Reference 1));
+      Product (Z 1, Ref 1);
+      Union (Ref 2, Product (Ref 0, Ref 1));
       Z 0;
     |];
   } in
@@ -34,7 +34,7 @@ let nary () =
 let seq () =
   let expected = Grammar.{
     names = [|"Node"|];
-    rules = [|Product (Seq (Reference 0), Z 1)|];
+    rules = [|Product (Seq (Ref 0), Z 1)|];
   } in
   Alcotest.check grammar "seq" expected (parse "seq")
 
@@ -42,8 +42,8 @@ let seq2 () =
   let expected = Grammar.{
     names = [|"Node"; "Seq"|];
     rules = [|
-      Product (Reference 1, Z 1);
-      Union (Z 0, Product (Reference 0, Reference 1));
+      Product (Ref 1, Z 1);
+      Union (Z 0, Product (Ref 0, Ref 1));
     |];
   } in
   Alcotest.check grammar "seq2" expected (parse "seq2")
@@ -52,9 +52,9 @@ let shuffle_plus () =
   let expected = Grammar.{
     names = [|"A"; "Ashuffle"; "Aplus"|];
     rules = [|
-      Union (Reference 1, Reference 2);
-      Product (Seq (Reference 0), Z 1);
-      Product (Product (Reference 1, Reference 1), Seq (Reference 1));
+      Union (Ref 1, Ref 2);
+      Product (Seq (Ref 0), Z 1);
+      Product (Product (Ref 1, Ref 1), Seq (Ref 1));
     |];
   } in
   Alcotest.check grammar "shuffle_plus" expected (parse "shuffle_plus")
@@ -66,9 +66,9 @@ let sp () =
       Union (
         Union (
           Z 1,
-          Product (Z 1, Reference 0)
+          Product (Z 1, Ref 0)
         ),
-        Product (Product (Product (Z 1, Reference 0), Reference 0), Reference 0)
+        Product (Product (Product (Z 1, Ref 0), Ref 0), Ref 0)
       )
     |];
   } in
@@ -81,9 +81,9 @@ let unarybinary () =
       Union (
         Union (
           Z 1,
-          Product (Reference 0, Z 1)
+          Product (Ref 0, Z 1)
         ),
-        Product (Product (Reference 0, Reference 0), Z 1)
+        Product (Product (Ref 0, Ref 0), Z 1)
       )
     |];
   } in
@@ -93,9 +93,9 @@ let unarybinary2 () =
   let expected = Grammar.{
     names = [|"UBTree"; "Unary"; "Binary"; "UBLeaf"|];
     rules = [|
-      Union (Union (Reference 3, Reference 1), Reference 2);
-      Product (Reference 0, Z 1);
-      Product (Product (Reference 0, Reference 0), Z 1);
+      Union (Union (Ref 3, Ref 1), Ref 2);
+      Product (Ref 0, Z 1);
+      Product (Product (Ref 0, Ref 0), Z 1);
       Z 1;
     |];
   } in

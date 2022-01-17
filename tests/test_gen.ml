@@ -43,7 +43,7 @@ let valid_binary () =
   let size_min, size_max = 20, 30 in
   let grammar = Grammar.{
     names = [|"B"|];
-    rules = [|Union (Z 0, Product (Z 1, Product (Reference 0, Reference 0)))|];
+    rules = [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|];
   } in
   let rec size = function
     | Tree.Node ("B", [l; r]) -> 1 + size l + size r
@@ -59,8 +59,8 @@ let valid_nary () =
   let grammar = Grammar.{
     names = [|"T"; "S"|];
     rules = [|
-      Product (Z 1, Reference 1);
-      Union (Z 0, Product (Reference 0, Reference 1));
+      Product (Z 1, Ref 1);
+      Union (Z 0, Product (Ref 0, Ref 1));
     |]
   } in
   let rec size = function
@@ -77,7 +77,7 @@ let valid_nary_bis () =
   let size_min, size_max = 20, 30 in
   let grammar = Grammar.{
     names = [|"T"|];
-    rules = [|Product (Z 1, Seq (Reference 0))|];
+    rules = [|Product (Z 1, Seq (Ref 0))|];
   } in
   let rec size = function
     | Tree.Node ("T", []) -> 1
@@ -95,8 +95,8 @@ let valid_motzkin () =
     rules = [|
       Union (Z 0,
         Union (
-          Product (Z 1, Reference 0),
-          Product (Z 1, Product (Reference 0, Reference 0))
+          Product (Z 1, Ref 0),
+          Product (Z 1, Product (Ref 0, Ref 0))
         )
       )
     |];
@@ -116,9 +116,9 @@ let valid_shuffle_plus () =
   let grammar = Grammar.{
     names = [|"A"; "Ashuffle"; "Aplus"|];
     rules = [|
-      Union (Reference 1, Reference 2);
-      Product (Z 1, Seq (Reference 0));
-      Product (Reference 1, Product (Reference 1, Seq (Reference 1)));
+      Union (Ref 1, Ref 2);
+      Product (Z 1, Seq (Ref 0));
+      Product (Ref 1, Product (Ref 1, Seq (Ref 1)));
     |];
   } in
   let get_type = function
@@ -161,7 +161,7 @@ let unif_binary () =
   Random.self_init ();
   let grammar = Grammar.{
     names = [|"B"|];
-    rules = [|Union (Z 0, Product (Z 1, Product (Reference 0, Reference 0)))|];
+    rules = [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|];
   } in
   let store = Array.init 6 (fun _ -> Hashtbl.create 17) in
   let rec repr = function

@@ -19,7 +19,7 @@ and 'ref expression =
   | Product of 'ref expression * 'ref expression
   | Union of 'ref expression * 'ref expression
   | Seq of 'ref expression
-  | Reference of 'ref
+  | Ref of 'ref
 
 (* Pretty printing *)
 
@@ -28,7 +28,7 @@ let pp_expression ~pp_ref =
     | Product (e1, e2) -> Format.fprintf fmt "%a * %a" aux e1 aux e2
     | Union (e1, e2) -> Format.fprintf fmt "(%a + %a)" aux e1 aux e2
     | Seq e -> Format.fprintf fmt "Seq(%a)" aux e
-    | Reference name -> pp_ref fmt name
+    | Ref name -> pp_ref fmt name
     | Z i -> Format.fprintf fmt "z^%d" i
   in
   aux
