@@ -1,13 +1,10 @@
-open Frontend
-
-
 let grammar =
   let pp = Grammar.pp in
   let equal g1 g2 = g1 = g2 in (* XXX *)
   Alcotest.testable pp equal
 
 let parse test_name =
-  let _, grammar = ParseUtil.parse_from_file (test_name ^ ".spec") in
+  let _, grammar = Frontend.parse_from_file (test_name ^ ".spec") in
   grammar
 
 

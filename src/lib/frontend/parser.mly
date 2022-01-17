@@ -33,12 +33,12 @@ option_list:
   | arbogen_option option_list { $1 :: $2 }
 
 arbogen_option:
-  SET LIDENT value { Options.Param ($2, $3) }
+  SET LIDENT value { ($2, $3) }
 
 value:
-  | NUMF    { Options.Vfloat $1 }
-  | NUMI    { Options.Vint $1 }
-  | LIDENT  { Options.Vstring $1 }
+  | NUMF    { Options.Value.Float $1 }
+  | NUMI    { Options.Value.Int $1 }
+  | LIDENT  { Options.Value.String $1 }
 
 
 /* Production rules ************************************* */
