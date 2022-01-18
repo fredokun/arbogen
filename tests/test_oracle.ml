@@ -182,11 +182,8 @@ let evaluation_tests = [
 
 (** {2 Tests for the singularity search} *)
 
-let eps = 1e-9
-
 let search grammar =
-  let config = Naive.{epsilon1 = eps; epsilon2 = eps; zmin = 0.; zmax = 1.; zstart = 0.} in
-  let oracle = Naive.make config grammar in
+  let oracle = Naive.make grammar in
   oracle.z
 
 let binary_singularity () =

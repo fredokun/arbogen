@@ -65,9 +65,14 @@ let search_singularity {epsilon1; epsilon2; zmin; zmax; zstart} grammar =
       | Diverge -> search zmin zstart ((zmin +. zstart) /. 2.)
   in
   match search zmin zmax zstart with
-  | _, _, Diverge -> failwith "search_singularity failed to find the singularity"
-  | zmin, zmax, Val v -> zmin, zmax, v
+  | _, _, Diverge ->
+    failwith "search_singularity failed to find the singularity"
+  | zmin, zmax, Val v ->
+    (zmin, zmax, v)
 
-let make config grammar =
+let default_config =
+  {epsilon1= 1e-5; epsilon2= 1e-3; zstart= 0.; zmin= 0.; zmax= 1.}
+
+let make ?(config = default_config) grammar =
   let z, _, values = search_singularity config grammar in
   Types.{z; values}
