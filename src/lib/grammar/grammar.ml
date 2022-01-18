@@ -25,18 +25,23 @@ and 'ref expression =
 
 let pp_expression ~pp_ref =
   let rec aux fmt = function
-    | Product (e1, e2) -> Format.fprintf fmt "%a * %a" aux e1 aux e2
-    | Union (e1, e2) -> Format.fprintf fmt "(%a + %a)" aux e1 aux e2
-    | Seq e -> Format.fprintf fmt "Seq(%a)" aux e
-    | Ref name -> pp_ref fmt name
-    | Z i -> Format.fprintf fmt "z^%d" i
+    | Product (e1, e2) ->
+      Format.fprintf fmt "%a * %a" aux e1 aux e2
+    | Union (e1, e2) ->
+      Format.fprintf fmt "(%a + %a)" aux e1 aux e2
+    | Seq e ->
+      Format.fprintf fmt "Seq(%a)" aux e
+    | Ref name ->
+      pp_ref fmt name
+    | Z i ->
+      Format.fprintf fmt "z^%d" i
   in
   aux
 
 let pp fmt {rules; names} =
   Array.iteri
     (fun i expr ->
-       Format.fprintf fmt "%s ::= %a@\n"
-         names.(i)
-         (pp_expression ~pp_ref:Format.pp_print_int) expr)
+      Format.fprintf fmt "%s ::= %a@\n" names.(i)
+        (pp_expression ~pp_ref:Format.pp_print_int)
+        expr )
     rules

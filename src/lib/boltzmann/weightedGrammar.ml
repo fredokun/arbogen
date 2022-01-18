@@ -15,6 +15,7 @@
 open Oracles.Types
 
 type t = {rules: expression array; names: string array}
+
 and expression =
   | Z of int
   | Product of expression * expression
@@ -22,23 +23,24 @@ and expression =
   | Seq of float * expression
   | Ref of int
 
-
 (** {2 Conversion from grammars} *)
 
 let of_expression oracle =
   let rec aux = function
-    | Grammar.Z n -> Z n, (oracle.z ** (float_of_int n))
+    | Grammar.Z n ->
+      (Z n, oracle.z ** float_of_int n)
     | Grammar.Product (e1, e2) ->
       let e1, w1 = aux e1 and e2, w2 = aux e2 in
-      Product (e1, e2), w1 *. w2
+      (Product (e1, e2), w1 *. w2)
     | Grammar.Union (e1, e2) ->
       let e1, w1 = aux e1 and e2, w2 = aux e2 in
       let w = w1 +. w2 in
-      Union (w1 /. w, e1, e2), w
+      (Union (w1 /. w, e1, e2), w)
     | Grammar.Seq e ->
       let e, w = aux e in
-      Seq (1. -. w, e), 1. /. (1. -. w)
-    | Grammar.Ref i -> Ref i, oracle.values.(i)
+      (Seq (1. -. w, e), 1. /. (1. -. w))
+    | Grammar.Ref i ->
+      (Ref i, oracle.values.(i))
   in
   fun e -> fst (aux e)
 
@@ -52,16 +54,21 @@ let of_grammar oracle grammar =
 
 let pp_expression =
   let rec pp fmt = function
-    | Z n -> Format.fprintf fmt "z^%d" n
-    | Product (e1, e2) -> Format.fprintf fmt "%a * %a" pp e1 pp e2
-    | Union (w, e1, e2) -> Format.fprintf fmt "Union (%F, %a, %a)" w pp e1 pp e2
-    | Seq (w, e) -> Format.fprintf fmt "Seq(%F, %a)" w pp e
-    | Ref i -> Format.fprintf fmt "Ref(%d)" i
+    | Z n ->
+      Format.fprintf fmt "z^%d" n
+    | Product (e1, e2) ->
+      Format.fprintf fmt "%a * %a" pp e1 pp e2
+    | Union (w, e1, e2) ->
+      Format.fprintf fmt "Union (%F, %a, %a)" w pp e1 pp e2
+    | Seq (w, e) ->
+      Format.fprintf fmt "Seq(%F, %a)" w pp e
+    | Ref i ->
+      Format.fprintf fmt "Ref(%d)" i
   in
   pp
 
 let pp fmt {rules; names} =
   Array.iteri
     (fun i expr ->
-       Format.fprintf fmt "%s ::= %a@\n" names.(i) pp_expression expr)
+      Format.fprintf fmt "%s ::= %a@\n" names.(i) pp_expression expr )
     rules

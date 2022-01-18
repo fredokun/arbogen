@@ -1,14 +1,18 @@
 open Grammar
 open Types
 
-
 let expression oracle =
   let rec aux = function
-    | Z n -> oracle.z ** (float_of_int n)
-    | Product (e1, e2) -> (aux e1) *. (aux e2)
-    | Union (e1, e2) -> (aux e1) +. (aux e2)
-    | Seq e -> 1. /. (1. -. aux e)
-    | Ref i -> oracle.values.(i)
+    | Z n ->
+      oracle.z ** float_of_int n
+    | Product (e1, e2) ->
+      aux e1 *. aux e2
+    | Union (e1, e2) ->
+      aux e1 +. aux e2
+    | Seq e ->
+      1. /. (1. -. aux e)
+    | Ref i ->
+      oracle.values.(i)
   in
   aux
 

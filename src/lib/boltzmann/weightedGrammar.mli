@@ -13,19 +13,16 @@ and expression =
   | Seq of float * expression
   | Ref of int
 
-
 (** {2 Grammar annotations} *)
 
+val of_expression :
+  Oracles.Types.unlabelled -> int Grammar.expression -> expression
 (** Annotate an expression. *)
-val of_expression:
-  Oracles.Types.unlabelled
-  -> int Grammar.expression
-  -> expression
 
+val of_grammar : Oracles.Types.unlabelled -> Grammar.t -> t
 (** Annotate a grammar. *)
-val of_grammar: Oracles.Types.unlabelled -> Grammar.t -> t
 
 (** {2 Pretty printing} *)
 
+val pp : Format.formatter -> t -> unit
 (** Pretty print a weighted grammar *)
-val pp: Format.formatter -> t -> unit
