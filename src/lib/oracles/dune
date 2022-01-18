@@ -1,5 +1,0 @@
-(library
- (name oracles)
- (public_name arbogen.oracles)
- (modules_without_implementation types)
- (libraries grammar))

@@ -46,9 +46,23 @@ module Grammar = Grammar
 
 (** {2 Pre-processing} *)
 
-(** TODO: explain *)
+(** The preprocessing of a grammar is handled by the {!Boltzmann.Oracle} and
+    {!WeightedGrammar} modules.
+    It consists in computing some weights (the values of the generating
+    functions of the combinatorial classes at play) an annotating the grammar
+    with theses weights.
+    The current (only) implementation of this mechanism is available under the
+    {!Boltzmann.Oracle.Naive} name.
 
-module Oracles = Oracles
+    Obtaining an annotated grammar is achieved as follows:
+    {[
+      let open Boltzmann in
+      let oracle = Oracle.Naive.make grammar in
+      WeightedGrammar.of_grammar oracle grammar
+    ]}
+
+    See the {!Boltzmann.Oracle} documentation for more options.
+ *)
 
 (** {2 Random generation} *)
 

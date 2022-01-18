@@ -1,5 +1,4 @@
-open Oracles
-open Oracles.Types
+open Boltzmann.Oracle
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 

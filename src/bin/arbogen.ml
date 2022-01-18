@@ -160,7 +160,7 @@ let parse_grammar () =
   g
 
 let make_oracle grammar =
-  let open Oracles.Naive in
+  let open Boltzmann.Oracle.Naive in
   let oracle_config =
     { epsilon1= Options.(WithDefault.value globals.epsilon1)
     ; epsilon2= Options.(WithDefault.value globals.epsilon2)

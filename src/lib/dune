@@ -1,7 +1,4 @@
-; Main entry point of the arbogen library.
-; Arbogen is split in 6 sub-libraries
-
 (library
  (name arbogen)
  (public_name arbogen)
- (libraries grammar randtools tree frontend boltzmann oracles))
+ (libraries grammar randtools tree frontend boltzmann))

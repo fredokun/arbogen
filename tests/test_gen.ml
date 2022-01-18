@@ -15,11 +15,11 @@ let check_size size_min size_max expected actual =
     fail "wrong size: %d not in [%d, %d]" actual size_min size_max
 
 let generate ?(seed = 42424242) grammar ~size_min ~size_max =
-  let oracle = Oracles.Naive.make grammar in
+  let oracle = Boltzmann.Oracle.Naive.make grammar in
   let module Rng = Randtools.OcamlRandom in
   Rng.init seed;
   match
-    Boltzmann.Gen.generator grammar oracle
+    Boltzmann.generator grammar oracle
       (module Rng)
       ~size_min ~size_max ~max_try:1000
   with

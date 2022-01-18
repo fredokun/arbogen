@@ -12,8 +12,6 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-open Oracles.Types
-
 type t = {rules: expression array; names: string array}
 
 and expression =
@@ -25,7 +23,7 @@ and expression =
 
 (** {2 Conversion from grammars} *)
 
-let of_expression oracle =
+let of_expression (oracle: Oracle.t) =
   let rec aux = function
     | Grammar.Z n ->
       (Z n, oracle.z ** float_of_int n)

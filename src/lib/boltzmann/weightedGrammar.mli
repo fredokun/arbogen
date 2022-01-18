@@ -16,10 +16,10 @@ and expression =
 (** {2 Grammar annotations} *)
 
 val of_expression :
-  Oracles.Types.unlabelled -> int Grammar.expression -> expression
+  Oracle.t -> int Grammar.expression -> expression
 (** Annotate an expression. *)
 
-val of_grammar : Oracles.Types.unlabelled -> Grammar.t -> t
+val of_grammar : Oracle.t -> Grammar.t -> t
 (** Annotate a grammar. *)
 
 (** {2 Pretty printing} *)

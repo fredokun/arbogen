@@ -18,7 +18,7 @@ val free_gen : (module Randtools.S) -> WeightedGrammar.t -> string Tree.t * int
 
 val generator :
      Grammar.t
-  -> Oracles.Types.unlabelled
+  -> Oracle.t
   -> (module Randtools.S)
   -> size_min:int
   -> size_max:int
