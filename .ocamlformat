@@ -1,0 +1,5 @@
+profile = ocamlformat
+parse-docstrings = true
+wrap-comments = true
+sequence-style = terminator
+cases-exp-indent = 2
