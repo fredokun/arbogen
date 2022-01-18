@@ -31,16 +31,21 @@ let nary2 () =
     ; rules= [|Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
   |> bench
 
-(* XXX. it takes forever to find a shuffle_plus tree in the window [20, 500000]
-   this is really suspicious let shuffle_plus () = bench ~size_min:20 Grammar.[
-   "A", [(0, [Elem "Aplus"]); (0, [Elem "Apar"])]; "Aplus", [(0, [Elem "Apar";
-   Elem "Apar"; Seq "Apar"])]; "Apar", [(1, [Seq "A"])] ] *)
+let shuffle_plus () =
+  Grammar.
+    { names= [|"A"; "Aplus"; "Apar"|]
+    ; rules=
+        [| Union (Ref 1, Ref 2)
+         ; Product (Ref 2, Product (Ref 2, Seq (Ref 2)))
+         ; Product (Z 1, Seq (Ref 0)) |] }
+  |> bench
 
 let () =
   let res =
     Benchmark.latencyN 4L
       [ ("binary", binary, ())
       ; ("nary1", nary1, ())
-      ; ("nary2", nary2, ()) (* "shuffle_plus", shuffle_plus, (); *) ]
+      ; ("nary2", nary2, ())
+      ; ("shuffle_plus", shuffle_plus, ()) ]
   in
   Benchmark.tabulate res
