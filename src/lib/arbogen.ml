@@ -35,8 +35,11 @@
     the size of a tree corresponds to its number of internal nodes:
 
     - in the .spec language: [B ::= <1> + <z> * B * B] - as a {!Grammar.t}
-    value: {[{ names = [|"B"|]; rules = [| Union (Z 0, Product (Z 1, Product
-    (Ref 0, Ref 0))) |] }]} *)
+    value:
+    {[
+      { names = [|"B"|]
+      ; rules = [| Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0))) |] }
+    ]} *)
 
 module Frontend = Frontend
 module Grammar = Grammar

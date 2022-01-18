@@ -5,15 +5,24 @@
     defined in [rules.(i)] - the high level name of symbol [i] is [names.(i)]
 
     For instance, the grammar of binary trees [B ::= 1 + z * B * B] may be
-    encoded as follows: {[{ rules = [|Union (Z 0, Product (Z 1, Product (Ref 0;
-    Ref 0)))|]] names = [|"B"|]] }]}
+    encoded as follows:
+    {[
+      { rules = [|Union (Z 0, Product (Z 1, Product (Ref 0; Ref 0)))|]
+      ; names = [|"B"|] }
+    ]}
 
     As another example, the grammar of plane trees might be represented either
-    using the sequence construction [T ::= z * Seq(T)]: {[{ rules = [|Product (Z
-    1, Seq (Ref 0))|]; names = [|"T"|]; }]} Or using a two-rules grammar to
-    explicitely express the sequence [T ::= z * S and S ::= 1 + T * S]: {[{
-    rules = [| Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1)); |];
-    names = [|"T"; "S"|]; }]} *)
+    using the sequence construction [T ::= z * Seq(T)]:
+    {[
+      { rules = [|Product (Z 1, Seq (Ref 0))|]
+      ; names = [|"T"|] }
+    ]}
+    Or using a two-rules grammar to explicitely express the sequence
+    [T ::= z * S and S ::= 1 + T * S]:
+    {[
+      { rules = [| Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1)); |]
+      ; names = \[|"T"; "S"|]; }
+    ]} *)
 type t = {names: string array; rules: int expression array}
 
 (** The currently supported grammar expressions. *)
