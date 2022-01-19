@@ -23,7 +23,7 @@ and expression =
 
 (** {2 Conversion from grammars} *)
 
-let of_expression (oracle: Oracle.t) =
+let of_expression (oracle : Oracle.t) =
   let rec aux = function
     | Grammar.Z n ->
       (Z n, oracle.z ** float_of_int n)

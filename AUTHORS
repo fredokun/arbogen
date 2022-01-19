@@ -1,24 +1,31 @@
-Frederic Peschanski -- Firstname dot Name at lip6 dot fr
-  Maintainer
-  General design
-  Packaging and distribution
+In alphabetical order
+=====================
 
-Xuming Zhan 
-  Initial prototype
+Alexis Darrasse
+  Underlying algorithmics
 
-Antoine Genitrini
-  Algorithm design and tuning
-
-Mathieu Dien
+Matthieu Dien
   Tail-recursive generator
   native SEQ implementation
   Many fixes and improvements
 
-Alexis Darrasse
-  Underlying algorithmics
+Antoine Genitrini
+  Algorithm design and tuning
 
 Marwan Ghanem
   finalization of SEQ
   various fixes
   packaging (source, Debian, Opam)
 
+Martin Pépin <kerl@wkerl.me>
+  Maintainer
+  Rewrite of the algorithms in persistant style
+  Reorganisation of the code as library + executable
+  Documentation
+
+Frederic Peschanski -- Firstname dot Name at lip6 dot fr
+  General design
+  Packaging and distribution
+
+Xuming Zhan 
+  Initial prototype
