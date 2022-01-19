@@ -1,5 +1,7 @@
 type t =
-  {randgen: string; rnd_state: Bytes.t; weighted_grammar: WeightedGrammar.t}
+  { randgen: string
+  ; rnd_state: Bytes.t
+  ; weighted_grammar: Boltzmann.WeightedGrammar.t }
 
 let from_file filename =
   let ic = open_in filename in

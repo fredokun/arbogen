@@ -47,7 +47,7 @@ module Grammar = Grammar
 (** {2 Pre-processing} *)
 
 (** The preprocessing of a grammar is handled by the {!Boltzmann.Oracle} and
-    {!WeightedGrammar} modules.
+    {!Boltzmann.WeightedGrammar} modules.
     It consists in computing some weights (the values of the generating
     functions of the combinatorial classes at play) an annotating the grammar
     with theses weights.

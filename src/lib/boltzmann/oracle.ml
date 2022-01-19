@@ -1,3 +1,5 @@
+(** Singularity search and approximation of generating functions *)
+
 (** For the grammars supported by Arbogen, it is enough to know the
     values of the different generating functions at one point [z]. *)
 type t = {z: float; values: float array}

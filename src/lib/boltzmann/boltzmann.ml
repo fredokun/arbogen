@@ -12,12 +12,11 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
+(** {2 Free Bolzmann generators (low-level interface)} *)
+
 let rec list_make_append n x l =
   if n <= 0 then l else list_make_append (n - 1) x (x :: l)
 
-(** {2 Core algorithms of the Boltzmann generation} *)
-
-(** Simulate the generation of a tree: only compute the size *)
 let free_size (module R : Randtools.S) ~size_max wgrm =
   let open WeightedGrammar in
   let rec gen_size s = function
@@ -57,7 +56,6 @@ let rec build vals children =
   | [] ->
     invalid_arg "build"
 
-(** Generate a tree *)
 let free_gen (module R : Randtools.S) wgrm =
   let open WeightedGrammar in
   let rec gen_tree size vals = function
@@ -95,11 +93,10 @@ let free_gen (module R : Randtools.S) wgrm =
   | _ ->
     failwith "internal error"
 
-(** {2 High level interface} *)
+(** {2 Rejection sampling in a size window (high-level interface)} *)
 
-(** Search for a tree in a specific size window *)
 let search_seed (type state) (module R : Randtools.S with type State.t = state)
-    rules ~size_min ~size_max ~max_try : (int * state) option =
+    ~size_min ~size_max ?max_try rules : (int * state) option =
   let rec search nb_try =
     if nb_try = 0 then None
     else
@@ -108,7 +105,7 @@ let search_seed (type state) (module R : Randtools.S with type State.t = state)
       if size < size_min || size > size_max then search (nb_try - 1)
       else Some (size, state)
   in
-  search max_try
+  search (Option.fold ~none:(-1) ~some:Fun.id max_try)
 
 let generator grammar oracle rng ~size_min ~size_max ~max_try =
   let module R = (val rng : Randtools.S) in
@@ -122,3 +119,6 @@ let generator grammar oracle rng ~size_min ~size_max ~max_try =
     Some (tree, size)
   | None ->
     None
+
+module WeightedGrammar = WeightedGrammar
+module Oracle = Oracle

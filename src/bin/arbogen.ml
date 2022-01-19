@@ -217,7 +217,7 @@ let () =
     if Options.globals.with_state then (
       if Options.globals.verbosity > 0 then
         Format.printf "Loading state file: %s@." Options.globals.state_file;
-      let state = Boltzmann.GenState.from_file Options.globals.state_file in
+      let state = GenState.from_file Options.globals.state_file in
       Options.globals.randgen <- state.randgen;
       Some state )
     else None
@@ -232,7 +232,7 @@ let () =
       let oracle = make_oracle grammar in
       if Options.globals.verbosity > 0 then Format.printf "Generating tree...@.";
       let tree =
-        Boltzmann.Gen.generator grammar oracle
+        Boltzmann.generator grammar oracle
           (module Rng)
           ~size_min:Options.(WithDefault.value globals.size_min)
           ~size_max:Options.(WithDefault.value globals.size_max)
@@ -241,7 +241,7 @@ let () =
       (tree, WeightedGrammar.of_grammar oracle grammar)
     | Some state ->
       Rng.(State.from_bytes state.rnd_state |> set_state);
-      let tree = Boltzmann.Gen.free_gen (module Rng) state.weighted_grammar in
+      let tree = Boltzmann.free_gen (module Rng) state.weighted_grammar in
       (Some tree, state.weighted_grammar)
   in
   match result with
@@ -250,7 +250,7 @@ let () =
     exit 1
   | Some (tree, size) ->
     let final_state =
-      Boltzmann.GenState.
+      GenState.
         { randgen= Rng.name
         ; rnd_state= Rng.(State.to_bytes (get_state ()))
         ; weighted_grammar= wgrm }
@@ -263,5 +263,5 @@ let () =
     in
     if Options.globals.verbosity >= 2 then
       Format.printf "==> Saving state to file '%s'@." out_state;
-    Boltzmann.GenState.to_file out_state final_state;
+    GenState.to_file out_state final_state;
     print_tree tree

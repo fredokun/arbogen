@@ -1,5 +1,7 @@
 type t =
-  {randgen: string; rnd_state: Bytes.t; weighted_grammar: WeightedGrammar.t}
+  { randgen: string
+  ; rnd_state: Bytes.t
+  ; weighted_grammar: Boltzmann.WeightedGrammar.t }
 
 val from_file : string -> t
 (** Load a generation state from a file *)
