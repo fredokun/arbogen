@@ -1,9 +1,4 @@
-
-// grammar file for unary/binary trees
-
-set min 1000
-set max 10000 
-set try 1000
+// Alternative grammar file for unary/binary trees
 
 UBTree ::= UBLeaf + Unary + Binary
 Unary ::= UBTree * <z>

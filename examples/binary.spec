@@ -1,23 +1,16 @@
+// Grammar file for binary trees (counting internal nodes)
 
-// grammar file for binary trees (counting leaves and internal nodes)
+Bintree ::=  <1> + Bintree * Bintree * <z>
 
-BinNode ::=  Leaf * <z> + BinNode * BinNode * <z>
+/* Variant : binary trees (counting leaves)
 
-/* variant : binary trees (counting internal nodes)
-
-BinNode ::= Leaf +  BinNode * BinNode * <z>
-
-*/
-
-/* variant : binary trees (counting leaves)
-
-BinNode ::= Leaf * <z> + BinNode * BinNode
+Bintree ::= <z> + Bintree * Bintree
 
 */
 
-/* variant : binary trees (counting leaves and internal nodes but nodes count twice)
+/* Variant: binary trees (counting leaves once and internal nodes twice)
 
-BinNode ::= Leaf * <z> + BinNode * BinNode * <z> * <z>
+Bintree ::= Leaf * <z> + Bintree * Bintree * <z> * <z>
 
 */
 
@@ -25,35 +18,47 @@ BinNode ::= Leaf * <z> + BinNode * BinNode * <z> * <z>
 
 arb. compact format
 
-BinNode[Leaf,BinNode[Leaf,Leaf]]
+Bintree[Bintree[],Bintree[Bintree[],Bintree[Bintree[],Bintree[Bintree[],Bintree[]]]]]
 
 xml. format
 
-<xml ...>
+<?xml version="1.0"?>
 <tree>
-<node name="BinNode">
-  <leaf name="Leaf"/>
-  <node name="BinNode">
-    <leaf name="Leaf"/>
-    <leaf name="Leaf"/>
+  <node type="Bintree">
+    <node type="Bintree"></node>
+    <node type="Bintree">
+      <node type="Bintree"></node>
+      <node type="Bintree">
+        <node type="Bintree"></node>
+        <node type="Bintree">
+          <node type="Bintree"></node>
+          <node type="Bintree"></node>
+        </node>
+      </node>
+    </node>
   </node>
-</node>
 </tree>
 
 dot file  (with or without labels) :
 
 digraph {
-  // nodes
-  node N1 [label="BinNode"]
-  node N2 [label="Leaf"]
-  node N3 [label="BinNode"]
-  node N4 [label="Leaf"]
-  node N5 [label="Leaf"]
-  // edges
-  N1 -> N2
-  N1 -> N3
-  N3 -> N4
-  N3 -> N5
+  8 [label="Bintree"];
+  0 [label="Bintree"];
+  7 [label="Bintree"];
+  1 [label="Bintree"];
+  6 [label="Bintree"];
+  2 [label="Bintree"];
+  5 [label="Bintree"];
+  3 [label="Bintree"];
+  4 [label="Bintree"];
+  8 -> 0;
+  8 -> 7;
+  7 -> 1;
+  7 -> 6;
+  6 -> 2;
+  6 -> 5;
+  5 -> 3;
+  5 -> 4;
 }
 
 */

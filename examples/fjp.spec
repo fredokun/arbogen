@@ -1,6 +1,3 @@
-set eps1 0.0000000001
-set eps2 0.0000000001
-
 // Fork-Join-Plus graphs, counting global choices
 
 E     ::= Epar + Eplus
