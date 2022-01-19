@@ -49,7 +49,17 @@ let output_list out output_elem op dl cl =
     ~print_dl:(fun () -> output_string out dl)
     ~print_cl:(fun () -> output_string out cl)
 
-let rec indent_string = function 0 -> "" | n -> "  " ^ indent_string (n - 1)
+let add_indent =
+  let s = ref (String.make 16 ' ') in
+  let grow n =
+    let len = String.length !s in
+    s := String.make (max n (2 * (len + 1))) ' '
+  in
+  fun buf n ->
+    let len = String.length !s in
+    if 2 * n >= len then grow (2 * n);
+    Buffer.add_substring buf !s 0 (2 * n)
+
 
 (* .arb *)
 
@@ -87,12 +97,12 @@ let xml_of_tree (show_type : bool) (show_id : bool) t =
 let indent_xml_of_tree (show_type : bool) (show_id : bool) t =
   let buf = Buffer.create 1024 in
   let rec tree level (Node ((typ, id), ts)) =
-    Buffer.add_string buf (indent_string level);
+    add_indent buf level;
     Buffer.add_string buf "<node";
     attributes buf typ id show_type show_id;
     Buffer.add_string buf ">\n";
     forest (level + 1) ts;
-    Buffer.add_string buf (indent_string level);
+    add_indent buf level;
     Buffer.add_string buf "</node>\n"
   and forest level = function
     | [] ->
@@ -126,7 +136,7 @@ let dot_of_tree (show_type : bool) (show_id : bool) (indent : bool) t =
     Buffer.add_string buf (label typ id);
     string_of_list_buf nodes buf "" "" "" ts
   and edges level pred (Node ((_, id), ts)) =
-    Buffer.add_string buf (if indent then indent_string level else "");
+    if indent then add_indent buf level;
     Buffer.add_string buf pred;
     Buffer.add_string buf " -> ";
     Buffer.add_string buf id;
