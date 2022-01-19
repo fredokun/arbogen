@@ -68,13 +68,13 @@ let rec tree_out (show_type : bool) (show_id : bool) tree out =
 (* .xml *)
 
 let attributes buf typ id show_type show_id =
-  Buffer.add_string buf (if show_type then "type=\"" ^ typ ^ "\" " else "");
-  Buffer.add_string buf (if show_id then "id=\"" ^ id ^ "\"" else "")
+  Buffer.add_string buf (if show_type then " type=\"" ^ typ ^ "\"" else "");
+  Buffer.add_string buf (if show_id then " id=\"" ^ id ^ "\"" else "")
 
 let xml_of_tree (show_type : bool) (show_id : bool) t =
   let buf = Buffer.create 1024 in
   let rec aux (Node ((typ, id), ts)) =
-    Buffer.add_string buf "<node ";
+    Buffer.add_string buf "<node";
     attributes buf typ id show_type show_id;
     Buffer.add_string buf ">";
     string_of_list_buf aux buf "" "" "</node>" ts
@@ -88,24 +88,23 @@ let indent_xml_of_tree (show_type : bool) (show_id : bool) t =
   let buf = Buffer.create 1024 in
   let rec tree level (Node ((typ, id), ts)) =
     Buffer.add_string buf (indent_string level);
-    Buffer.add_string buf "<node ";
+    Buffer.add_string buf "<node";
     attributes buf typ id show_type show_id;
-    Buffer.add_string buf ">";
+    Buffer.add_string buf ">\n";
     forest (level + 1) ts;
-    Buffer.add_string buf "\n";
     Buffer.add_string buf (indent_string level);
-    Buffer.add_string buf "</node>"
+    Buffer.add_string buf "</node>\n"
   and forest level = function
     | [] ->
       ()
     | [t] ->
       tree level t
     | t :: f' ->
-      tree level t; Buffer.add_string buf "\n"; forest level f'
+      tree level t; forest level f'
   in
   Buffer.add_string buf "<?xml version=\"1.0\"?>\n<tree>\n";
   tree 1 t;
-  Buffer.add_string buf "\n</tree>\n";
+  Buffer.add_string buf "</tree>\n";
   buf
 
 (* .dot *)
