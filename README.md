@@ -62,14 +62,12 @@ all the dependencies.
 
 If you just want opam to install the dependencies but don't want to install
 arbogen, run `opam install . --deps-only --with-test --with-doc`. The explicit
-list of all dependencies can be found in `arbogen.opam`.
+list of all dependencies can be found in `dune-project`.
 
-To build arbogen manually, run `dune build @install` or `make build`. This will
-build both the executable and the library and expose them under `bin/` and
-`lib/` at the root of the repository.
+To build arbogen manually, run `dune build @install` or `make build`.
 
 ### Documentation
 
-A rather sparse documentation can be build using `dune build @doc` or `make
-doc`. Please feel free to open an issue if you need some parts of the
-documentation to be clarified.
+A documentation can be build using `dune build @doc` or `make doc`. Please feel
+free to open an issue if you need some parts of the documentation to be
+clarified.
