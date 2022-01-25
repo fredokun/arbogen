@@ -45,6 +45,7 @@ type t =
   ; mutable size_max: int WithDefault.t
   ; mutable epsilon1: float WithDefault.t
   ; mutable epsilon2: float WithDefault.t
+  ; mutable epsilon3: float WithDefault.t
   ; mutable with_id: bool
   ; mutable with_type: bool
   ; mutable max_try: int WithDefault.t
@@ -64,8 +65,9 @@ let globals =
   ; random_seed= None
   ; size_min= Default 10
   ; size_max= Default 20
-  ; epsilon1= Default Boltzmann.Oracle.Naive.default_config.epsilon1
-  ; epsilon2= Default Boltzmann.Oracle.Naive.default_config.epsilon2
+  ; epsilon1= Default Boltzmann.Oracle.Naive.default_singular_config.epsilon1
+  ; epsilon2= Default Boltzmann.Oracle.Naive.default_singular_config.epsilon2
+  ; epsilon3= Default Boltzmann.Oracle.Naive.default_singular_config.epsilon3
   ; with_id= false
   ; with_type= false
   ; max_try= Default 100_000

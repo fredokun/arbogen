@@ -14,8 +14,9 @@ let check_size size_min size_max expected actual =
   else if actual < size_min || actual > size_max then
     fail "wrong size: %d not in [%d, %d]" actual size_min size_max
 
-let generate ?(seed = 42424242) grammar ~size_min ~size_max =
-  let oracle = Boltzmann.Oracle.Naive.make grammar in
+let generate ?(seed = 42424242) grammar size_min size_max =
+  let expectation = (size_min + size_max) / 2 in
+  let oracle = Boltzmann.Oracle.Naive.make_expectation expectation grammar in
   let module Rng = Randtools.OcamlRandom in
   Rng.init seed;
   match
@@ -26,8 +27,13 @@ let generate ?(seed = 42424242) grammar ~size_min ~size_max =
   | Some (tree, size) ->
     (tree, size)
   | None ->
-    let name = grammar.Grammar.names.(0) in
-    fail "generation of %s failed" name
+     let name = grammar.Grammar.names.(0) in
+     Format.eprintf "%f\n" oracle.z;
+     Array.iter (Format.eprintf "%f,") oracle.values;
+     Format.eprintf "\n";
+     Array.iter (Format.eprintf "%f,") oracle.derivate_values;
+     Format.eprintf "\n";
+     fail "generation of %s failed" name
 
 (** {2 Correctness tests} *)
 
@@ -48,7 +54,7 @@ let valid_binary () =
     | _ ->
       raise Invalid
   in
-  let tree, gen_size = generate grammar ~size_min ~size_max in
+  let tree, gen_size = generate grammar size_min size_max in
   try check_size size_min size_max gen_size (size tree)
   with Invalid -> fail "not a binary tree: %a" pp_tree tree
 
@@ -69,7 +75,7 @@ let valid_nary () =
     | _ ->
       raise Invalid
   in
-  let tree, gen_size = generate grammar ~size_min ~size_max in
+  let tree, gen_size = generate grammar size_min size_max in
   try check_size size_min size_max gen_size (size tree)
   with Invalid -> fail "not an nary tree: %a" pp_tree tree
 
@@ -86,7 +92,7 @@ let valid_nary_bis () =
     | _ ->
       raise Invalid
   in
-  let tree, gen_size = generate grammar ~size_min ~size_max in
+  let tree, gen_size = generate grammar size_min size_max in
   try check_size size_min size_max gen_size (size tree)
   with Invalid -> fail "not an nary tree (bis): %a" pp_tree tree
 
@@ -112,7 +118,7 @@ let valid_motzkin () =
     | _ ->
       raise Invalid
   in
-  let tree, gen_size = generate grammar ~size_min ~size_max in
+  let tree, gen_size = generate grammar size_min size_max in
   try check_size size_min size_max gen_size (size tree)
   with Invalid -> fail "not a Motzkin tree: %a" pp_tree tree
 
@@ -149,7 +155,7 @@ let valid_shuffle_plus () =
     | _ ->
       raise Invalid
   in
-  let tree, gen_size = generate ~seed:1234512345 grammar ~size_min ~size_max in
+  let tree, gen_size = generate ~seed:1234512345 grammar size_min size_max in
   try check_size size_min size_max gen_size (size `A tree)
   with Invalid -> fail "not a shuffle+ tree: %a" pp_tree tree
 
@@ -189,7 +195,7 @@ let unif_binary () =
   let nb_iterations = 1000 in
   (* 1000 is not enough *)
   for _ = 0 to nb_iterations - 1 do
-    generate grammar ~seed:(Random.bits ()) ~size_min:0 ~size_max:5
+    generate grammar ~seed:(Random.bits ()) 0 5
     |> incr repr store
   done;
   let check size _ nb =
@@ -206,4 +212,4 @@ let uniformity = [("binary trees", `Slow, unif_binary)]
 (** {2 All the tests} *)
 
 let () =
-  Alcotest.run "gen" [("correctness", correctness); ("uniformity", uniformity)]
+  Alcotest.run "gen_expect" [("correctness", correctness); ("uniformity", uniformity)]

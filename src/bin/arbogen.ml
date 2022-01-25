@@ -164,9 +164,10 @@ let make_oracle grammar =
   let oracle_config =
     { epsilon1= Options.(WithDefault.value globals.epsilon1)
     ; epsilon2= Options.(WithDefault.value globals.epsilon2)
+    ; epsilon3= Options.(WithDefault.value globals.epsilon3)
     ; zstart= Options.(WithDefault.value globals.zstart) }
   in
-  make ~config:oracle_config grammar
+  make_singular ~config:oracle_config grammar
 
 let get_rng : string -> (module Randtools.S) = function
   | "ocaml" ->

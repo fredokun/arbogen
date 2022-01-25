@@ -2,12 +2,19 @@ open Boltzmann.Oracle
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 
-let checkfa tolerance = Alcotest.(check (array (float tolerance)))
+let checkfa tolerance s a b = 
+  (* Array.iter (Format.eprintf "%f,") a; *)
+  (* Format.eprintf "@."; *)
+  (* Array.iter (Format.eprintf "%f,") b; *)
+  (* print_endline "@."; *)
+  Alcotest.(check (array (float tolerance))) s a b
 
 let foi = float_of_int
 
 let iteration grammar z epsilon2 =
-  match Naive.iteration_simple grammar z epsilon2 with
+  let len = Array.length grammar.Grammar.rules in
+  let init_values = init len z in
+  match Naive.iteration_simple grammar init_values epsilon2 with
   | Diverge ->
     Alcotest.fail "diverge"
   | Val v ->
@@ -16,40 +23,40 @@ let iteration grammar z epsilon2 =
 (** {2 tests for simple evaluations} *)
 
 let eval_elem () =
-  let oracle = {z= 0.; values= [|0.23|]} in
+  let oracle = {z= 0.; values= [|0.23|]; derivate_values= [|0.|]} in
   checkf 0. "eval(Ref 0)" 0.23 (Eval.expression oracle (Ref 0));
-  let oracle = {z= 0.; values= [|0.8|]} in
+  let oracle = {z= 0.; values= [|0.8|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(Seq)" 5. (Eval.expression oracle (Seq (Ref 0)))
 
 let eval_powers_of_z () =
   let test n z =
     let name = Format.sprintf "eval(z^%d)" n in
-    let oracle = {z; values= [||]} in
+    let oracle = {z; values= [|0.|]; derivate_values= [|0.|]} in
     checkf 1e-12 name (z ** foi n) (Eval.expression oracle (Z n))
   in
   test 5 0.8; test 10 0.95; test 3 0.01; test 1 0.4
 
 let eval_products () =
   let prod = Grammar.Product (Z 1, Product (Ref 0, Ref 0)) in
-  let oracle = {z= 0.25; values= [|2.|]} in
+  let oracle = {z= 0.25; values= [|2.|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(z*A*A)" 1. (Eval.expression oracle prod);
   let prod = Grammar.Product (Z 1, Product (Ref 1, Ref 2)) in
-  let oracle = {z= 0.5; values= [|20.; 3.; 4.|]} in
+  let oracle = {z= 0.5; values= [|20.; 3.; 4.|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(B*C*z)" 6. (Eval.expression oracle prod);
   let prod = Grammar.Product (Z 1, Product (Ref 1, Seq (Ref 3))) in
-  let oracle = {z= 0.4; values= [|20.; 1.234; 4.; 0.8|]} in
+  let oracle = {z= 0.4; values= [|20.; 1.234; 4.; 0.8|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (Eval.expression oracle prod)
 
 let eval_sums () =
   let sum = Grammar.Union (Z 1, Union (Z 1, Z 1)) in
   let z = 0.34567 in
-  let oracle = {z; values= [||]} in
+  let oracle = {z; values= [||]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(z + z + z)" (3. *. z) (Eval.expression oracle sum);
   let sum = Grammar.Union (Ref 0, Union (Seq (Ref 3), Z 1)) in
-  let oracle = {z= 0.11; values= [|0.33; 10.; 20.; 0.2|]} in
+  let oracle = {z= 0.11; values= [|0.33; 10.; 20.; 0.2|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (Eval.expression oracle sum);
   let sum = Grammar.Union (Product (Ref 0, Ref 0), Union (Z 0, Z 1)) in
-  let oracle = {z= 0.87; values= [|0.7|]} in
+  let oracle = {z= 0.87; values= [|0.7|]; derivate_values= [|0.|]} in
   let expected = (oracle.values.(0) ** 2.) +. 1. +. oracle.z in
   checkf 1e-12 "eval(A^2 + 1 + z)" expected (Eval.expression oracle sum)
 
@@ -62,16 +69,16 @@ let eval_plane_trees () =
   (* at a random point / context *)
   let z = 0.28 in
   let values = [|2.3; 8.1|] in
-  let oracle = {z; values} in
+  let oracle = {z; values; derivate_values= [|0.; 0.|]} in
   let expected = [|z *. 8.1; 1. +. (2.3 *. 8.1)|] in
-  checkfa 1e-12 "eval(plane tree)" expected (Eval.grammar oracle grammar);
+  checkfa 1e-12 "eval(plane tree)" expected (Eval.grammar oracle grammar).values;
   (* at the singularity *)
   let z = 0.25 in
   let values = [|0.5; 2.|] in
-  let oracle = {z; values} in
+  let oracle = {z; values; derivate_values= [|0.; 0.|]} in
   let expected = values in
   checkfa 1e-12 "eval(plane tree)@singularity" expected
-    (Eval.grammar oracle grammar)
+    (Eval.grammar oracle grammar).values
 
 let simple_evaluation_tests =
   [ ("Evaluate atomic elements", `Quick, eval_elem)
@@ -91,7 +98,7 @@ let eval_binary () =
   let oracle z = (1. -. sqrt (1. -. (4. *. z *. z))) /. (2. *. z) in
   let test z =
     let name = Format.sprintf "binary(%F)" z in
-    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).values.(0)
   in
   test 0.1; test 0.3; test 0.4
 (* TODO: test 0.5 *)
@@ -108,7 +115,7 @@ let eval_nary () =
   in
   let test z =
     let name = Format.sprintf "nary(%F)" z in
-    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9).values
   in
   test 0.1; test 0.2
 (* TODO: test 0.25 *)
@@ -120,7 +127,7 @@ let eval_seq () =
   let oracle z = (1. -. sqrt (1. -. (4. *. z))) /. 2. in
   let test z =
     let name = Format.sprintf "seq2(%F)" z in
-    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).(0)
+    checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).values.(0)
   in
   test 0.1; test 0.2
 (* TODO: test 0.25 *)
@@ -140,7 +147,7 @@ let eval_shuffle_plus () =
   in
   let test z =
     let name = Format.sprintf "shuffle_plus(%F)" z in
-    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9)
+    checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9).values
   in
   test 0.05; test 0.1; test 0.15
 (* TODO: test (2. -. sqrt 8.) *)
@@ -158,7 +165,7 @@ let evaluation_tests =
 (** {2 Tests for the singularity search} *)
 
 let search grammar =
-  let oracle = Naive.make grammar in
+  let oracle = Naive.make_singular grammar in
   oracle.z
 
 let binary_singularity () =
@@ -207,10 +214,65 @@ let singularity_tests =
     , `Quick
     , shuffle_plus_singularity ) ]
 
+(** {2 Tests for the expectation search} *)
+
+let search grammar =
+  let oracle = Naive.make_expectation 1000 grammar in
+  oracle.z
+
+let binary_expectation () =
+  let grammar =
+    Grammar.
+      { names= [|"B"|]
+      ; rules= [|Union (Z 1, Product (Z 1, Product (Ref 0, Ref 0)))|] }
+  in
+  checkf 5e-9 "expectation(binary)" 0.5 (search grammar)
+
+let nary_expectation () =
+  let grammar =
+    Grammar.
+      { names= [|"T"; "S"|]
+      ; rules= [|Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
+  in
+  checkf 5e-9 "expectation(nary)" 0.25 (search grammar)
+
+let seq_expectation () =
+  let grammar =
+    Grammar.{names= [|"S"|]; rules= [|Product (Z 1, Seq (Ref 0))|]}
+  in
+  checkf 5e-9 "expectation(seq)" 0.25 (search grammar)
+
+let shuffle_plus_expectation () =
+  let grammar =
+    Grammar.
+      { names= [|"A"; "Ashuffle"; "Aplus"|]
+      ; rules=
+          [| Union (Ref 1, Ref 2)
+           ; Product (Z 1, Seq (Ref 0))
+           ; Product (Ref 1, Product (Ref 1, Seq (Ref 1))) |] }
+  in
+  let expectation = 3. -. sqrt 8. in
+  checkf 5e-9 "expectation(shuffle_plus)" expectation (search grammar)
+
+(* TODO: sp *)
+(* TODO: unarybinary *)
+(* TODO: unarybinary2 *)
+
+let expectation_tests =
+  [ ("Search expectation for binary.spec", `Quick, binary_expectation)
+  ; ("Search expectation for nary.spec", `Quick, nary_expectation)
+  ; ("Search expectation for seq.spec", `Quick, seq_expectation)
+  ; ( "Search expectation for shuffle_plus.spec"
+    , `Quick
+    , shuffle_plus_expectation ) ]
+
+
 (** {2 All the oracle-related tests} *)
 
 let () =
+  eval_plane_trees ();
   Alcotest.run "oracle"
     [ ("simple evaluation", simple_evaluation_tests)
     ; ("function approximation", evaluation_tests)
-    ; ("singularity search", singularity_tests) ]
+    ; ("singularity search", singularity_tests)
+    ; ("expectation search", expectation_tests) ]
