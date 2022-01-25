@@ -21,6 +21,18 @@ and 'ref expression =
   | Seq of 'ref expression
   | Ref of 'ref
 
+let product x y = Product (x, y)
+
+let product_n = function
+  | [] -> Z 0
+  | x :: xs -> List.fold_left product x xs
+
+let union x y = Union (x, y)
+
+let union_n = function
+  | [] -> invalid_arg "Grammar.union_n: empty unions are forbidden"
+  | x :: xs -> List.fold_left union x xs
+
 (* Pretty printing *)
 
 let pp_expression ~pp_ref =

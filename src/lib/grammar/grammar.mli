@@ -41,6 +41,18 @@ and 'ref expression =
           order to allow both integer references ([Ref i] refers to the [i]th
           non-terminal of the grammar) and strings (for use in the parser). *)
 
+val product : 'a expression -> 'a expression -> 'a expression
+(** Curryfied product constructor *)
+
+val product_n : 'a expression list -> 'a expression
+(** N-ary product constructor *)
+
+val union : 'a expression -> 'a expression -> 'a expression
+(** Curryfied union constructor *)
+
+val union_n : 'a expression list -> 'a expression
+(** N-ary union constructor *)
+
 (** {2 Pretty printing} *)
 
 val pp : Format.formatter -> t -> unit
