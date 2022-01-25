@@ -35,3 +35,6 @@ let parse_from_file filename =
   let chan = open_in filename in
   let res = parse_from_channel chan in
   close_in chan; res
+
+module ParseTree = ParseTree
+(** A user-friendly representation of grammars. *)
