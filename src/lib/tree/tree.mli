@@ -6,6 +6,13 @@ type 'a t = Node of 'a * 'a t list
 val annotate : 'a t -> ('a * string) t
 (** Annotate a tree with unique identifiers. *)
 
+
+(** {2 Iterators} *)
+
+val fold: ('a -> 'b list -> 'b) -> 'a t -> 'b
+(** A tail-recursive fold on trees. *)
+
+
 (** {2 Output functions} *)
 
 val output_arb :
