@@ -226,7 +226,7 @@ let binary_expectation () =
       { names= [|"B"|]
       ; rules= [|Union (Z 1, Product (Z 1, Product (Ref 0, Ref 0)))|] }
   in
-  checkf 5e-9 "expectation(binary)" 0.5 (search grammar)
+  checkf 5e-6 "expectation(binary)" 0.5 (search grammar)
 
 let nary_expectation () =
   let grammar =
@@ -234,7 +234,7 @@ let nary_expectation () =
       { names= [|"T"; "S"|]
       ; rules= [|Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
   in
-  checkf 5e-9 "expectation(nary)" 0.25 (search grammar)
+  checkf 5e-6 "expectation(nary)" 0.25 (search grammar)
 
 let seq_expectation () =
   let grammar =
