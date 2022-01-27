@@ -241,7 +241,12 @@ let () =
       (tree, WeightedGrammar.of_grammar oracle grammar)
     | Some state ->
       Rng.(State.from_bytes state.rnd_state |> set_state);
-      let tree = Boltzmann.free_gen (module Rng) state.weighted_grammar in
+      let tree =
+        Boltzmann.free_gen
+          (module Rng)
+          state.weighted_grammar
+          state.weighted_grammar.names.(0)
+      in
       (Some tree, state.weighted_grammar)
   in
   match result with

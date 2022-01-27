@@ -41,6 +41,7 @@ val free_size : (module Randtools.S) -> size_max:int -> WeightedGrammar.t -> int
     weighted grammar [rules] (starting by the first symbol) but only computes
     its size. The generation aborts early if the size goes beyond [size_max]. *)
 
-val free_gen : (module Randtools.S) -> WeightedGrammar.t -> string Tree.t * int
-(** Generate a tree and its size, following the weigthed grammar given as
-    argument. *)
+val free_gen :
+  (module Randtools.S) -> WeightedGrammar.t -> string -> string Tree.t * int
+(** Generate a tree and its size, given weigthed grammar and the desired
+    non-terminal. *)

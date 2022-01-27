@@ -56,6 +56,15 @@ let rec build vals children =
   | [] ->
     invalid_arg "build"
 
+let find_pos x xs =
+  let len = Array.length xs in
+  let rec aux i =
+    if i = len then invalid_arg "find_pos"
+    else if xs.(i) = x then i
+    else aux (i + 1)
+  in
+  aux 0
+
 let free_gen (module R : Randtools.S) wgrm =
   let open WeightedGrammar in
   let rec gen_tree size vals = function
@@ -87,11 +96,13 @@ let free_gen (module R : Randtools.S) wgrm =
       let e = if Random.float 1. < w then e1 else e2 in
       gen_tree size vals (Gen e :: next)
   in
-  match gen_tree 0 [] [Gen (Ref 0)] with
-  | [Some tree], size ->
-    (tree, size)
-  | _ ->
-    failwith "internal error"
+  fun name ->
+    let i = find_pos name wgrm.names in
+    match gen_tree 0 [] [Gen (Ref i)] with
+    | [Some tree], size ->
+      (tree, size)
+    | _ ->
+      failwith "internal error"
 
 (** {2 Rejection sampling in a size window (high-level interface)} *)
 
@@ -113,7 +124,7 @@ let generator grammar oracle rng ~size_min ~size_max ~max_try =
   match search_seed (module R) wgrm ~size_min ~size_max ~max_try with
   | Some (size, state) ->
     R.set_state state;
-    let tree, size' = free_gen rng wgrm in
+    let tree, size' = free_gen rng wgrm wgrm.names.(0) in
     assert (size = size');
     (* sanity check *)
     Some (tree, size)
