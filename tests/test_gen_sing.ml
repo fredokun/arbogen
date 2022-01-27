@@ -206,4 +206,5 @@ let uniformity = [("binary trees", `Slow, unif_binary)]
 (** {2 All the tests} *)
 
 let () =
-  Alcotest.run "gen_sing" [("correctness", correctness); ("uniformity", uniformity)]
+  Alcotest.run "gen_sing"
+    [("correctness", correctness); ("uniformity", uniformity)]

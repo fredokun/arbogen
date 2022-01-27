@@ -2,7 +2,7 @@ open Boltzmann.Oracle
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 
-let checkfa tolerance s a b = 
+let checkfa tolerance s a b =
   (* Array.iter (Format.eprintf "%f,") a; *)
   (* Format.eprintf "@."; *)
   (* Array.iter (Format.eprintf "%f,") b; *)
@@ -44,7 +44,9 @@ let eval_products () =
   let oracle = {z= 0.5; values= [|20.; 3.; 4.|]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(B*C*z)" 6. (Eval.expression oracle prod);
   let prod = Grammar.Product (Z 1, Product (Ref 1, Seq (Ref 3))) in
-  let oracle = {z= 0.4; values= [|20.; 1.234; 4.; 0.8|]; derivate_values= [|0.|]} in
+  let oracle =
+    {z= 0.4; values= [|20.; 1.234; 4.; 0.8|]; derivate_values= [|0.|]}
+  in
   checkf 1e-12 "eval(B*z*Seq(D)*1)" 2.468 (Eval.expression oracle prod)
 
 let eval_sums () =
@@ -53,7 +55,9 @@ let eval_sums () =
   let oracle = {z; values= [||]; derivate_values= [|0.|]} in
   checkf 1e-12 "eval(z + z + z)" (3. *. z) (Eval.expression oracle sum);
   let sum = Grammar.Union (Ref 0, Union (Seq (Ref 3), Z 1)) in
-  let oracle = {z= 0.11; values= [|0.33; 10.; 20.; 0.2|]; derivate_values= [|0.|]} in
+  let oracle =
+    {z= 0.11; values= [|0.33; 10.; 20.; 0.2|]; derivate_values= [|0.|]}
+  in
   checkf 1e-12 "eval(A + Seq(D) + z)" 1.69 (Eval.expression oracle sum);
   let sum = Grammar.Union (Product (Ref 0, Ref 0), Union (Z 0, Z 1)) in
   let oracle = {z= 0.87; values= [|0.7|]; derivate_values= [|0.|]} in
@@ -101,6 +105,7 @@ let eval_binary () =
     checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).values.(0)
   in
   test 0.1; test 0.3; test 0.4
+
 (* TODO: test 0.5 *)
 
 let eval_nary () =
@@ -118,6 +123,7 @@ let eval_nary () =
     checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9).values
   in
   test 0.1; test 0.2
+
 (* TODO: test 0.25 *)
 
 let eval_seq () =
@@ -130,6 +136,7 @@ let eval_seq () =
     checkf 5e-9 name (oracle z) (iteration grammar z 1e-9).values.(0)
   in
   test 0.1; test 0.2
+
 (* TODO: test 0.25 *)
 
 let eval_shuffle_plus () =
@@ -150,6 +157,7 @@ let eval_shuffle_plus () =
     checkfa 5e-9 name (oracle z) (iteration grammar z 1e-9).values
   in
   test 0.05; test 0.1; test 0.15
+
 (* TODO: test (2. -. sqrt 8.) *)
 
 (* TODO: sp *)
@@ -265,7 +273,6 @@ let expectation_tests =
   ; ( "Search expectation for shuffle_plus.spec"
     , `Quick
     , shuffle_plus_expectation ) ]
-
 
 (** {2 All the oracle-related tests} *)
 

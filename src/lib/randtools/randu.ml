@@ -28,10 +28,12 @@ let int n =
   let r = 65539 * !state mod max_mod in
   state := r;
   r mod n
+
 (* FIXME: this is not uniform! *)
 
 let float f =
   let n = int max_mod in
   state := n;
   f *. (float_of_int n /. max_mod_f)
+
 (* XXX. Precision? *)

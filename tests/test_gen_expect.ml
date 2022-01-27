@@ -27,13 +27,13 @@ let generate ?(seed = 42424242) grammar size_min size_max =
   | Some (tree, size) ->
     (tree, size)
   | None ->
-     let name = grammar.Grammar.names.(0) in
-     Format.eprintf "%f\n" oracle.z;
-     Array.iter (Format.eprintf "%f,") oracle.values;
-     Format.eprintf "\n";
-     Array.iter (Format.eprintf "%f,") oracle.derivate_values;
-     Format.eprintf "\n";
-     fail "generation of %s failed" name
+    let name = grammar.Grammar.names.(0) in
+    Format.eprintf "%f\n" oracle.z;
+    Array.iter (Format.eprintf "%f,") oracle.values;
+    Format.eprintf "\n";
+    Array.iter (Format.eprintf "%f,") oracle.derivate_values;
+    Format.eprintf "\n";
+    fail "generation of %s failed" name
 
 (** {2 Correctness tests} *)
 
@@ -195,8 +195,7 @@ let unif_binary () =
   let nb_iterations = 1000 in
   (* 1000 is not enough *)
   for _ = 0 to nb_iterations - 1 do
-    generate grammar ~seed:(Random.bits ()) 0 5
-    |> incr repr store
+    generate grammar ~seed:(Random.bits ()) 0 5 |> incr repr store
   done;
   let check size _ nb =
     let size = float_of_int size in
@@ -212,4 +211,5 @@ let uniformity = [("binary trees", `Slow, unif_binary)]
 (** {2 All the tests} *)
 
 let () =
-  Alcotest.run "gen_expect" [("correctness", correctness); ("uniformity", uniformity)]
+  Alcotest.run "gen_expect"
+    [("correctness", correctness); ("uniformity", uniformity)]

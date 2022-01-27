@@ -68,5 +68,5 @@ let pp_expression =
 let pp fmt {rules; names} =
   Array.iteri
     (fun i expr ->
-      Format.fprintf fmt "%s ::= %a@\n" names.(i) pp_expression expr )
+      Format.fprintf fmt "%s ::= %a@\n" names.(i) pp_expression expr)
     rules
