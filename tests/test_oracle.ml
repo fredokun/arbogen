@@ -2,8 +2,7 @@ open Boltzmann.Oracle
 
 let checkf tolerance = Alcotest.(check (float tolerance))
 
-let checkfa tolerance s a b =
-  Alcotest.(check (array (float tolerance))) s a b
+let checkfa tolerance s a b = Alcotest.(check (array (float tolerance))) s a b
 
 let foi = float_of_int
 

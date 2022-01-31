@@ -155,17 +155,14 @@ module Naive = struct
     | zmin, zmax, Val v ->
       (zmin, zmax, v)
 
-  let default_singular_config =
-    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 0.}
+  let default_config =
+    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 5.}
 
-  let default_expectation_config =
-    {epsilon1= 1e-9; epsilon2= 1e-9; epsilon3= 5.; zstart= 0.}
-
-  let make_singular ?(config = default_singular_config) grammar =
+  let make_singular ?(config = default_config) grammar =
     let _, _, values = search_singularity config grammar in
     values
 
-  let make_expectation ?(config = default_expectation_config) n grammar =
+  let make_expectation ?(config = default_config) n grammar =
     let _, _, values = search_expectation config n grammar in
     values
 end
