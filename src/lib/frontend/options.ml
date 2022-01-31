@@ -36,15 +36,19 @@ module WithDefault = struct
   let value = function Default x | Value x -> x
 end
 
+type oracle_type = Expectation | Singular
+
 (** A record holding all the configuration options *)
 type t =
   { mutable grammar_file: string
   ; mutable verbosity: int
   ; mutable random_seed: int option
+  ; mutable oracle_type: oracle_type
   ; mutable size_min: int WithDefault.t
   ; mutable size_max: int WithDefault.t
   ; mutable epsilon1: float WithDefault.t
   ; mutable epsilon2: float WithDefault.t
+  ; mutable epsilon3: float WithDefault.t
   ; mutable with_id: bool
   ; mutable with_type: bool
   ; mutable max_try: int WithDefault.t
@@ -62,10 +66,12 @@ let globals =
   { grammar_file= ""
   ; verbosity= 1
   ; random_seed= None
+  ; oracle_type= Expectation
   ; size_min= Default 10
   ; size_max= Default 20
   ; epsilon1= Default Boltzmann.Oracle.Naive.default_config.epsilon1
   ; epsilon2= Default Boltzmann.Oracle.Naive.default_config.epsilon2
+  ; epsilon3= Default Boltzmann.Oracle.Naive.default_config.epsilon3
   ; with_id= false
   ; with_type= false
   ; max_try= Default 100_000

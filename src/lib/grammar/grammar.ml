@@ -55,5 +55,5 @@ let pp fmt {rules; names} =
     (fun i expr ->
       Format.fprintf fmt "%s ::= %a@\n" names.(i)
         (pp_expression ~pp_ref:Format.pp_print_int)
-        expr )
+        expr)
     rules

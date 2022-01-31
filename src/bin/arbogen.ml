@@ -46,7 +46,7 @@ let speclist =
     , Arg.Unit
         (fun () ->
           Format.printf "%s@." version_str;
-          exit 0 )
+          exit 0)
     , "print version information" )
   ; ( "-verbose"
     , Arg.Int set_verbosity
@@ -61,6 +61,17 @@ let speclist =
     , Arg.Int (fun n -> Options.set "max" (Int n))
     , "<n> : set the maximum size for the generated tree to <n> (a \
        non-negative integer)" )
+  ; ( "-oracle"
+    , Arg.String
+        (function
+        | "singular" ->
+          Options.globals.oracle_type <- Options.Singular
+        | "expectation" ->
+          Options.globals.oracle_type <- Options.Expectation
+        | _ ->
+          Format.eprintf "Error: oracle must be `singular` or `expectation`@.";
+          exit 1)
+    , "<n>: set the oracle to use `singular` or `expectation`" )
   ; ( "-seed"
     , Arg.Int (fun n -> Options.set "seed" (Int n))
     , "<n> : set the random generator seed to <n>" )
@@ -71,6 +82,10 @@ let speclist =
   ; ( "-eps2"
     , Arg.Float (fun f -> Options.set "eps2" (Float f))
     , "<x> : set the epsilon for simple iteration (a positive float number)" )
+  ; ( "-eps3"
+    , Arg.Float (fun f -> Options.set "eps3" (Float f))
+    , "<x> : with the expectation oracle, set the epsilon between the targeted \
+       expectation and the computed one (a positive float number)" )
   ; ( "-try"
     , Arg.Int (fun n -> Options.set "try" (Int n))
     , "<n> : set the maximum of tries when generating trees" )
@@ -87,7 +102,7 @@ let speclist =
           Options.globals.output_type <- 3
         | _ ->
           Format.eprintf "Error: otype must be in [arb|dot|xml|all]@.";
-          exit 1 )
+          exit 1)
     , "<n>: set the type [arb|dot|xml|all] of the generated tree" )
   ; ( "-o"
     , Arg.String (fun x -> Options.globals.fileName <- x)
@@ -99,7 +114,7 @@ let speclist =
     , Arg.String
         (fun x ->
           Options.globals.state_file <- x;
-          Options.globals.with_state <- true )
+          Options.globals.with_state <- true)
     , "<n>: set the name of state file" )
   ; ( "-id"
     , Arg.Unit (fun () -> Options.globals.with_id <- true)
@@ -164,9 +179,19 @@ let make_oracle grammar =
   let oracle_config =
     { epsilon1= Options.(WithDefault.value globals.epsilon1)
     ; epsilon2= Options.(WithDefault.value globals.epsilon2)
+    ; epsilon3= Options.(WithDefault.value globals.epsilon3)
     ; zstart= Options.(WithDefault.value globals.zstart) }
   in
-  make ~config:oracle_config grammar
+  match Options.globals.oracle_type with
+  | Options.Singular ->
+    make_singular ~config:oracle_config grammar
+  | Options.Expectation ->
+    let expectation =
+      ( Options.(WithDefault.value globals.size_min)
+      + Options.(WithDefault.value globals.size_min) )
+      / 2
+    in
+    make_expectation ~config:oracle_config expectation grammar
 
 let get_rng : string -> (module Randtools.S) = function
   | "ocaml" ->
@@ -200,7 +225,7 @@ let () =
       else (
         Format.eprintf
           "Error: grammar file already set, argument '%s' rejected@." arg;
-        exit 1 ) )
+        exit 1 ))
     usage;
   Options.extra_checks ();
   if Options.globals.verbosity > 0 then Format.printf "%s@." banner;

@@ -14,23 +14,21 @@
 
 type 'a t = Node of 'a * 'a t list
 
-
 (** {2 Iterators} *)
 
 let fold f =
   let rec dfs k tree =
-    let Node (label, children) = tree in
+    let (Node (label, children)) = tree in
     dfs_forest (fun xs -> k (f label xs)) children
   and dfs_forest k = function
-    | [] -> k []
+    | [] ->
+      k []
     | tree :: forest ->
       dfs (fun x -> dfs_forest (fun xs -> k (x :: xs)) forest) tree
   in
   dfs Fun.id
 
-
 (** {2 Output functions} *)
-
 
 (* temporary workaround *)
 let annotate tree =
@@ -77,7 +75,6 @@ let add_indent =
     let len = String.length !s in
     if 2 * n >= len then grow (2 * n);
     Buffer.add_substring buf !s 0 (2 * n)
-
 
 (* .arb *)
 

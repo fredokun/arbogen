@@ -1,5 +1,5 @@
 (tests
- (names test_parsing test_oracle test_gen)
+ (names test_parsing test_oracle test_gen_sing test_gen_expect)
  (deps
   (glob_files *.spec))
  (libraries arbogen alcotest))

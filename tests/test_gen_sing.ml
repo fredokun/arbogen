@@ -15,7 +15,7 @@ let check_size size_min size_max expected actual =
     fail "wrong size: %d not in [%d, %d]" actual size_min size_max
 
 let generate ?(seed = 42424242) grammar ~size_min ~size_max =
-  let oracle = Boltzmann.Oracle.Naive.make grammar in
+  let oracle = Boltzmann.Oracle.Naive.make_singular grammar in
   let module Rng = Randtools.OcamlRandom in
   Rng.init seed;
   match
@@ -206,4 +206,5 @@ let uniformity = [("binary trees", `Slow, unif_binary)]
 (** {2 All the tests} *)
 
 let () =
-  Alcotest.run "gen" [("correctness", correctness); ("uniformity", uniformity)]
+  Alcotest.run "gen_sing"
+    [("correctness", correctness); ("uniformity", uniformity)]
