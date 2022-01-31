@@ -139,7 +139,7 @@ module Naive = struct
           search init_values' zmin init_values.z
         | Val v ->
           let expectation = v.z *. v.derivate_values.(0) /. v.values.(0) in
-          let diff = float_of_int n -. expectation in
+          let diff = (float_of_int n -. expectation) /. float_of_int n in
           if abs_float diff < epsilon3 then (zmin, zmax, eval)
           else if diff < 0. then
             let init_values' = init len ((zmin +. init_values.z) /. 2.) in
@@ -156,7 +156,7 @@ module Naive = struct
       (zmin, zmax, v)
 
   let default_config =
-    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 5.}
+    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 0.005}
 
   let make_singular ?(config = default_config) grammar =
     let _, _, values = search_singularity config grammar in
