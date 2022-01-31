@@ -12,9 +12,6 @@ doc:
 	@echo Documentation available at doc/index.html
 
 test: build
-	ALCOTEST_QUICK_TESTS=1 dune runtest --no-buffer
-
-longtest: build
 	dune runtest --no-buffer
 
 bench: build

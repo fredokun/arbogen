@@ -14,20 +14,21 @@ let check_size size_min size_max expected actual =
   else if actual < size_min || actual > size_max then
     fail "wrong size: %d not in [%d, %d]" actual size_min size_max
 
-let generate ?(seed = 42424242) grammar ~size_min ~size_max =
-  let oracle = Boltzmann.Oracle.Naive.make_singular grammar in
+let generate_from_wg wg ~size_min ~size_max =
   let module Rng = Randtools.OcamlRandom in
-  Rng.init seed;
-  match
-    Boltzmann.generator grammar oracle
-      (module Rng)
-      ~size_min ~size_max ~max_try:1000
-  with
-  | Some (tree, size) ->
-    (tree, size)
+  let max_try = 1_000_000 in
+  match Boltzmann.search_seed (module Rng) ~size_min ~size_max ~max_try wg with
+  | Some (_, state) ->
+    Rng.set_state state;
+    Boltzmann.free_gen (module Rng) wg wg.names.(0)
   | None ->
-    let name = grammar.Grammar.names.(0) in
-    fail "generation of %s failed" name
+    assert false
+
+let generate ?(seed = 42424242) grammar =
+  let oracle = Boltzmann.Oracle.Naive.make_singular grammar in
+  Randtools.OcamlRandom.init seed;
+  let wg = Boltzmann.WeightedGrammar.of_grammar oracle grammar in
+  generate_from_wg wg
 
 (** {2 Correctness tests} *)
 
@@ -160,51 +161,103 @@ let correctness =
   ; ("Motzkin trees", `Quick, valid_motzkin)
   ; ("shuffle+ trees", `Quick, valid_shuffle_plus) ]
 
-(** {2 Uniformity tests} *)
+(** {2 Statistical tests} *)
 
-let incr repr store (tree, size) =
-  let r = repr tree in
-  match Hashtbl.find_opt store.(size) r with
-  | None ->
-    Hashtbl.add store.(size) r 1
-  | Some nb ->
-    Hashtbl.replace store.(size) r (nb + 1)
+(** Chi square test of adequation. *)
+let chi_square degree ~expected ~actual =
+  let chi2 = [|0.; 3.84; 5.99; 7.81; 9.49; 11.07|] in
+  if
+    degree >= Array.length chi2
+    || Array.length expected <> degree + 1
+    || Array.length actual <> degree + 1
+  then invalid_arg "chi_square";
+  let _, test =
+    Array.fold_left
+      (fun (i, t) ni ->
+        let actual = float_of_int ni in
+        (i + 1, t +. (((expected.(i) -. actual) ** 2.) /. expected.(i))) )
+      (0, 0.) actual
+  in
+  test <= chi2.(degree)
 
-let unif_binary () =
-  Random.self_init ();
+module Binary = struct
+  let catalan = [|1; 1; 2; 5; 14; 42|]
+
   let grammar =
-    Grammar.
+    Boltzmann.WeightedGrammar.
       { names= [|"B"|]
-      ; rules= [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|] }
-  in
-  let store = Array.init 6 (fun _ -> Hashtbl.create 17) in
-  let rec repr = function
-    | Tree.Node ("B", []) ->
-      ""
-    | Tree.Node ("B", [l; r]) ->
-      "(" ^ repr l ^ ")" ^ repr r
-    | _ ->
-      invalid_arg "repr"
-  in
-  let nb_iterations = 1000 in
-  (* 1000 is not enough *)
-  for _ = 0 to nb_iterations - 1 do
-    generate grammar ~seed:(Random.bits ()) ~size_min:0 ~size_max:5
-    |> incr repr store
-  done;
-  let check size _ nb =
-    let size = float_of_int size in
-    let probability = float_of_int nb /. float_of_int nb_iterations in
-    let expected = (0.25 ** size) /. 2. in
-    (* XXX. crappy tolerance *)
-    Alcotest.(check (float 0.2)) "distribution(binary)" probability expected
-  in
-  Array.iteri (fun size tbl -> Hashtbl.iter (check size) tbl) store
+      ; rules= [|Union (0.5, Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|] }
 
-let uniformity = [("binary trees", `Slow, unif_binary)]
+  let rank =
+    let convolution n k =
+      let rec sum acc i =
+        if i > k then acc
+        else sum (acc + (catalan.(i) * catalan.(n - 1 - i))) (i + 1)
+      in
+      sum 0 0
+    in
+    let rec size_and_rank : string Tree.t -> int * int = function
+      | Node ("B", []) ->
+        (0, 0)
+      | Node ("B", [l; r]) ->
+        let s1, r1 = size_and_rank l in
+        let s2, r2 = size_and_rank r in
+        let size = s1 + s2 + 1 in
+        let rank = convolution size (s1 - 1) + (r1 * catalan.(s2)) + r2 in
+        (size, rank)
+      | _ ->
+        assert false
+    in
+    fun tree -> snd (size_and_rank tree)
+
+  (** Adequation with the Boltzmann distribution. *)
+  let boltzmann_dist () =
+    let store = Array.make 6 0 in
+    let nb_iterations = 50000 in
+    for _ = 1 to nb_iterations do
+      let _, size = generate_from_wg grammar ~size_min:0 ~size_max:5 in
+      store.(size) <- store.(size) + 1
+    done;
+    (* Chi-square test *)
+    let expected =
+      let foi = float_of_int in
+      let arr = Array.init 6 (fun i -> foi catalan.(i) *. (0.25 ** foi i)) in
+      let total_weight = Array.fold_left ( +. ) 0. arr in
+      Array.iteri
+        (fun i x -> arr.(i) <- x /. total_weight *. foi nb_iterations)
+        arr;
+      arr
+    in
+    Alcotest.(check bool)
+      "distribution(size(binary))" true
+      (chi_square 5 ~expected ~actual:store)
+
+  (** Adequation with the uniform distribution at fixed size. *)
+  let unif_dist () =
+    let len = catalan.(3) in
+    let store = Array.make len 0 in
+    let nb_iterations = 5000 in
+    for _ = 1 to nb_iterations do
+      let tree, _ = generate_from_wg grammar ~size_min:3 ~size_max:3 in
+      let r = rank tree in
+      store.(r) <- store.(r) + 1
+    done;
+    (* Chi-square test *)
+    let expected =
+      Array.make len (float_of_int nb_iterations /. float_of_int len)
+    in
+    Alcotest.(check bool)
+      "distribution(size(binary))" true
+      (chi_square (len - 1) ~expected ~actual:store)
+end
+
+let statistical_tests =
+  [ ("binary / boltz", `Quick, Binary.boltzmann_dist)
+  ; ("binary / unif", `Quick, Binary.unif_dist) ]
 
 (** {2 All the tests} *)
 
 let () =
+  Random.self_init ();
   Alcotest.run "gen_sing"
-    [("correctness", correctness); ("uniformity", uniformity)]
+    [("correctness", correctness); ("statistical_tests", statistical_tests)]
