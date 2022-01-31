@@ -3,10 +3,6 @@ open Boltzmann.Oracle
 let checkf tolerance = Alcotest.(check (float tolerance))
 
 let checkfa tolerance s a b =
-  (* Array.iter (Format.eprintf "%f,") a; *)
-  (* Format.eprintf "@."; *)
-  (* Array.iter (Format.eprintf "%f,") b; *)
-  (* print_endline "@."; *)
   Alcotest.(check (array (float tolerance))) s a b
 
 let foi = float_of_int
@@ -229,28 +225,43 @@ let search grammar =
   oracle.z
 
 let binary_expectation () =
+  (*    B(z) = (1 - sqrt(1 - 4z^2)) / (2 z)
+     z B'(z) = B(z) / (1 - 2 z B(z))
+             = B(z) / sqrt(1 - 4 z^2)
+
+     expectation = N => z = 0.5 * sqrt(1 - 1 / N^2) *)
   let grammar =
     Grammar.
       { names= [|"B"|]
       ; rules= [|Union (Z 1, Product (Z 1, Product (Ref 0, Ref 0)))|] }
   in
-  checkf 5e-6 "expectation(binary)" 0.5 (search grammar)
+  let tuned_z = sqrt (1. -. 1. /. (1000. ** 2.)) /. 2. in
+  checkf 5e-9 "expectation(binary)" tuned_z (search grammar)
 
 let nary_expectation () =
+  (*  T(z) = (1 - sqrt(1 - 4 z)) / 2
+     T'(z) = 1 / sqrt(1 - 4 z)
+
+     expectation = N => z = 0.25 * (1 - 1 / (2 N - 1)^2) *)
   let grammar =
     Grammar.
       { names= [|"T"; "S"|]
       ; rules= [|Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
   in
-  checkf 5e-6 "expectation(nary)" 0.25 (search grammar)
+  let tuned_z = (1. -. 1. /. (2. *. 1000. -. 1.) ** 2.) /. 4. in
+  checkf 5e-9 "expectation(nary)" tuned_z (search grammar)
 
 let seq_expectation () =
+  (* same as above *)
   let grammar =
     Grammar.{names= [|"S"|]; rules= [|Product (Z 1, Seq (Ref 0))|]}
   in
-  checkf 5e-9 "expectation(seq)" 0.25 (search grammar)
+  let tuned_z = (1. -. 1. /. (2. *. 1000. -. 1.) ** 2.) /. 4. in
+  checkf 5e-9 "expectation(seq)" tuned_z (search grammar)
 
 let shuffle_plus_expectation () =
+  (* A(z)    = (1 - z - sqrt((1 - z)^2 - 4 z)) / 2
+     z A'(z) = (A + A^2) / (1 - A^2 / z) *)
   let grammar =
     Grammar.
       { names= [|"A"; "Ashuffle"; "Aplus"|]
@@ -259,12 +270,9 @@ let shuffle_plus_expectation () =
            ; Product (Z 1, Seq (Ref 0))
            ; Product (Ref 1, Product (Ref 1, Seq (Ref 1))) |] }
   in
-  let expectation = 3. -. sqrt 8. in
-  checkf 5e-9 "expectation(shuffle_plus)" expectation (search grammar)
-
-(* TODO: sp *)
-(* TODO: unarybinary *)
-(* TODO: unarybinary2 *)
+  (* Solved by dichotomy using sage and a the explicit formulas given above. *)
+  let tuned_z = 0.171572814532940 in
+  checkf 5e-9 "expectation(shuffle_plus)" tuned_z (search grammar)
 
 let expectation_tests =
   [ ("Search expectation for binary.spec", `Quick, binary_expectation)

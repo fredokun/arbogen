@@ -42,7 +42,7 @@ module Eval = struct
       | Union (e1, e2) ->
         aux e1 +. aux e2
       | Seq e ->
-        aux e /. ((1. -. aux e) ** 2.)
+        aux e /. ((1. -. expression oracle e) ** 2.)
       | Ref i ->
         oracle.derivate_values.(i)
     in
