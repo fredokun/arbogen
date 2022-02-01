@@ -1,12 +1,15 @@
 let fail format = Format.kasprintf (fun s -> Alcotest.fail s) format
 
 (* XXX. *)
-let rec pp_tree fmt tree =
-  let (Tree.Node (typ, children)) = tree in
-  let pp_sep fmt () = Format.fprintf fmt ",@," in
-  Format.fprintf fmt "%s[%a]" typ
-    (Format.pp_print_list ~pp_sep pp_tree)
-    children
+let rec pp_tree fmt = function
+  | Tree.Label (typ, children) ->
+    let pp_sep fmt () = Format.fprintf fmt ",@," in
+    Format.fprintf fmt "%s[%a]" typ
+      (Format.pp_print_list ~pp_sep pp_tree)
+      children
+  | Tree.Tuple children ->
+    let pp_sep fmt () = Format.fprintf fmt ",@," in
+    Format.fprintf fmt "[%a]" (Format.pp_print_list ~pp_sep pp_tree) children
 
 let check_size size_min size_max expected actual =
   if actual <> expected then
@@ -41,9 +44,9 @@ let valid_binary () =
     Grammar.{names= [|"B"|]; rules= [|Union [Z 0; Product [Z 1; Ref 0; Ref 0]]|]}
   in
   let rec size = function
-    | Tree.Node ("B", [l; r]) ->
+    | Tree.Label ("B", [Tuple []; l; r]) ->
       1 + size l + size r
-    | Tree.Node ("B", []) ->
+    | Tree.Label ("B", []) ->
       0
     | _ ->
       raise Invalid
@@ -60,11 +63,11 @@ let valid_nary () =
       ; rules= [|Product [Z 1; Ref 1]; Union [Z 0; Product [Ref 0; Ref 1]]|] }
   in
   let rec size = function
-    | Tree.Node ("T", [s]) ->
+    | Tree.Label ("T", [Tuple []; s]) ->
       1 + size s
-    | Tree.Node ("S", []) ->
+    | Tree.Label ("S", []) ->
       0
-    | Tree.Node ("S", [x; xs]) ->
+    | Tree.Label ("S", [x; xs]) ->
       size x + size xs
     | _ ->
       raise Invalid
@@ -79,9 +82,9 @@ let valid_nary_bis () =
     Grammar.{names= [|"T"|]; rules= [|Product [Z 1; Seq (Ref 0)]|]}
   in
   let rec size = function
-    | Tree.Node ("T", []) ->
+    | Tree.Label ("T", [Tuple []; Tuple []]) ->
       1
-    | Tree.Node ("T", children) ->
+    | Tree.Label ("T", [Tuple []; Tuple children]) ->
       List.fold_left (fun acc t -> acc + size t) 1 children
     | _ ->
       raise Invalid
@@ -99,11 +102,11 @@ let valid_motzkin () =
       }
   in
   let rec size = function
-    | Tree.Node ("M", []) ->
+    | Tree.Label ("M", []) ->
       0
-    | Tree.Node ("M", [t]) ->
+    | Tree.Label ("M", [Tuple []; t]) ->
       1 + size t
-    | Tree.Node ("M", [l; r]) ->
+    | Tree.Label ("M", [Tuple []; l; r]) ->
       1 + size l + size r
     | _ ->
       raise Invalid
@@ -123,9 +126,9 @@ let valid_shuffle_plus () =
            ; Product [Ref 1; Ref 1; Seq (Ref 1)] |] }
   in
   let get_type = function
-    | Tree.Node ("Aplus", _) ->
+    | Tree.Label ("Aplus", _) ->
       `plus
-    | Tree.Node ("Ashuffle", _) ->
+    | Tree.Label ("Ashuffle", _) ->
       `shuffle
     | _ ->
       raise Invalid
@@ -133,14 +136,11 @@ let valid_shuffle_plus () =
   let sum size_fun = List.fold_left (fun acc t -> acc + size_fun t) 0 in
   let rec size typ tree =
     match (typ, tree) with
-    | `A, Tree.Node ("A", [t]) ->
+    | `A, Tree.Label ("A", [t]) ->
       size (get_type t) t
-    | `plus, Tree.Node ("Aplus", children) ->
-      if List.compare_length_with children 2 < 0 then raise Invalid;
-      sum (size `shuffle) children
-    | `shuffle, Tree.Node ("Ashuffle", []) ->
-      1
-    | `shuffle, Tree.Node ("Ashuffle", children) ->
+    | `plus, Tree.Label ("Aplus", [x; x'; Tuple children]) ->
+      sum (size `shuffle) (x :: x' :: children)
+    | `shuffle, Tree.Label ("Ashuffle", [Tuple []; Tuple children]) ->
       1 + sum (size `A) children
     | _ ->
       raise Invalid
@@ -199,9 +199,9 @@ module Binary = struct
       sum 0 0
     in
     let rec size_and_rank : string Tree.t -> int * int = function
-      | Node ("B", []) ->
+      | Label ("B", []) ->
         (0, 0)
-      | Node ("B", [l; r]) ->
+      | Label ("B", [Tuple []; l; r]) ->
         let s1, r1 = size_and_rank l in
         let s2, r2 = size_and_rank r in
         let size = s1 + s2 + 1 in

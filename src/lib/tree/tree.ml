@@ -12,14 +12,16 @@
  *           GNU GPL v.3 licence (cf. LICENSE file)      *
  *********************************************************)
 
-type 'a t = Node of 'a * 'a t list
+type 'a t = Label of 'a * 'a t list | Tuple of 'a t list
 
 (** {2 Iterators} *)
 
-let fold f =
-  let rec dfs k tree =
-    let (Node (label, children)) = tree in
-    dfs_forest (fun xs -> k (f label xs)) children
+let fold ~label ~tuple =
+  let rec dfs k = function
+    | Label (l, children) ->
+      dfs_forest (fun xs -> k (label l xs)) children
+    | Tuple children ->
+      dfs_forest (fun xs -> k (tuple xs)) children
   and dfs_forest k = function
     | [] ->
       k []
@@ -34,10 +36,10 @@ let fold f =
 let annotate tree =
   let id = ref (-1) in
   let next () = incr id; !id in
-  let rec aux (Node (x, children)) =
-    Node ((x, next () |> string_of_int), List.map aux children)
-  in
-  aux tree
+  fold
+    ~label:(fun l children -> Label ((l, next () |> string_of_int), children))
+    ~tuple:(fun children -> Tuple children)
+    tree
 
 (* Some pretty printing utilities *)
 
@@ -78,17 +80,24 @@ let add_indent =
 
 (* .arb *)
 
-let rec tree_out (show_type : bool) (show_id : bool) tree out =
+let tree_out (show_type : bool) (show_id : bool) =
   let label typ id =
     if show_type then if show_id then typ ^ ":" ^ id else typ
     else if show_id then id
     else ""
   in
-  let (Node ((typ, id), ts)) = tree in
-  output_string out (label typ id);
-  output_list out
-    (fun (out : out_channel) t -> tree_out show_type show_id t out)
-    "[" "," "]" ts
+  let rec print_tree out = function
+    | Label ((typ, id), ts) ->
+      output_string out (label typ id);
+      output_list out
+        (fun (out : out_channel) t -> print_tree out t)
+        "[" "," "]" ts
+    | Tuple ts ->
+      output_list out
+        (fun (out : out_channel) t -> print_tree out t)
+        "[" "," "]" ts
+  in
+  fun tree out -> print_tree out tree
 
 (* .xml *)
 
@@ -98,11 +107,15 @@ let attributes buf typ id show_type show_id =
 
 let xml_of_tree (show_type : bool) (show_id : bool) t =
   let buf = Buffer.create 1024 in
-  let rec aux (Node ((typ, id), ts)) =
-    Buffer.add_string buf "<node";
-    attributes buf typ id show_type show_id;
-    Buffer.add_string buf ">";
-    string_of_list_buf aux buf "" "" "</node>" ts
+  let rec aux = function
+    | Label ((typ, id), ts) ->
+      Buffer.add_string buf "<node";
+      attributes buf typ id show_type show_id;
+      Buffer.add_string buf ">";
+      string_of_list_buf aux buf "" "" "</node>" ts
+    | Tuple ts ->
+      Buffer.add_string buf "<node>";
+      string_of_list_buf aux buf "" "" "</node>" ts
   in
   Buffer.add_string buf "<?xml version=\"1.0\"?><tree>";
   aux t;
@@ -111,14 +124,21 @@ let xml_of_tree (show_type : bool) (show_id : bool) t =
 
 let indent_xml_of_tree (show_type : bool) (show_id : bool) t =
   let buf = Buffer.create 1024 in
-  let rec tree level (Node ((typ, id), ts)) =
-    add_indent buf level;
-    Buffer.add_string buf "<node";
-    attributes buf typ id show_type show_id;
-    Buffer.add_string buf ">\n";
-    forest (level + 1) ts;
-    add_indent buf level;
-    Buffer.add_string buf "</node>\n"
+  let rec tree level = function
+    | Label ((typ, id), ts) ->
+      add_indent buf level;
+      Buffer.add_string buf "<node";
+      attributes buf typ id show_type show_id;
+      Buffer.add_string buf ">\n";
+      forest (level + 1) ts;
+      add_indent buf level;
+      Buffer.add_string buf "</node>\n"
+    | Tuple ts ->
+      add_indent buf level;
+      Buffer.add_string buf "<node>";
+      forest (level + 1) ts;
+      add_indent buf level;
+      Buffer.add_string buf "</node>\n"
   and forest level = function
     | [] ->
       ()
@@ -145,23 +165,62 @@ let dot_of_tree (show_type : bool) (show_id : bool) (indent : bool) t =
     if l = "" then " [shape=point];\n" else " [label=\"" ^ l ^ "\"];\n"
   in
   let buf = Buffer.create 1024 in
-  let rec nodes (Node ((typ, id), ts)) =
-    Buffer.add_string buf "  ";
-    Buffer.add_string buf id;
-    Buffer.add_string buf (label typ id);
-    string_of_list_buf nodes buf "" "" "" ts
-  and edges level pred (Node ((_, id), ts)) =
-    if indent then add_indent buf level;
-    Buffer.add_string buf pred;
-    Buffer.add_string buf " -> ";
-    Buffer.add_string buf id;
-    Buffer.add_string buf ";\n";
-    string_of_list_buf (fun t -> edges (level + 1) id t) buf "" "" "" ts
+  let rec nodes tid = function
+    | Label ((typ, id), ts) ->
+      Buffer.add_string buf "  ";
+      Buffer.add_string buf id;
+      Buffer.add_string buf (label typ id);
+      nodes_forest tid ts
+    | Tuple ts ->
+      Buffer.add_string buf "  ";
+      Buffer.add_string buf ("t" ^ string_of_int tid);
+      Buffer.add_char buf '\n';
+      nodes_forest (tid + 1) ts
+  and nodes_forest tid = function
+    | [] ->
+      tid
+    | t :: ts ->
+      let tid = nodes tid t in
+      nodes_forest tid ts
+  in
+  let rec edges level tid parent = function
+    | Label ((_, id), ts) ->
+      if indent then add_indent buf level;
+      Buffer.add_string buf parent;
+      Buffer.add_string buf " -> ";
+      Buffer.add_string buf id;
+      Buffer.add_string buf ";\n";
+      edges_forest (level + 1) tid id ts
+    | Tuple ts ->
+      let id = "t" ^ string_of_int tid in
+      if indent then add_indent buf level;
+      Buffer.add_string buf parent;
+      Buffer.add_string buf " -> ";
+      Buffer.add_string buf id;
+      Buffer.add_string buf ";\n";
+      edges_forest (level + 1) (tid + 1) id ts
+  and edges_forest level tid parent = function
+    | [] ->
+      tid
+    | t :: ts ->
+      let tid = edges level tid parent t in
+      edges_forest level tid parent ts
   in
   Buffer.add_string buf "digraph {\n";
-  nodes t;
-  let (Node ((_, id), ts)) = t in
-  string_of_list_buf (fun t -> edges 1 id t) buf "" "" "" ts;
+  let _ = nodes 0 t in
+  let _ =
+    match t with
+    | Label ((_, id), ts) ->
+      let level = 1 in
+      let parent = id in
+      let tid = 0 in
+      edges_forest level tid parent ts
+    | Tuple ts ->
+      let level = 1 in
+      let parent = "t0" in
+      let tid = 1 in
+      edges_forest level tid parent ts
+  in
   Buffer.add_string buf "}\n";
   buf
 

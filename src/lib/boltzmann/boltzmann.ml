@@ -35,7 +35,7 @@ let free_size (module R : Randtools.S) ~size_max wgrm =
     | Seq (w, expr) :: next ->
       let n = Randtools.geometric (module R) w in
       gen_size s (list_make_append n expr next)
-    (* Add both component of the product to the call stack. *)
+    (* Add all components of the product **in reverse order** to the call stack. *)
     | Product args :: next ->
       gen_size s (List.rev_append args next)
     (* Add one term of the union to the call stack and drop the other one. *)
@@ -50,16 +50,27 @@ let free_size (module R : Randtools.S) ~size_max wgrm =
   in
   gen_size 0 [wgrm.rules.(0)]
 
-type instr = Gen of WeightedGrammar.expression | Build of int
+type instr =
+  | Gen of WeightedGrammar.expression
+  | Label of string
+  | Tuple of int
 
-let rec build vals children =
-  match vals with
-  | None :: vals ->
-    (vals, children)
-  | Some tree :: vals ->
-    build vals (tree :: children)
-  | [] ->
-    invalid_arg "build"
+let rec pop_n n acc xs =
+  if n = 0 then (List.rev acc, xs)
+  else
+    match xs with
+    | [] ->
+      invalid_arg "pop_n"
+    | x :: xs ->
+      pop_n (n - 1) (x :: acc) xs
+
+let pop = function [] -> invalid_arg "pop" | x :: xs -> (x, xs)
+
+let relabel name : string Tree.t -> string Tree.t = function
+  | Label _ as tree ->
+    Label (name, [tree])
+  | Tuple children ->
+    Label (name, children)
 
 let find_pos x xs =
   let len = Array.length xs in
@@ -72,34 +83,39 @@ let find_pos x xs =
 
 let free_gen (module R : Randtools.S) wgrm =
   let open WeightedGrammar in
-  let rec gen_tree size vals = function
+  let rec gen_tree size built = function
     (* Generation complete *)
     | [] ->
-      (vals, size)
-    (* Build a node *)
-    | Build rule_id :: next ->
-      let vals, children = build vals [] in
-      let tree = Tree.Node (wgrm.names.(rule_id), children) in
-      gen_tree size (Some tree :: vals) next
-    (* Add the atom size to the total size and continue. *)
+      (built, size)
+    (* Build a named node. *)
+    | Label name :: next ->
+      let tree, built = pop built in
+      gen_tree size (relabel name tree :: built) next
+    (* Built a tuple *)
+    | Tuple arity :: next ->
+      let children, built = pop_n arity [] built in
+      gen_tree size (Tree.Tuple children :: built) next
+    (* Add the atom size to the total size and generate an empty tuple. *)
     | Gen (Z n) :: next ->
-      gen_tree (size + n) vals next
+      gen_tree (size + n) (Tree.Tuple [] :: built) next
     (* Lookup the definition of i and add it to the call stack *)
     | Gen (Ref i) :: next ->
-      let expr_i = wgrm.rules.(i) in
-      gen_tree size (None :: vals) (Gen expr_i :: Build i :: next)
+      gen_tree size built (Gen wgrm.rules.(i) :: Label wgrm.names.(i) :: next)
     (* Draw the length of the list according to the geometric law and add the
        corresponding number of [expr] to the call stack *)
     | Gen (Seq (w, expr)) :: next ->
       let n = Randtools.geometric (module R) w in
-      gen_tree size vals (list_make_append n (Gen expr) next)
-    (* Add both component of the product to the call stack. *)
+      gen_tree size built (list_make_append n (Gen expr) (Tuple n :: next))
+    (* Add components of the product **in reverse order** to the call stack. *)
     | Gen (Product args) :: next ->
-      gen_tree size vals
-        (List.fold_left (fun next e -> Gen e :: next) next args)
-    (* Add one term of the union to the call stack and drop the other one. *)
+      gen_tree size built
+        (List.fold_left
+           (fun next e -> Gen e :: next)
+           (Tuple (List.length args) :: next)
+           args )
+    (* Add one term of the union to the call stack and drop the other ones. *)
     | Gen (Union args) :: next ->
-      gen_union size vals (R.float 1.) next args
+      gen_union size built (R.float 1.) next args
   and gen_union size vals r next = function
     | [] ->
       assert false
@@ -110,7 +126,7 @@ let free_gen (module R : Randtools.S) wgrm =
   fun name ->
     let i = find_pos name wgrm.names in
     match gen_tree 0 [] [Gen (Ref i)] with
-    | [Some tree], size ->
+    | [tree], size ->
       (tree, size)
     | _ ->
       failwith "internal error"

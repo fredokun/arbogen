@@ -1,14 +1,15 @@
 (** Generic trees *)
 
 (** The type of trees *)
-type 'a t = Node of 'a * 'a t list
+type 'a t = Label of 'a * 'a t list | Tuple of 'a t list
 
 val annotate : 'a t -> ('a * string) t
 (** Annotate a tree with unique identifiers. *)
 
 (** {2 Iterators} *)
 
-val fold : ('a -> 'b list -> 'b) -> 'a t -> 'b
+val fold : label:('a -> 'b list -> 'b) -> tuple:('b list -> 'b) -> 'a t -> 'b
+
 (** A tail-recursive fold on trees. *)
 
 (** {2 Output functions} *)
