@@ -12,9 +12,8 @@ let binary () =
   let expected =
     Grammar.
       { names= [|"BinNode"; "Leaf"|]
-      ; rules=
-          [| Union (Product (Ref 1, Z 1), Product (Product (Ref 0, Ref 0), Z 1))
-           ; Z 0 |] }
+      ; rules= [|Union [Product [Ref 1; Z 1]; Product [Ref 0; Ref 0; Z 1]]; Z 0|]
+      }
   in
   Alcotest.check grammar "binary" expected (parse "binary")
 
@@ -23,14 +22,14 @@ let nary () =
     Grammar.
       { names= [|"NTree"; "Seq"; "Leaf"|]
       ; rules=
-          [|Product (Z 1, Ref 1); Union (Ref 2, Product (Ref 0, Ref 1)); Z 0|]
+          [|Product [Z 1; Ref 1]; Union [Ref 2; Product [Ref 0; Ref 1]]; Z 0|]
       }
   in
   Alcotest.check grammar "nary" expected (parse "nary")
 
 let seq () =
   let expected =
-    Grammar.{names= [|"Node"|]; rules= [|Product (Seq (Ref 0), Z 1)|]}
+    Grammar.{names= [|"Node"|]; rules= [|Product [Seq (Ref 0); Z 1]|]}
   in
   Alcotest.check grammar "seq" expected (parse "seq")
 
@@ -38,7 +37,7 @@ let seq2 () =
   let expected =
     Grammar.
       { names= [|"Node"; "Seq"|]
-      ; rules= [|Product (Ref 1, Z 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
+      ; rules= [|Product [Ref 1; Z 1]; Union [Z 0; Product [Ref 0; Ref 1]]|] }
   in
   Alcotest.check grammar "seq2" expected (parse "seq2")
 
@@ -47,9 +46,9 @@ let shuffle_plus () =
     Grammar.
       { names= [|"A"; "Ashuffle"; "Aplus"|]
       ; rules=
-          [| Union (Ref 1, Ref 2)
-           ; Product (Seq (Ref 0), Z 1)
-           ; Product (Product (Ref 1, Ref 1), Seq (Ref 1)) |] }
+          [| Union [Ref 1; Ref 2]
+           ; Product [Seq (Ref 0); Z 1]
+           ; Product [Ref 1; Ref 1; Seq (Ref 1)] |] }
   in
   Alcotest.check grammar "shuffle_plus" expected (parse "shuffle_plus")
 
@@ -59,8 +58,8 @@ let sp () =
       { names= [|"T"|]
       ; rules=
           [| Union
-               ( Union (Z 1, Product (Z 1, Ref 0))
-               , Product (Product (Product (Z 1, Ref 0), Ref 0), Ref 0) ) |] }
+               [Z 1; Product [Z 1; Ref 0]; Product [Z 1; Ref 0; Ref 0; Ref 0]]
+          |] }
   in
   Alcotest.check grammar "sp" expected (parse "sp")
 
@@ -68,10 +67,8 @@ let unarybinary () =
   let expected =
     Grammar.
       { names= [|"UBTree"|]
-      ; rules=
-          [| Union
-               ( Union (Z 1, Product (Ref 0, Z 1))
-               , Product (Product (Ref 0, Ref 0), Z 1) ) |] }
+      ; rules= [|Union [Z 1; Product [Ref 0; Z 1]; Product [Ref 0; Ref 0; Z 1]]|]
+      }
   in
   Alcotest.check grammar "unarybinary" expected (parse "unarybinary")
 
@@ -80,9 +77,9 @@ let unarybinary2 () =
     Grammar.
       { names= [|"UBTree"; "Unary"; "Binary"; "UBLeaf"|]
       ; rules=
-          [| Union (Union (Ref 3, Ref 1), Ref 2)
-           ; Product (Ref 0, Z 1)
-           ; Product (Product (Ref 0, Ref 0), Z 1)
+          [| Union [Ref 3; Ref 1; Ref 2]
+           ; Product [Ref 0; Z 1]
+           ; Product [Ref 0; Ref 0; Z 1]
            ; Z 1 |] }
   in
   Alcotest.check grammar "unarybinary2" expected (parse "unarybinary2")

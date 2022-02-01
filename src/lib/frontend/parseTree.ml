@@ -7,10 +7,8 @@ and rule = string * string Grammar.expression
 module Sset = Set.Make (String)
 
 let rec expr_names set = function
-  | Grammar.Product (e1, e2) ->
-    expr_names (expr_names set e1) e2
-  | Grammar.Union (e1, e2) ->
-    expr_names (expr_names set e1) e2
+  | Grammar.Product args | Grammar.Union args ->
+    List.fold_left expr_names set args
   | Grammar.Seq e ->
     expr_names set e
   | Grammar.Z _ ->
@@ -50,14 +48,13 @@ let map_names_to_ids rules =
   (names, indices)
 
 let expr_to_id indices =
-  let open Grammar in
-  let rec aux = function
+  let rec aux : string Grammar.expression -> int Grammar.expression = function
     | Z n ->
       Z n
-    | Product (e1, e2) ->
-      Product (aux e1, aux e2)
-    | Union (e1, e2) ->
-      Union (aux e1, aux e2)
+    | Product args ->
+      Product (List.map aux args)
+    | Union args ->
+      Union (List.map aux args)
     | Seq e ->
       Seq (aux e)
     | Ref r ->

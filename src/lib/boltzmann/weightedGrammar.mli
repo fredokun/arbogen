@@ -8,8 +8,8 @@ type t = {rules: expression array; names: string array}
 (** Analog of {!Grammar.expression} with weight information. *)
 and expression =
   | Z of int
-  | Product of expression * expression
-  | Union of float * expression * expression
+  | Product of expression list
+  | Union of (float * expression) list
   | Seq of float * expression
   | Ref of int
 

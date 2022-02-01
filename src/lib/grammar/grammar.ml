@@ -16,31 +16,37 @@ type t = {names: string array; rules: int expression array}
 
 and 'ref expression =
   | Z of int
-  | Product of 'ref expression * 'ref expression
-  | Union of 'ref expression * 'ref expression
+  | Product of 'ref expression list
+  | Union of 'ref expression list
   | Seq of 'ref expression
   | Ref of 'ref
 
-let product x y = Product (x, y)
+let product = function
+  | [] | [_] ->
+    invalid_arg "product with less that two arguments"
+  | args ->
+    Product args
 
-let product_n = function
-  | [] -> Z 0
-  | x :: xs -> List.fold_left product x xs
-
-let union x y = Union (x, y)
-
-let union_n = function
-  | [] -> invalid_arg "Grammar.union_n: empty unions are forbidden"
-  | x :: xs -> List.fold_left union x xs
+let union = function
+  | [] | [_] ->
+    invalid_arg "union with less that two arguments"
+  | args ->
+    Union args
 
 (* Pretty printing *)
 
 let pp_expression ~pp_ref =
   let rec aux fmt = function
-    | Product (e1, e2) ->
-      Format.fprintf fmt "%a * %a" aux e1 aux e2
-    | Union (e1, e2) ->
-      Format.fprintf fmt "(%a + %a)" aux e1 aux e2
+    | Product args ->
+      Format.pp_print_list
+        ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " * ")
+        aux fmt args
+    | Union args ->
+      Format.fprintf fmt "(%a)"
+        (Format.pp_print_list
+           ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " + ")
+           aux )
+        args
     | Seq e ->
       Format.fprintf fmt "Seq(%a)" aux e
     | Ref name ->
@@ -55,5 +61,5 @@ let pp fmt {rules; names} =
     (fun i expr ->
       Format.fprintf fmt "%s ::= %a@\n" names.(i)
         (pp_expression ~pp_ref:Format.pp_print_int)
-        expr)
+        expr )
     rules

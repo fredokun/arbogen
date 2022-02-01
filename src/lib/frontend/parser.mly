@@ -10,10 +10,6 @@
 %token SEQ
 %token PLUS EQUAL TIMES LWEIGHT RWEIGHT LPAREN RPAREN ONE Z
 
-/* precedence rules */
-%left PLUS
-%left TIMES
-
 %start start
 %type <Options.parameter list * ParseTree.t> start
 
@@ -51,10 +47,27 @@ rule_list:
 rule:
   UIDENT EQUAL expr { $1, $3 }
 
+/* Expressions ****************************************** */
+
 expr:
+  | union           { Grammar.union $1 }
+  | pof             { $1 }
+
+union:
+  | pof PLUS pof    { [$1; $3] }
+  | pof PLUS union  { $1 :: $3 }
+
+/* Product or Factor */
+pof:
+  | product { Grammar.product $1 }
+  | factor  { $1 }
+
+product:
+  | factor TIMES factor     { [$1; $3] }
+  | factor TIMES product    { $1 :: $3 }
+
+factor:
   | LPAREN expr RPAREN      { $2 }
-  | expr PLUS expr          { Grammar.Union ($1, $3) }
-  | expr TIMES expr         { Grammar.Product ($1, $3) }
   | UIDENT                  { Grammar.Ref $1 }
   | SEQ LPAREN expr RPAREN  { Grammar.Seq $3 }
   | LWEIGHT NUMI RWEIGHT    { Grammar.Z $2 }

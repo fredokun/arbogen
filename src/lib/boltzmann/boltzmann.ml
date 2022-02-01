@@ -36,12 +36,17 @@ let free_size (module R : Randtools.S) ~size_max wgrm =
       let n = Randtools.geometric (module R) w in
       gen_size s (list_make_append n expr next)
     (* Add both component of the product to the call stack. *)
-    | Product (e1, e2) :: next ->
-      gen_size s (e2 :: e1 :: next)
+    | Product args :: next ->
+      gen_size s (List.rev_append args next)
     (* Add one term of the union to the call stack and drop the other one. *)
-    | Union (w, e1, e2) :: next ->
-      if Random.float 1. < w then gen_size s (e1 :: next)
-      else gen_size s (e2 :: next)
+    | Union args :: next ->
+      gen_union_size s (R.float 1.) next args
+  and gen_union_size s r next = function
+    | [] ->
+      assert false
+    | (w, e) :: args ->
+      if r <= w then gen_size s (e :: next)
+      else gen_union_size s (r -. w) next args
   in
   gen_size 0 [wgrm.rules.(0)]
 
@@ -89,12 +94,18 @@ let free_gen (module R : Randtools.S) wgrm =
       let n = Randtools.geometric (module R) w in
       gen_tree size vals (list_make_append n (Gen expr) next)
     (* Add both component of the product to the call stack. *)
-    | Gen (Product (e1, e2)) :: next ->
-      gen_tree size vals (Gen e2 :: Gen e1 :: next)
+    | Gen (Product args) :: next ->
+      gen_tree size vals
+        (List.fold_left (fun next e -> Gen e :: next) next args)
     (* Add one term of the union to the call stack and drop the other one. *)
-    | Gen (Union (w, e1, e2)) :: next ->
-      let e = if Random.float 1. < w then e1 else e2 in
-      gen_tree size vals (Gen e :: next)
+    | Gen (Union args) :: next ->
+      gen_union size vals (R.float 1.) next args
+  and gen_union size vals r next = function
+    | [] ->
+      assert false
+    | (w, e) :: args ->
+      if r <= w then gen_tree size vals (Gen e :: next)
+      else gen_union size vals (r -. w) next args
   in
   fun name ->
     let i = find_pos name wgrm.names in

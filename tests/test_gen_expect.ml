@@ -38,9 +38,7 @@ exception Invalid
 let valid_binary () =
   let size_min, size_max = (20, 30) in
   let grammar =
-    Grammar.
-      { names= [|"B"|]
-      ; rules= [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|] }
+    Grammar.{names= [|"B"|]; rules= [|Union [Z 0; Product [Z 1; Ref 0; Ref 0]]|]}
   in
   let rec size = function
     | Tree.Node ("B", [l; r]) ->
@@ -59,7 +57,7 @@ let valid_nary () =
   let grammar =
     Grammar.
       { names= [|"T"; "S"|]
-      ; rules= [|Product (Z 1, Ref 1); Union (Z 0, Product (Ref 0, Ref 1))|] }
+      ; rules= [|Product [Z 1; Ref 1]; Union [Z 0; Product [Ref 0; Ref 1]]|] }
   in
   let rec size = function
     | Tree.Node ("T", [s]) ->
@@ -78,7 +76,7 @@ let valid_nary () =
 let valid_nary_bis () =
   let size_min, size_max = (20, 30) in
   let grammar =
-    Grammar.{names= [|"T"|]; rules= [|Product (Z 1, Seq (Ref 0))|]}
+    Grammar.{names= [|"T"|]; rules= [|Product [Z 1; Seq (Ref 0)]|]}
   in
   let rec size = function
     | Tree.Node ("T", []) ->
@@ -97,12 +95,8 @@ let valid_motzkin () =
   let grammar =
     Grammar.
       { names= [|"M"|]
-      ; rules=
-          [| Union
-               ( Z 0
-               , Union
-                   (Product (Z 1, Ref 0), Product (Z 1, Product (Ref 0, Ref 0)))
-               ) |] }
+      ; rules= [|Union [Z 0; Product [Z 1; Ref 0]; Product [Z 1; Ref 0; Ref 0]]|]
+      }
   in
   let rec size = function
     | Tree.Node ("M", []) ->
@@ -124,9 +118,9 @@ let valid_shuffle_plus () =
     Grammar.
       { names= [|"A"; "Ashuffle"; "Aplus"|]
       ; rules=
-          [| Union (Ref 1, Ref 2)
-           ; Product (Z 1, Seq (Ref 0))
-           ; Product (Ref 1, Product (Ref 1, Seq (Ref 1))) |] }
+          [| Union [Ref 1; Ref 2]
+           ; Product [Z 1; Seq (Ref 0)]
+           ; Product [Ref 1; Ref 1; Seq (Ref 1)] |] }
   in
   let get_type = function
     | Tree.Node ("Aplus", _) ->
@@ -191,8 +185,7 @@ module Binary = struct
   let oracle, grammar =
     let g =
       Grammar.
-        { names= [|"B"|]
-        ; rules= [|Union (Z 0, Product (Z 1, Product (Ref 0, Ref 0)))|] }
+        {names= [|"B"|]; rules= [|Union [Z 0; Product [Z 1; Ref 0; Ref 0]]|]}
     in
     let oracle = Boltzmann.Oracle.Naive.make_expectation 3 g in
     (oracle, Boltzmann.WeightedGrammar.of_grammar oracle g)

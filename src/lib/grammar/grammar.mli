@@ -30,9 +30,10 @@ and 'ref expression =
   | Z of int
       (** The atom, potentially elevated to the power of some integer. This
           accounts for the size of the generated object. *)
-  | Product of 'ref expression * 'ref expression  (** Cartesian product *)
-  | Union of 'ref expression * 'ref expression
-      (** Disjoint unions (alternative between two possible derivations) *)
+  | Product of 'ref expression list
+      (** Cartesian product. The list must have at least two elements. *)
+  | Union of 'ref expression list
+      (** Disjoint unions (alternative between two or more derivations) *)
   | Seq of 'ref expression
       (** Sequence of objects. This behaves as a Kleene start, that is [Seq e]
           behaves as [Union (Z 0, Product (e, Seq e)] *)
@@ -41,17 +42,11 @@ and 'ref expression =
           order to allow both integer references ([Ref i] refers to the [i]th
           non-terminal of the grammar) and strings (for use in the parser). *)
 
-val product : 'a expression -> 'a expression -> 'a expression
-(** Curryfied product constructor *)
+val product : 'a expression list -> 'a expression
+(** Product constructor *)
 
-val product_n : 'a expression list -> 'a expression
-(** N-ary product constructor *)
-
-val union : 'a expression -> 'a expression -> 'a expression
-(** Curryfied union constructor *)
-
-val union_n : 'a expression list -> 'a expression
-(** N-ary union constructor *)
+val union : 'a expression list -> 'a expression
+(** Union constructor *)
 
 (** {2 Pretty printing} *)
 

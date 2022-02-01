@@ -21,10 +21,10 @@ module Eval = struct
     let rec aux : int Grammar.expression -> float = function
       | Z n ->
         oracle.z ** float_of_int n
-      | Product (e1, e2) ->
-        aux e1 *. aux e2
-      | Union (e1, e2) ->
-        aux e1 +. aux e2
+      | Product args ->
+        List.fold_left (fun p e -> p *. aux e) 1. args
+      | Union args ->
+        List.fold_left (fun s e -> s +. aux e) 0. args
       | Seq e ->
         1. /. (1. -. aux e)
       | Ref i ->
@@ -37,10 +37,14 @@ module Eval = struct
       | Z n ->
         if n == 0 then 0.
         else float_of_int n *. (oracle.z ** float_of_int (n - 1))
-      | Product (e1, e2) ->
-        (aux e1 *. expression oracle e2) +. (aux e2 *. expression oracle e1)
-      | Union (e1, e2) ->
-        aux e1 +. aux e2
+      | Product args ->
+        let factors = List.map (fun e -> (expression oracle e, aux e)) args in
+        let product = List.fold_left (fun p (e, _) -> p *. e) 1. factors in
+        List.fold_left
+          (fun res (e, e') -> res +. (product *. e' /. e))
+          0. factors
+      | Union args ->
+        List.fold_left (fun s e -> s +. aux e) 0. args
       | Seq e ->
         aux e /. ((1. -. expression oracle e) ** 2.)
       | Ref i ->
@@ -123,7 +127,7 @@ module Naive = struct
     | zmin, zmax, Val v ->
       (zmin, zmax, v)
 
-  (* Find the parameter such that size of `Ref 0` is at `epsilon3` of `n` *)
+  (* Find the parameter such that size of `Ref 0` is at `epsilon3 * n` of `n` *)
   let search_expectation {epsilon1; epsilon2; epsilon3; zstart} n grammar =
     let len = Array.length grammar.Grammar.rules in
     let rec search init_values zmin zmax =
@@ -156,7 +160,7 @@ module Naive = struct
       (zmin, zmax, v)
 
   let default_config =
-    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 0.005}
+    {epsilon1= 1e-9; epsilon2= 1e-9; zstart= 0.; epsilon3= 0.001}
 
   let make_singular ?(config = default_config) grammar =
     let _, _, values = search_singularity config grammar in
