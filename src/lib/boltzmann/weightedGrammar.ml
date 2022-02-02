@@ -66,9 +66,11 @@ let pp_expression =
     | Z n ->
       Format.fprintf fmt "z^%d" n
     | Product args ->
-      Format.pp_print_list
-        ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " * ")
-        pp fmt args
+      Format.fprintf fmt "(%a)"
+        (Format.pp_print_list
+           ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " * ")
+           pp )
+        args
     | Union args ->
       Format.fprintf fmt "(%a)"
         (Format.pp_print_list

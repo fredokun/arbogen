@@ -38,9 +38,11 @@ let union = function
 let pp_expression ~pp_ref =
   let rec aux fmt = function
     | Product args ->
-      Format.pp_print_list
-        ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " * ")
-        aux fmt args
+      Format.fprintf fmt "(%a)"
+        (Format.pp_print_list
+           ~pp_sep:(fun fmt () -> Format.pp_print_string fmt " * ")
+           aux )
+        args
     | Union args ->
       Format.fprintf fmt "(%a)"
         (Format.pp_print_list
