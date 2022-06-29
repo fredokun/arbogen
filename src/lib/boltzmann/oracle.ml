@@ -170,3 +170,41 @@ module Naive = struct
     let _, _, values = search_expectation config n grammar in
     values
 end
+
+(** Dump an oracle *)
+let dump fmt {z; values; derivate_values} =
+  let dump_floats fmt floats =
+    (Format.pp_print_list
+       ~pp_sep:(fun fmt () -> Format.pp_print_char fmt ' ')
+       (fun fmt -> Format.fprintf fmt "%.18g") )
+      fmt (Array.to_list floats)
+  in
+  Format.fprintf fmt "z: %.18g\n" z;
+  Format.fprintf fmt "values: %a\n" dump_floats values;
+  Format.fprintf fmt "derivatives: %a" dump_floats derivate_values
+
+(** Dump an oracle to a string *)
+let dumps = Format.asprintf "%a" dump
+
+let loads : string -> t =
+  let strip_prefix string prefix =
+    let prefix_len = String.length prefix in
+    let string_len = String.length string in
+    if prefix_len > string_len && String.sub string 0 prefix_len <> prefix then
+      invalid_arg ("Oracle.loads / " ^ prefix);
+    String.sub string prefix_len (string_len - prefix_len)
+  in
+  let parse_floats s =
+    s |> String.split_on_char ' ' |> List.map float_of_string |> Array.of_list
+  in
+  fun s ->
+    let lines = String.split_on_char '\n' s in
+    match lines with
+    | [z; values; derivatives] | [z; values; derivatives; ""] ->
+      { z= float_of_string (strip_prefix z "z: ")
+      ; values= parse_floats (strip_prefix values "values: ")
+      ; derivate_values= parse_floats (strip_prefix derivatives "derivatives: ")
+      }
+    | lines ->
+      Format.ksprintf invalid_arg "Oracle.loads (found %d lines)"
+        (List.length lines)

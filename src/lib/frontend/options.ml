@@ -59,7 +59,8 @@ type t =
   ; mutable state_file: string
   ; mutable randgen: string
   ; mutable indent: bool
-  ; mutable print_oracle: bool }
+  ; mutable print_oracle: string
+  ; mutable use_oracle: string }
 
 (** Global variable holding the current configuration *)
 let globals =
@@ -82,7 +83,8 @@ let globals =
   ; state_file= ""
   ; randgen= "ocaml"
   ; indent= false
-  ; print_oracle= false }
+  ; print_oracle= ""
+  ; use_oracle= "" }
 
 (** Helper function to sanitise config options and set them. The [preserve] flag
     tells whether an option that had previously been set should be preserved or
